@@ -2,6 +2,8 @@ package in.dream_lab.bm.stream_iot.tasks.predict;
 
 import in.dream_lab.bm.stream_iot.tasks.AbstractTask;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.StringReader;
 import java.util.Map;
 import java.util.Properties;
@@ -76,7 +78,10 @@ public class LinearRegressionPredictor extends AbstractTask<String,Float> {
 						l.info("Model is {} ", lr.toString());
 
 					SAMPLE_HEADER=p_.getProperty("PREDICT.LINEAR_REGRESSION.SAMPLE_HEADER");
-					instanceHeader = WekaUtil.loadDatasetInstances(new StringReader(SAMPLE_HEADER), l);
+					BufferedReader reader = new BufferedReader(new FileReader(SAMPLE_HEADER));
+					instanceHeader = WekaUtil.loadDatasetInstances(reader, l);
+					
+					//instanceHeader = WekaUtil.loadDatasetInstances(new StringReader(SAMPLE_HEADER), l);
 					if (l.isInfoEnabled())
 						l.info("Header is {}", instanceHeader);
 					assert instanceHeader != null;

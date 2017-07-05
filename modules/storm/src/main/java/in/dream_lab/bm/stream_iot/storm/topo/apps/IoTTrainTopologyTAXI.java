@@ -59,12 +59,14 @@ public class IoTTrainTopologyTAXI {
         TopologyBuilder builder = new TopologyBuilder();
 
 
-        String basePathForMultipleSpout="/Users/anshushukla/Downloads/Incomplete/stream/iot-bm/modules/tasks/src/main/resources/";
+//        String basePathForMultipleSpout="/Users/anshushukla/Downloads/Incomplete/stream/iot-bm/modules/tasks/src/main/resources/";
 //        String basePathForMultipleSpout="/Users/anshushukla/Downloads/Incomplete/stream/iot-bm/modules/tasks/src/main/resources/";
 
+
+        String basePathForMultipleSpout="/home/talha/iot/storm/datasets/";
         System.out.println("basePathForMultipleSpout is used -"+basePathForMultipleSpout);
 
-        String spout1InputFilePath=basePathForMultipleSpout+ "inputFileForTimerSpout-TAXI.csv";
+        String spout1InputFilePath=basePathForMultipleSpout+ "trip_data_1.csv";
 
 //        String spout1InputFilePath=basePathForMultipleSpout+ "inputFileForTimerSpout-TAXI-train-microbench-1min.csv";
 

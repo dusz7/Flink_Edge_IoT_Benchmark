@@ -35,7 +35,9 @@ public class EventGen {
 
     public void launch(String csvFileName, String outCSVFileName)
     {
-    	launch(csvFileName, outCSVFileName, -1);
+        System.out.println(csvFileName);
+        System.out.println(outCSVFileName);
+        launch(csvFileName, outCSVFileName, 60000L);
     }
 
     //Launches all the threads
@@ -44,9 +46,11 @@ public class EventGen {
         //2. Assign a thread with (new SubEventGen(myISEG, eventList))
         //3. Attach this thread to ThreadPool
         try {
-            int numThreads = GlobalConstants.numThreads;
+            int numThreads = GlobalConstants.numThreads;	// currently, 1
             //double scalingFactor = GlobalConstants.accFactor;
             String datasetType = "";
+            
+                       
             if (outCSVFileName.indexOf("TAXI") != -1) {
                 datasetType = "TAXI";// GlobalConstants.dataSetType = "TAXI";
             } else if (outCSVFileName.indexOf("SYS") != -1) {
@@ -55,8 +59,14 @@ public class EventGen {
                 datasetType = "PLUG";// GlobalConstants.dataSetType = "PLUG";
             }
             
+            System.out.println("\n\n datasetType: " + datasetType + "\n\n");
+            System.out.println("\n\n outCSVFileName: " + outCSVFileName + "\n\n");
+            
             List<TableClass> nestedList = CsvSplitter.roundRobinSplitCsvToMemory(csvFileName, numThreads, scalingFactor, datasetType);
             
+            System.out.println(this.getClass().getName() + " splitted csv files to memory. nestedList");
+            for (TableClass c : nestedList) 
+            	System.out.println(this.getClass().getName() + " " + c.toString() + " \n + Header" + c.getHeader() + "\n # Rows" + c.getRows() );
             
             this.executorService = Executors.newFixedThreadPool(numThreads);
 
@@ -68,12 +78,16 @@ public class EventGen {
             for (int i = 0; i < numThreads; i++) {
                 //this.executorService.execute(new SubEventGen(this.iseg, nestedList.get(i)));
                 subEventGenArr[i] = new SubEventGen(this.iseg, nestedList.get(i), sem1, sem2);
+                System.out.println(this.getClass().getName() + " submitting first runnable");
                 this.executorService.execute(subEventGenArr[i]);
             }
 
             sem1.acquire(numThreads);
-            //set the start time to all the thread objects
+            
+            System.out.println(this.getClass().getName() + " acquired sem1");
+            
             long experiStartTs = System.currentTimeMillis();
+            //set the start time to all the thread objects
             for (int i = 0; i < numThreads; i++) {
                 //this.executorService.execute(new SubEventGen(this.iseg, nestedList.get(i)));
                 subEventGenArr[i].experiStartTime = experiStartTs;
@@ -81,6 +95,8 @@ public class EventGen {
                 this.executorService.execute(subEventGenArr[i]);
             }
             sem2.release(numThreads);
+            System.out.println(this.getClass().getName() + " released sem2");
+            
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -149,7 +165,7 @@ class SubEventGen implements Runnable {
     TableClass eventList;
     Long experiStartTime;  //in millis since epoch
     Semaphore sem1, sem2;
-    Long experiDuration = -1L;
+    Long experiDuration = 60000L;
 
     public SubEventGen(ISyntheticEventGen iseg, TableClass eventList, Semaphore sem1, Semaphore sem2) {
         this.iseg = iseg;
@@ -160,42 +176,62 @@ class SubEventGen implements Runnable {
 
     @Override
     public void run() {
-
+    	System.out.println(Thread.currentThread().getId() + "-" + Thread.currentThread().getName() + 
+    			"170: Executing SubEventGen runnable to generate events !!!");
         sem1.release();
         try {
             sem2.acquire();
         } catch (InterruptedException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
+        	e1.printStackTrace();
         }
         List<List<String>> rows = this.eventList.getRows();
         int rowLen = rows.size();
         List<Long> timestamps = this.eventList.getTs();
         Long experiRestartTime = experiStartTime;
         boolean runOnce = (experiDuration < 0);
+        System.out.println(this.getClass().getName() + " - runOnce: " + runOnce);
         long currentRuntime = 0;
-
+        
+        System.out.println(Thread.currentThread().getId() + "-" + Thread.currentThread().getName() + 
+    			"186: Executing SubEventGen runnable. sem2 had been acquired acquired");
+        
         do {
             for (int i = 0; i < rowLen && (runOnce || (currentRuntime < experiDuration)); i++) {
                 Long deltaTs = timestamps.get(i);
                 List<String> event = rows.get(i);
                 Long currentTs = System.currentTimeMillis();
-                long delay = deltaTs - (currentTs - experiRestartTime); // how long until this event should be sent?
-                if (delay > 10) { // sleep only if it is non-trivial time. We will catch up on sleep later.
+                //long delay = deltaTs - (currentTs - experiRestartTime); // how long until this event should be sent?
+                
+                /* Delaying sending the event if we're working with old csv files does not make sense. 
+                 * Is data preparation required beforehand?*/
+                
+                //System.out.println(this.getClass().getName() + " - delay: " + delay + " deltaTs " + deltaTs);
+                
+                /* Why sleep here ???? It seems delay ~= deltaTs, which we actually get from the csv file. 
+                 * It's a large value and hence the thread sleeps here !!! Commenting this sleep for now.*/
+                
+                /*if (delay > 10) { // sleep only if it is non-trivial time. We will catch up on sleep later.
                     try {
                         Thread.sleep(delay);
                     } catch (InterruptedException e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
                     }
-                }
+                }*/
+                
+                System.out.println(Thread.currentThread().getId() + "-" + Thread.currentThread().getName() + 
+            			"202: Executing SubEventGen runnable. Writing events to the Spout's queue");
                 this.iseg.receive(event);
-
-                currentRuntime = (currentTs - experiStartTime) + delay; // appox time since the experiment started
+                
+                /*Since not sleeping anymore, should not factor in the value of delay in currentRuntime calculation*/
+                //ORIG: currentRuntime = (currentTs - experiStartTime) + delay; // appox time since the experiment started
+                currentRuntime = (currentTs - experiStartTime);
+                System.out.println(this.getClass().getName() + " - updated current time: " + currentRuntime + 
+                		" Calculation: currentTs: " + Long.toString(currentTs) + "expStartTime: " + Long.toString(experiStartTime));
             }
 
             experiRestartTime = System.currentTimeMillis();
         } while (!runOnce && (currentRuntime < experiDuration));
-
+        
     }
 }

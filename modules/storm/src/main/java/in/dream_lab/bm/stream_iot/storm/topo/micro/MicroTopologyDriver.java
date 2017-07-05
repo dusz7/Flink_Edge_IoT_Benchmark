@@ -53,21 +53,26 @@ public class MicroTopologyDriver {
 				argumentClass.getScalingFactor()),
 				1);
 		
+	
 		String taskName = argumentClass.getTasksName();
-		BaseTaskBolt taskBolt = MicroTopologyFactory.newTaskBolt(taskName, p_);
+		BaseTaskBolt taskBolt = MicroTopologyFactory.newTaskBolt(taskName, p_);		/* an object of BaseTaskBolt from AggregateBolts class*/
 		
 		builder.setBolt(taskName, taskBolt, 1).shuffleGrouping("spout");
 
 		builder.setBolt("sink", new Sink(sinkLogFileName), 1).shuffleGrouping(taskName);
-
+		
+		System.out.println("LOG: Creating Topology");
+		
 		StormTopology stormTopology = builder.createTopology();
 
+		System.out.println("LOG: Topology created....");
+		
 		if (argumentClass.getDeploymentMode().equals("C")) {
 			StormSubmitter.submitTopology(argumentClass.getTopoName(), conf, stormTopology);
 		} else {
 			LocalCluster cluster = new LocalCluster();
 			cluster.submitTopology(argumentClass.getTopoName(), conf, stormTopology);
-			Utils.sleep(100000);
+			Utils.sleep(500000);
 			cluster.killTopology(argumentClass.getTopoName());
 			cluster.shutdown();
 		}

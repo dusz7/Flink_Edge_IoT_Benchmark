@@ -47,6 +47,10 @@ public class LinearRegressionTrain extends AbstractTask {
 				try {
 					// converting arff file with header only to string
 					instanceHeader = WekaUtil.readFileToString(arffFilePath, StandardCharsets.UTF_8);
+					
+					System.out.println(Thread.currentThread().getId() + "-" + Thread.currentThread().getName() + 
+			    			this.getClass().getName().toString() + " : Converted ARFF file with header to String");
+					
 					doneSetup=true;
 				} catch (IOException e) {
 					l.warn("error reading arff file: " + arffFilePath, e);
@@ -67,12 +71,15 @@ public class LinearRegressionTrain extends AbstractTask {
 
 //		m="-71.106167,42.372802,-0.1,65.3,0,367.38,26";
 //		System.out.println("instancesBuf-"+instancesBuf.toString());
-		String m = (String)map.get(AbstractTask.DEFAULT_KEY);
+		String m = (String)map.get(AbstractTask.DEFAULT_KEY);	// getting RowString from incoming tuple here.
 		if(l.isInfoEnabled())
 			l.info("Range query res:{}",m);
-
+		
+		
 		int result = 0;
 		try {
+			System.out.println(Thread.currentThread().getId() + Thread.currentThread().getName() + this.getClass().getName() + 
+					"Executing Bolt logic");
 			instancesCount++;
 			instancesBuf.append(m).append("\n");
 			if(instancesCount == modelTrainFreq){  // instances count is full
@@ -80,7 +87,9 @@ public class LinearRegressionTrain extends AbstractTask {
 				l.info("instancesBuf-"+instancesBuf.toString());
 				StringReader stringReader = new StringReader(instancesBuf.toString());
 				result = linearRegressionTrainAndSaveModel(stringReader, modelFilePath, l);
-
+				
+				System.out.println(Thread.currentThread().getId() + Thread.currentThread().getName() + this.getClass().getName() + 
+						"Trained and saved the model. Result = " + result);
 //				if(l.isInfoEnabled()) {
 					LinearRegression readModel = (LinearRegression) weka.core.SerializationHelper.read(modelFilePath);
 					l.info("Trained Model L.R.-{}", readModel.toString());

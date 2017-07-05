@@ -42,14 +42,23 @@ public abstract class BaseTaskBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple input) {
+    	
         String rowString = input.getStringByField("RowString");
         String msgId = input.getStringByField("MSGID");
+        
+        System.out.println(Thread.currentThread().getId() + Thread.currentThread().getName() + " Bolt received the tuple. " + 
+        													"\nRowString: " + rowString + "\nMsgId: " + msgId);
+
         HashMap<String, String> map = new HashMap<String, String>();
         map.put(AbstractTask.DEFAULT_KEY, rowString);
         Float res = task.doTask(map);
 
         if(res != null ) {
-            if(res != Float.MIN_VALUE) collector.emit(new Values(rowString, msgId, res));
+            if(res != Float.MIN_VALUE) {
+            	System.out.println(Thread.currentThread().getId() + Thread.currentThread().getName() + " Bolt emitting values. " + 
+						"\nRowString: " + rowString + "\nMsgId: " + msgId + "\nres: " + res);
+            	collector.emit(new Values(rowString, msgId, res));
+            }
             else {
                 if (l.isWarnEnabled()) l.warn("Error in task {} for input {}", task, rowString);
                 throw new RuntimeException("Error in task " + task + " for input " + rowString);

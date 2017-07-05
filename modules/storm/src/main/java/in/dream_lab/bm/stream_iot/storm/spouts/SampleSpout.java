@@ -60,7 +60,7 @@ public class SampleSpout extends BaseRichSpout implements ISyntheticEventGen {
 //		System.out.println("spout Queue count= "+this.eventQueue.size());
 		// allow multiple tuples to be emitted per next tuple.
 		// Discouraged? https://groups.google.com/forum/#!topic/storm-user/SGwih7vPiDE
-		int count = 0, MAX_COUNT=10; // FIXME?
+		int count = 0, MAX_COUNT=1; // FIXME?
 		while(count < MAX_COUNT) {
 			List<String> entry = this.eventQueue.poll(); // nextTuple should not block!
 			if(entry == null) return;
@@ -71,9 +71,13 @@ public class SampleSpout extends BaseRichSpout implements ISyntheticEventGen {
 				rowStringBuf.append(",").append(s);
 			}
 			String rowString = rowStringBuf.toString().substring(1);
-			values.add(rowString);
+			values.add(rowString);		// RowString to emit
 			msgId++;
-			values.add(Long.toString(msgId));
+			values.add(Long.toString(msgId));	// msgId to emit
+			
+			System.out.println("Emitting: Values" + values);
+			System.out.println(Thread.currentThread().getId() + "next_tuple: Emitting tuple from SampleSpout" );
+			
 			this._collector.emit(values);
 			try {
 //				msgId++;
@@ -156,9 +160,6 @@ public class SampleSpout extends BaseRichSpout implements ISyntheticEventGen {
 
 			e.printStackTrace();
 		}
-
-
-
 
 
 

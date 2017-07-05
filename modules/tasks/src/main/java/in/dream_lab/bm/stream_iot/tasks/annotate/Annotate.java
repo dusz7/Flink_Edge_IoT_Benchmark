@@ -69,6 +69,9 @@ public class Annotate extends AbstractTask<String,String>
 	protected Float doTaskLogic(Map<String,String> map) 
 	{
 		// reading the meta and obsvalue from string
+		
+		
+		
 		String in ; 
 		String annotateKey;
 		in = (String) map.get(AbstractTask.DEFAULT_KEY);
@@ -82,6 +85,9 @@ public class Annotate extends AbstractTask<String,String>
 		    String annotatedValue = new StringBuffer(in).append(",").append(annotation).toString();
 		    setLastResult(annotatedValue);
 		}
+		
+		System.out.println(Thread.currentThread().getId() + "Executing Bolt.");
+		
 		return 0f;
 	}
 	

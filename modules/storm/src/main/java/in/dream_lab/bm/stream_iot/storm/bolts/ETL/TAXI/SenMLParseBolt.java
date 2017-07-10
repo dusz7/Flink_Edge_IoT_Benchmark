@@ -93,11 +93,14 @@ public class SenMLParseBolt extends BaseRichBolt {
 				senMLParseTask.doTask(map);
 				HashMap<String, String> resultMap =(HashMap) senMLParseTask.getLastResult();
 				
+				System.out.println("Result Map: \n" + resultMap);
+
 				/* loop over to concatenate different meta fields together 
 				 * preserving ordering among them */
 				StringBuilder meta = new StringBuilder();
 				for(int i = 0; i< metaFields.length ; i++)
 				{
+					System.out.println(metaFields[i]);
 					meta.append(resultMap.get((metaFields[i]))).append(",");
 				}
 				meta = meta.deleteCharAt(meta.lastIndexOf(","));

@@ -101,7 +101,7 @@ public class JsonSplitter {
 			}
 			else if(datasetType.equals("SENML")){
 				timestampColIndex = 0;
-				date = new DateTime(Long.parseLong(nextLine[timestampColIndex]));
+				date = new DateTime(Long.parseLong(nextLine[timestampColIndex])); 
 			}
 
 			long ts = date.getMillis();

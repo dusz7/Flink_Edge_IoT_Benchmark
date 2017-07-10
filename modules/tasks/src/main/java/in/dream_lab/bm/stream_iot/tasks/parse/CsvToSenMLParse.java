@@ -91,7 +91,9 @@ public class CsvToSenMLParse extends AbstractTask<String,String>
 				m= sampledata;
 			else
 				m = (String)map.get(AbstractTask.DEFAULT_KEY);
-			String [] val = m.split(",");
+			
+			String [] val = m.split(",");						/* NPE here with ETLTopology */
+			
 			String[] sch;
 			jsonArr = new JSONArray();
 			val = m.split(",");

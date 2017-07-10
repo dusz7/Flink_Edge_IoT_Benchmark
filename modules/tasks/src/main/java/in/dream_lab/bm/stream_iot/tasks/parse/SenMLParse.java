@@ -57,8 +57,10 @@ public class SenMLParse extends AbstractTask<String,Map>
 	protected Float doTaskLogic(Map map) 
 	{
 		JSONParser jsonParser = new JSONParser();
-		JSONObject jsonObject ; 
-	
+		JSONObject jsonObject;
+		
+		System.out.println(this.getClass().getName() + ". Executing SenMLParse logic.");
+		
 		try 
 		{
 			String m;
@@ -66,11 +68,20 @@ public class SenMLParse extends AbstractTask<String,Map>
 				m = sampledata;
 			else
 				 m = (String)map.get(AbstractTask.DEFAULT_KEY);
+			
+			System.out.println(this.getClass().getName() + ". m = " + m);
+			
 			jsonObject = (JSONObject) jsonParser.parse(m);
-//			long baseTime =   (long) (jsonObject.get("bt") == null  ? 0L : jsonObject.get("bt")) ; // for sys and taxi
-			long baseTime =   Long.parseLong(((String)jsonObject.get("bt"))) ;     // for fit dataset
+			System.out.println(this.getClass().getName() + ". Parsed JSON: " + jsonObject.toString());
+			
+			long baseTime =   (long) (jsonObject.get("bt") == null  ? 0L : jsonObject.get("bt")) ; // for sys and taxi
+			//long baseTime =   Long.parseLong(((String)jsonObject.get("bt"))) ;     // for fit dataset
+			
 			String baseUnit = (String)(( jsonObject.get("bu") == null ) ? null : jsonObject.get("bu") );
+			
 			String baseName = (String)(( jsonObject.get("bn") == null ) ? null : jsonObject.get("bn") );
+			
+			
 			JSONArray jsonArr = (JSONArray) jsonObject.get("e");
 			Object v;
 			String n, u;
@@ -95,11 +106,13 @@ public class SenMLParse extends AbstractTask<String,Map>
 				/* Add to  Hashmap  each key value pair */
 				mapkeyValues.put(n, v);			
 			}
+			System.out.println("MapKeyValues: \n" + mapkeyValues);
 			super.setLastResult(mapkeyValues);	
 			return null; 
 		}
 		catch (Exception e)
 		 {
+			System.out.println(this.getClass().getName() + ". Exception occurred. " + e.toString());
 			e.printStackTrace();
 		 }
 		return 0.0f;

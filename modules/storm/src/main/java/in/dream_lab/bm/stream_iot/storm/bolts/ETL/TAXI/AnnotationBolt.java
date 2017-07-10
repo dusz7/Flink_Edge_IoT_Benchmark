@@ -50,7 +50,7 @@ public class AnnotationBolt extends BaseRichBolt {
     	String meta = (String)input.getValueByField("META");
     	String obsType = (String)input.getValueByField("OBSTYPE");
     	String obsVal = (String)input.getValueByField("OBSVAL");
-    	    	
+    	
     	HashMap<String, String> map = new HashMap();
         map.put(AbstractTask.DEFAULT_KEY, obsVal);
     	Float res = annotateTask.doTask(map);  

@@ -1,0 +1,3 @@
+timestamp,city,temperature,light,airquality_raw,sound,humidity,dust
+timestamp,string,far,per,per,per,per,per
+sv,sv,v,v,v,v,v,v

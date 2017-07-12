@@ -54,8 +54,9 @@ public class ETLTopology {
 		// String
 		// basePathForMultipleSpout="/home/shilpa/Datasets/CityCanvasData/SYS_6hrs_data_10Files/SYS-inputcsv-predict-10spouts200mps-480sec-file/";
 		// String spout1InputFilePath=basePathForMultipleSpout+"test.csv";
-		String spout1InputFilePath = "/home/talha/iot/storm/benchmarks/riot/riot-bench/modules/tasks/src/main/resources/SYS_sample_data_senml.csv";
-
+		//String spout1InputFilePath = "/home/talha/iot/storm/benchmarks/riot/riot-bench/modules/tasks/src/main/resources/SYS_sample_data_senml.csv";
+		
+		String spout1InputFilePath = "/home/user/storm/riot/riot-bench/modules/tasks/src/main/resources/SYS_sample_data_senml.csv";
 		// String
 		// spout1InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts200mps-480sec-file1.csv";
 		// String

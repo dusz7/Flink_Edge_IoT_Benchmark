@@ -68,6 +68,9 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 			msgId++;
 			values.add(Long.toString(msgId));
 			values.add(newRow);
+			
+			System.out.println(this.getClass().getName() + " - LOGS - " + values.toString());
+			
 			this._collector.emit(values);
 			try 
 			{

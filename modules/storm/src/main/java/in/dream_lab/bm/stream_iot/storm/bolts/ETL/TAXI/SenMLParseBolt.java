@@ -66,6 +66,8 @@ public class SenMLParseBolt extends BaseRichBolt {
 				BufferedReader br = new BufferedReader(reader);
 				line = br.readLine();
 				String [] obsType = line.split(",");
+				
+				/* Observable fields are all those that are not meta fields */
 				for(int i = 0; i < obsType.length ; i++)
 				{
 					if(metaList.contains(obsType[i]) == false)
@@ -106,7 +108,9 @@ public class SenMLParseBolt extends BaseRichBolt {
 				meta = meta.deleteCharAt(meta.lastIndexOf(","));
 				for(int j = 0; j < observableFields.size(); j++)
 				{
-					collector.emit(new Values(msgId, resultMap.get(idField) ,meta.toString() , (String)observableFields.get(j) ,(String) resultMap.get((String)observableFields.get(j))));
+					Values value = new Values(msgId, resultMap.get(idField) ,meta.toString() , (String)observableFields.get(j) ,(String) resultMap.get((String)observableFields.get(j)));
+					System.out.println(this.getClass().getName() + " - LOGS - " + value.toString());
+					collector.emit(value);
  				}				
 			}
 			catch(Exception e)

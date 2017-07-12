@@ -48,12 +48,12 @@ public class SenMLParseBoltPREDSYS extends BaseRichBolt {
 				ArrayList<String> metaList = new ArrayList<String>();
 				
 				/* read meta field list from property */
-				String meta = p.getProperty("PARSE.META_FIELD_SCHEMA");
+				String meta = p.getProperty("PARSE.META_FIELD_SCHEMA");		/*timestamp,source,longitude,latitude*/
 				idField = p.getProperty("PARSE.ID_FIELD_SCHEMA");
 				metaFields = meta.split(",");
 				for(int i = 0;  i< metaFields.length; i++)
 				{
-					metaList.add(metaFields[i]);
+					metaList.add(metaFields[i]);							/*timestamp,source,longitude,latitude*/
 				}
 				/* read csv schema to read fields observable into a list
 				 excluding meta fields read above */
@@ -82,18 +82,18 @@ public class SenMLParseBoltPREDSYS extends BaseRichBolt {
 			try 
 			{
 				String msg = tuple.getStringByField("PAYLOAD");
-				
-//				System.out.println("Payload = "+msg);
 				String msgId = tuple.getStringByField("MSGID");
+				
 				HashMap<String, String> map = new HashMap();
 		        map.put(AbstractTask.DEFAULT_KEY, msg);
-				senMLParseTask.doTask(map);
+				senMLParseTask.doTask(map);				/* Parses and sets last result as csv */
 				HashMap<String, String> resultMap =(HashMap) senMLParseTask.getLastResult();
 				
 				/* loop over to concatenate different meta fields together 
 				 * preserving ordering among them */
 				StringBuilder meta = new StringBuilder();
 				StringBuilder obsVal = new StringBuilder();
+
 				for(int i = 0; i< metaFields.length ; i++)
 				{
 					meta.append(resultMap.get((metaFields[i]))).append(",");

@@ -56,7 +56,9 @@ public class CsvToSenMLBolt extends BaseRichBolt {
     	Float res = csvToSenMlparseTask.doTask(map);  
     	String updatedValue = (String) csvToSenMlparseTask.getLastResult();
     	
-    	collector.emit(new Values(msgId,meta,"senml" ,updatedValue));
+    	Values values = new Values(msgId,meta,"senml" ,updatedValue);
+    	System.out.println(this.getClass().getName() + " - LOG - " + values.toString());
+    	collector.emit(values);
     }
 
     @Override

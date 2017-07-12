@@ -75,7 +75,7 @@ public class MQTTSubscribeSpout extends BaseRichSpout {
         HashMap<String, String> map = new HashMap();
         map.put(AbstractTask.DEFAULT_KEY, "dummy");
         mqttSubscribeTask.doTask(map);
-        String arg1= (String) mqttSubscribeTask.getLastResult();
+        String arg1= (String) mqttSubscribeTask.getLastResult();	// directly the string received by this MQTT subscriber
 
 //        if(l.isInfoEnabled())
 //            l.info("MQTTSubscribeSpout nextTuple {}",arg1);

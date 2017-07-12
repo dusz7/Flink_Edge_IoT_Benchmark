@@ -73,12 +73,12 @@ public class MQTTSubscribeTask extends AbstractTask implements MqttCallback
 		@Override
 		protected Float doTaskLogic(Map map) 
 		{
-			String m = (String)map.get(AbstractTask.DEFAULT_KEY);
+			String m = (String)map.get(AbstractTask.DEFAULT_KEY);	//map has dummy values at this point
 
 			String pollString = incoming.poll();
 			if(pollString!=null) {
 				if(l.isInfoEnabled())
-				l.info("TEST:pollString-{}",pollString);
+					l.info("TEST:pollString-{}",pollString);
 				setLastResult(pollString);
 				return Float.valueOf(pollString.length());
 			}

@@ -64,6 +64,7 @@ public class Interpolation extends AbstractTask<String,Float> {
 		{
 			return null;
 		}
+		/* Seems this set will only contain two entrySet (at least in ETLTopology)*/
 		for (Entry<String, String> entry : entrySet) 
 		{
 			String obsType = entry.getKey();

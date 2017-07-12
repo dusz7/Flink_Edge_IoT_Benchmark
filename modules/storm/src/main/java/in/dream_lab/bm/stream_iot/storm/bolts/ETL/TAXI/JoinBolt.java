@@ -29,13 +29,15 @@ public class JoinBolt extends BaseRichBolt {
 	private ArrayList<String> schemaFieldOrderList;
 	private String schemaFieldOrderFilePath;
 	private String[] metaFields;
+	private String idField;
 
 	public JoinBolt(Properties p_) {
 		p = p_;
-		maxCountPossible = Integer.parseInt(p_.getProperty("JOIN.MAX_COUNT_VALUE"));
+		maxCountPossible = Integer.parseInt(p_.getProperty("JOIN.MAX_COUNT_VALUE"));	/*9*/
 		schemaFieldOrderFilePath = p_.getProperty("JOIN.SCHEMA_FILE_PATH");
-		String metaField = p_.getProperty("JOIN.META_FIELD_SCHEMA");
+		String metaField = p_.getProperty("JOIN.META_FIELD_SCHEMA");	/*timestamp,source,longitude,latitude*/
 		metaFields = metaField.split(",");
+		idField = p_.getProperty("JOIN.ID_FIELD_SCHEMA");
 
 	}
 
@@ -81,12 +83,16 @@ public class JoinBolt extends BaseRichBolt {
 		String meta = (String) input.getValueByField("META");
 		String obsType = (String) input.getValueByField("OBSTYPE");
 		String obsVal = (String) input.getValueByField("OBSVAL");
+		
+		/*TALHA: Why not get the sensor ID as well. Interpolation bolt is sending the SensorID.*/
+		String sensorId = (String) input.getValueByField("SENSORID");
+		
 		HashMap map;
 		/* if message id is present in hashmap, update */
 		Long msgIdLong = Long.parseLong(msgId);			/* msgId never increases 8. 1530000062258 */
 
-		System.out.println(this.getClass().getName() + " - " + msgId + " - " + meta + " - " + obsType + " - " + obsVal
-				+ " msgIdCountMap.size() = " + msgIdCountMap.size());
+//		System.out.println(this.getClass().getName() + " - " + msgId + " - " + meta + " - " + obsType + " - " + obsVal
+//				+ " msgIdCountMap.size() = " + msgIdCountMap.size());
 
 		if (msgIdCountMap.containsKey(msgIdLong) == true) {
 			map = (HashMap) msgIdCountMap.get(msgIdLong);
@@ -94,7 +100,7 @@ public class JoinBolt extends BaseRichBolt {
 			msgIdCountMap.put(msgIdLong, map);
 
 			System.out.println(this.getClass().getName() + msgIdLong + " found in the map msgIdCountMap. map.size = "
-					+ map.size());
+					+ map.size() + "\n" + map);
 
 			if (map.size() == maxCountPossible) {
 				/*
@@ -116,18 +122,27 @@ public class JoinBolt extends BaseRichBolt {
 			map = new HashMap<String, String>();		
 			map.put(obsType, obsVal);
 
-			System.out.println(this.getClass().getName() + msgIdLong
-					+ " NOT FOUND in the map msgIdCountMap. map.size = " + map.size());
 
 			/*
 			 * split the meta fields and add it to hash map to merge back into
 			 * csv. This is done once only for a msg Id
 			 */
 			String[] metaVal = meta.split(",");
+			/* TALHA: 
+			 * The size of metaVal (timestamp, longitude, latitude) and metaFields (timestamp,source,longitude,latitude)
+			 * is different. This creates an incorrect mapping. Source is mapped to longitude and longitude to latitude
+			 * Which one to use???? Not sure.
+			 * But updating to use all. */
 			for (int i = 0; i < metaVal.length; i++) {
 				map.put(metaFields[i], metaVal[i]);
 			}
+			map.put(idField, sensorId);
+			/*The map contains 4 values now, timestamp, source, longitude, latitude*/
+			
 			msgIdCountMap.put(msgIdLong, map);
+
+			System.out.println(this.getClass().getName() + msgIdLong
+					+ " NOT FOUND in the map msgIdCountMap. map.size = " + map.size() + "\n" + map);
 
 			if (map.size() == maxCountPossible) {
 				/*

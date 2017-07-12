@@ -63,6 +63,7 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 				batchOperation.insert(obj);			
 			 }
 			ArrayList a = table.execute(batchOperation);
+			System.out.println(this.getClass().getName() + " - LOGS - " + a.size() + " - " + a.get(0));
 			return (float)a.size();
 		}
 			catch (Exception e) 

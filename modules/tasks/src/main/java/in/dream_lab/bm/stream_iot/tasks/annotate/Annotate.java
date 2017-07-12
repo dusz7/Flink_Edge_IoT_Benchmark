@@ -75,10 +75,10 @@ public class Annotate extends AbstractTask<String,String>
 		String in ; 
 		String annotateKey;
 		in = (String) map.get(AbstractTask.DEFAULT_KEY);
-		annotateKey = in.split(",")[useMsgField];
+		annotateKey = in.split(",")[useMsgField];	/*TG: getting sensor Id from here*/
 		
 		// Fetch annotated values from hashmap corresponding to this key 
-		String annotation = annotationMap.get(annotateKey);
+		String annotation = annotationMap.get(annotateKey);		/*TG: looking annotation for that sesnor Id*/
 		
 		if(annotation != null)
 		{

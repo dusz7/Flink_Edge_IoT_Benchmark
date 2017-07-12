@@ -55,7 +55,7 @@ public class AzureBlobDownloadTask extends AbstractTask<String,byte[]> {
 	
 	@Override
 	protected Float doTaskLogic(Map<String, String> map) {
-		String m = map.get(AbstractTask.DEFAULT_KEY);
+		String m = map.get(AbstractTask.DEFAULT_KEY);	//BlobModelPath
 		// get file index to be downloaded from message or at random
 		int fileindex;
 		if(useMsgField > 0){

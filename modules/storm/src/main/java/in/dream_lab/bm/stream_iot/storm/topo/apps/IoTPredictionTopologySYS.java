@@ -69,7 +69,9 @@ public class IoTPredictionTopologySYS {
 
         System.out.println("basePathForMultipleSpout is used -"+basePathForMultipleSpout);
 
-        String spout1InputFilePath=basePathForMultipleSpout+"SYS_sample_data_senml.csv";
+        String spout1InputFilePath = "/home/talha/iot/storm/benchmarks/riot/riot-bench/modules/tasks/src/main/resources/SYS_sample_data_senml.csv";
+        
+        
 //        String spout1InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts200mps-480sec-file1.csv";
 //        String spout2InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts600mps-480sec-file2.csv";
 //        String spout3InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts600mps-480sec-file3.csv";

@@ -24,108 +24,134 @@ import java.util.Properties;
 
 public class DecisionTreeClassifyBolt extends BaseRichBolt {
 
-    private Properties p;
+	private Properties p;
 
-    public DecisionTreeClassifyBolt(Properties p_){
-         p=p_;
+	public DecisionTreeClassifyBolt(Properties p_) {
+		p = p_;
 
-    }
-    OutputCollector collector; private static Logger l;  public static void initLogger(Logger l_) {     l = l_; }
+	}
 
-    DecisionTreeClassify decisionTreeClassify;
+	OutputCollector collector;
+	private static Logger l;
 
+	public static void initLogger(Logger l_) {
+		l = l_;
+	}
 
-//    J48 j48tree;
-//    LinearRegression lr;
-    @Override
-    public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
+	DecisionTreeClassify decisionTreeClassify;
 
-        this.collector=outputCollector;
-        initLogger(LoggerFactory.getLogger("APP"));
+	// J48 j48tree;
+	// LinearRegression lr;
+	@Override
+	public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
 
-        decisionTreeClassify=new DecisionTreeClassify();
+		this.collector = outputCollector;
+		initLogger(LoggerFactory.getLogger("APP"));
 
-        decisionTreeClassify.setup(l,p);
-    }
+		decisionTreeClassify = new DecisionTreeClassify();
 
-    @Override
-    public void execute(Tuple input) {
+		decisionTreeClassify.setup(l, p);
+	}
 
-        String msgtype = input.getStringByField("MSGTYPE");
-        String analyticsType = input.getStringByField("ANALAYTICTYPE");
-        String sensorMeta=input.getStringByField("META");
+	@Override
+	public void execute(Tuple input) {
 
+		String msgtype = input.getStringByField("MSGTYPE");
+		String analyticsType = input.getStringByField("ANALAYTICTYPE");
+		String sensorMeta = input.getStringByField("META");
 
-        String obsVal="22.7,49.3,0,1955.22,27"; //dummy
-        String msgId="0";
+		String obsVal = "22.7,49.3,0,1955.22,27"; // dummy
+		String msgId = "0";
 
-        
-        /* We are getting an model update message so we will update the model only*/
-        
-        if(msgtype.equals("modelupdate") && analyticsType.equals("DTC"))
-        {
-            byte[] BlobModelObject= (byte[]) input.getValueByField("BlobModelObject");
-            InputStream bytesInputStream = new ByteArrayInputStream(BlobModelObject);
-//        	ByteArrayInputStream BlobModelObject= (ByteArrayInputStream) input.getValueByField("BlobModelObject");
-        	// do nothing for now
-        //            byte[] blobModelObjects = input.getBinaryByField("BlobModelObject");
-            //            p.setProperty("CLASSIFICATION.DECISION_TREE.MODEL_PATH",)
+		System.out.println(this.getClass().getName() + " - RECEIVED - msgType: " + msgtype + " - analyticsType: "
+				+ analyticsType + " - sensorMeta: " + sensorMeta);
 
-            //TODO:  1- Either write model file to local disk - no task code change
-            //TODO:  2- Pass it as bytestream , update the code for task
-            //TODO:  3- confirm, once this j48tree object will be updated dor not
-            try {
-                DecisionTreeClassify.j48tree = (J48) weka.core.SerializationHelper.read(bytesInputStream);
-                if(l.isInfoEnabled()) l.info("Model is {}", DecisionTreeClassify.j48tree);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+		/*
+		 * We are getting an model update message so we will update the model
+		 * only
+		 */
 
-        }
+		if (msgtype.equals("modelupdate") && analyticsType.equals("DTC")) {
+			byte[] BlobModelObject = (byte[]) input.getValueByField("BlobModelObject");
+			InputStream bytesInputStream = new ByteArrayInputStream(BlobModelObject);
+			// ByteArrayInputStream BlobModelObject= (ByteArrayInputStream)
+			// input.getValueByField("BlobModelObject");
+			// do nothing for now
+			// byte[] blobModelObjects =
+			// input.getBinaryByField("BlobModelObject");
+			// p.setProperty("CLASSIFICATION.DECISION_TREE.MODEL_PATH",)
 
-//        if(msgtype.equals("modelupdate") && analyticsType.equals("DTC")){
-//
-//            try {
-//                lr = (LinearRegression) SerializationHelper.read(BlobModelObject);
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//            if(this.l.isInfoEnabled()) {
-//                this.l.info("Model is {} ", lr.toString());
-//            }
-//        }
-        
-        /* Here we are getting msg from senMl parse and we need to  need to predict */
-        if(! msgtype.equals("modelupdate") )
-        {
-        	System.out.println("TestS : In DT bolt ");
-        	 obsVal = input.getStringByField("OBSVAL");
-             msgId = input.getStringByField("MSGID");
-        }
+			// TODO: 1- Either write model file to local disk - no task code
+			// change
+			// TODO: 2- Pass it as bytestream , update the code for task
+			// TODO: 3- confirm, once this j48tree object will be updated dor
+			// not
+			try {
+				DecisionTreeClassify.j48tree = (J48) weka.core.SerializationHelper.read(bytesInputStream);
+				if (l.isInfoEnabled())
+					l.info("Model is {}", DecisionTreeClassify.j48tree);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 
+		}
 
-        HashMap<String, String> map = new HashMap();
-        map.put(AbstractTask.DEFAULT_KEY, obsVal);
-        Float res = decisionTreeClassify.doTask(map);  // index of result-class/enum as return
-//        System.out.println("TestS: DT res " +res);
-        if(res!=null ) {
-            if(res!=Float.MIN_VALUE)
-                collector.emit(new Values(sensorMeta,obsVal, msgId, res.toString(),"DTC"));
-            else {
-                if (l.isWarnEnabled()) l.warn("Error in DecisionTreeClassifyBolt");
-                throw new RuntimeException();
-            }
-        }
-    }
+		// if(msgtype.equals("modelupdate") && analyticsType.equals("DTC")){
+		//
+		// try {
+		// lr = (LinearRegression) SerializationHelper.read(BlobModelObject);
+		// } catch (Exception e) {
+		// e.printStackTrace();
+		// }
+		// if(this.l.isInfoEnabled()) {
+		// this.l.info("Model is {} ", lr.toString());
+		// }
+		// }
 
-    @Override
-    public void cleanup() {
-        decisionTreeClassify.tearDown();
-    }
+		/*
+		 * Here we are getting msg from senMl parse and we need to need to
+		 * predict
+		 */
+		if (!msgtype.equals("modelupdate")) {
+			System.out.println("TestS : In DT bolt ");
+			obsVal = input.getStringByField("OBSVAL");
+			msgId = input.getStringByField("MSGID");
+		}
 
-    @Override
-    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("META","OBSVAL","MSGID","RES","ANALAYTICTYPE"));
-    }
+		HashMap<String, String> map = new HashMap();
+		map.put(AbstractTask.DEFAULT_KEY, obsVal);
+
+		System.out.println(this.getClass().getName() + " - obsVal:" + obsVal);
+
+		Float res = decisionTreeClassify.doTask(map); // index of
+														// result-class/enum as
+														// return
+
+		// System.out.println("TestS: DT res " +res);
+
+		System.out.println(this.getClass().getName() + " - CLASSIFICATION RESULT: " + res);
+
+		if (res != null) {
+			if (res != Float.MIN_VALUE) {
+				Values values = new Values(sensorMeta, obsVal, msgId, res.toString(), "DTC");
+				System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+				collector.emit(values);
+			} else {
+				if (l.isWarnEnabled())
+					l.warn("Error in DecisionTreeClassifyBolt");
+				throw new RuntimeException();
+			}
+		}
+	}
+
+	@Override
+	public void cleanup() {
+		decisionTreeClassify.tearDown();
+	}
+
+	@Override
+	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
+		outputFieldsDeclarer.declare(new Fields("META", "OBSVAL", "MSGID", "RES", "ANALAYTICTYPE"));
+	}
 
 }

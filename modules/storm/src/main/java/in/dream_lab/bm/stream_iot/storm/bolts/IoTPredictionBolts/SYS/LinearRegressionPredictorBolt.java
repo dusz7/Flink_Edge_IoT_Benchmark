@@ -23,106 +23,114 @@ import java.util.Properties;
 
 public class LinearRegressionPredictorBolt extends BaseRichBolt {
 
-    private Properties p;
+	private Properties p;
 
-    public LinearRegressionPredictorBolt(Properties p_){
-         p=p_;
-    }
+	public LinearRegressionPredictorBolt(Properties p_) {
+		p = p_;
+	}
 
-    OutputCollector collector; private static Logger l;  public static void initLogger(Logger l_) {     l = l_; }
-    LinearRegressionPredictor linearRegressionPredictor;
-//    LinearRegression lr;
+	OutputCollector collector;
+	private static Logger l;
 
+	public static void initLogger(Logger l_) {
+		l = l_;
+	}
 
-    @Override
-    public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
+	LinearRegressionPredictor linearRegressionPredictor;
+	// LinearRegression lr;
 
-        this.collector=outputCollector; initLogger(LoggerFactory.getLogger("APP"));
-        linearRegressionPredictor=new LinearRegressionPredictor();
-        linearRegressionPredictor.setup(l,p);
-    }
+	@Override
+	public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
 
-    @Override
-    public void execute(Tuple input) {
+		this.collector = outputCollector;
+		initLogger(LoggerFactory.getLogger("APP"));
+		linearRegressionPredictor = new LinearRegressionPredictor();
+		linearRegressionPredictor.setup(l, p);
+	}
 
+	@Override
+	public void execute(Tuple input) {
 
-//        //
-//        String msgId = input.getStringByField("MSGID");
-        String sensorMeta=input.getStringByField("META");
-//        String sensorID=input.getStringByField("SENSORID");
-//        String obsType=input.getStringByField("OBSTYPE");
-//        String obsVal = input.getStringByField("OBSVAL");
-//        //
+		// //
+		// String msgId = input.getStringByField("MSGID");
+		String sensorMeta = input.getStringByField("META");
+		// String sensorID=input.getStringByField("SENSORID");
+		// String obsType=input.getStringByField("OBSTYPE");
+		// String obsVal = input.getStringByField("OBSVAL");
+		// //
 
-//
-        String msgtype = input.getStringByField("MSGTYPE");
-        String analyticsType = input.getStringByField("ANALAYTICTYPE");
+		//
+		String msgtype = input.getStringByField("MSGTYPE");
+		String analyticsType = input.getStringByField("ANALAYTICTYPE");
 
-        String obsVal="22.7,49.3,0,1955.22,27"; //dummy
-        String msgId="0";
-//        String sensorMeta = "meta";
+		String obsVal = "22.7,49.3,0,1955.22,27"; // dummy
+		String msgId = "0";
+		// String sensorMeta = "meta";
 
+		if (msgtype.equals("modelupdate") && analyticsType.equals("MLR")) {
+			byte[] BlobModelObject = (byte[]) input.getValueByField("BlobModelObject");
+			InputStream bytesInputStream = new ByteArrayInputStream(BlobModelObject);
+			// ByteArrayInputStream blobModelObject= (ByteArrayInputStream)
+			// input.getValueByField("BlobModelObject");
+			// byte[] blobModelObjects =
+			// input.getBinaryByField("BlobModelObject");
+			if (l.isInfoEnabled())
+				l.info("blob model size " + bytesInputStream.toString());
 
-        if(msgtype.equals("modelupdate")&& analyticsType.equals("MLR")){
-            byte[] BlobModelObject= (byte[]) input.getValueByField("BlobModelObject");
-            InputStream bytesInputStream = new ByteArrayInputStream(BlobModelObject);
-//            ByteArrayInputStream blobModelObject= (ByteArrayInputStream) input.getValueByField("BlobModelObject");
-//            byte[] blobModelObjects = input.getBinaryByField("BlobModelObject");
-            if(l.isInfoEnabled())
-                l.info("blob model size "+bytesInputStream.toString());
+			// TODO: 1- Either write model file to local disk - no task code
+			// change
+			// TODO: 2- Pass it as bytestream , need to update the code for task
 
-//TODO:  1- Either write model file to local disk - no task code change
-//TODO:  2- Pass it as bytestream , need to update the code for task
+			try {
+				LinearRegressionPredictor.lr = (LinearRegression) SerializationHelper.read(bytesInputStream);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			if (this.l.isInfoEnabled()) {
+				this.l.info("Model is {} ", LinearRegressionPredictor.lr.toString());
+			}
 
-            try {
-                LinearRegressionPredictor.lr = (LinearRegression) SerializationHelper.read(bytesInputStream);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            if(this.l.isInfoEnabled()) {
-                this.l.info("Model is {} ", LinearRegressionPredictor.lr.toString());
-            }
+		}
 
-        }
+		if (!msgtype.equals("modelupdate")) {
+			obsVal = input.getStringByField("OBSVAL");
+			msgId = input.getStringByField("MSGID");
+			// sensorMeta = input.getStringByField("META");
 
-        if(! msgtype.equals("modelupdate") ){
-            obsVal = input.getStringByField("OBSVAL");
-            msgId = input.getStringByField("MSGID");
-//            sensorMeta = input.getStringByField("META");
+			if (l.isInfoEnabled())
+				l.info("obsVal-" + obsVal);
+		}
+		//
 
-            if(l.isInfoEnabled())
-                l.info("obsVal-"+obsVal);
-        }
-        //
+		HashMap<String, String> map = new HashMap();
+		// obsVal="22.7,49.3,0,1955.22,27"; //dummy
+		map.put(AbstractTask.DEFAULT_KEY, obsVal);
+		Float res = linearRegressionPredictor.doTask(map);
 
+		l.info("res linearRegressionPredictor-" + res);
 
+		if (res != null) {
+			if (res != Float.MIN_VALUE) {
+				Values values = new Values(sensorMeta, obsVal, msgId, res.toString(), "MLR");
+				System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+				collector.emit(values);
+			} else {
+				if (l.isWarnEnabled())
+					l.warn("Error in LinearRegressionPredictorBolt");
+				throw new RuntimeException();
+			}
+		}
 
-        HashMap<String, String> map = new HashMap();
-//        obsVal="22.7,49.3,0,1955.22,27"; //dummy
-        map.put(AbstractTask.DEFAULT_KEY, obsVal);
-        Float res = linearRegressionPredictor.doTask(map);
+	}
 
-        l.info("res linearRegressionPredictor-"+res);
+	@Override
+	public void cleanup() {
+		linearRegressionPredictor.tearDown();
+	}
 
-        if(res!=null ) {
-            if(res!=Float.MIN_VALUE)
-                collector.emit(new Values(sensorMeta,obsVal, msgId, res.toString(),"MLR"));
-            else {
-                if (l.isWarnEnabled()) l.warn("Error in LinearRegressionPredictorBolt");
-                throw new RuntimeException();
-            }
-        }
-
-    }
-
-    @Override
-    public void cleanup() {
-        linearRegressionPredictor.tearDown();
-    }
-
-    @Override
-    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("META","OBSVAL","MSGID","RES","ANALAYTICTYPE"));
-    }
+	@Override
+	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
+		outputFieldsDeclarer.declare(new Fields("META", "OBSVAL", "MSGID", "RES", "ANALAYTICTYPE"));
+	}
 
 }

@@ -34,8 +34,8 @@ public class BlockWindowAverage extends AbstractTask<String,Float> {
 		super.setup(l_, p_);
 		synchronized (SETUP_LOCK) { // for static fields
 			if(!doneSetup) { // Do setup only once static objects for this task
-				aggCountWindowSize = Integer.parseInt(p_.getProperty("AGGREGATE.BLOCK_COUNT.WINDOW_SIZE")); // TODO: Later, rename to BLOCK_AVG
-				useMsgField = Integer.parseInt(p_.getProperty("AGGREGATE.BLOCK_COUNT.USE_MSG_FIELD"));
+				aggCountWindowSize = Integer.parseInt(p_.getProperty("AGGREGATE.BLOCK_COUNT.WINDOW_SIZE")); // TODO: Later, rename to BLOCK_AVG (TG: val=5)
+				useMsgField = Integer.parseInt(p_.getProperty("AGGREGATE.BLOCK_COUNT.USE_MSG_FIELD"));		// 6
 				doneSetup=true;
 			}
 		}
@@ -45,7 +45,7 @@ public class BlockWindowAverage extends AbstractTask<String,Float> {
 	@Override
 	protected Float doTaskLogic(Map<String,String> map) 
 	{
-		String m = map.get(AbstractTask.DEFAULT_KEY);
+		String m = map.get(AbstractTask.DEFAULT_KEY);	
 		float item;
 		if(useMsgField>0){
 			item= Float.parseFloat(m);
@@ -61,7 +61,10 @@ public class BlockWindowAverage extends AbstractTask<String,Float> {
 			return super.setLastResult(null);
 		}
 		else {
+			
 			avgRes=Float.valueOf(aggSum/aggCount);
+			System.out.println(this.getClass().getName() + " - AVERAGE: " + avgRes + 
+					" - AGG_COUNT: " + aggCount + " AGG_SUM: " + aggSum);
 			aggCount = 0;
 			aggSum=0;
 //			l.info("CHECK: Block Average = " +avgRes);

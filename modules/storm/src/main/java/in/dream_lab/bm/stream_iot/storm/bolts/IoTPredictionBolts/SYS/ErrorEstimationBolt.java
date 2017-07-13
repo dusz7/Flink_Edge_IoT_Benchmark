@@ -15,78 +15,81 @@ import java.util.Properties;
 
 public class ErrorEstimationBolt extends BaseRichBolt {
 
-    private Properties p;
+	private Properties p;
 
-    private String Res="0";
-    private String avgRes="0";
+	private String Res = "0";
+	private String avgRes = "0";
 
-    public ErrorEstimationBolt(Properties p_){
-         p=p_;
-    }
-    OutputCollector collector; private static Logger l;  public static void initLogger(Logger l_) {     l = l_; }
+	public ErrorEstimationBolt(Properties p_) {
+		p = p_;
+	}
 
+	OutputCollector collector;
+	private static Logger l;
 
+	public static void initLogger(Logger l_) {
+		l = l_;
+	}
 
-    @Override
-    public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
+	@Override
+	public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
 
+		this.collector = outputCollector;
+		initLogger(LoggerFactory.getLogger("APP"));
 
-        this.collector=outputCollector; initLogger(LoggerFactory.getLogger("APP"));
+	}
 
-    }
+	// From L.R.
+	// outputFieldsDeclarer.declare(new
+	// Fields("sensorMeta","obsVal","MSGID","Res","analyticsType"));
 
-// From L.R.
-//    outputFieldsDeclarer.declare(new Fields("sensorMeta","obsVal","MSGID","Res","analyticsType"));
+	@Override
+	public void execute(Tuple input) {
 
-    @Override
-    public void execute(Tuple input) {
+		String msgId = input.getStringByField("MSGID");
+		String analyticsType = input.getStringByField("ANALAYTICTYPE");
+		// String sensorID=input.getStringByField("sensorID");
+		String sensorMeta = input.getStringByField("META");
+		String obsVal = input.getStringByField("OBSVAL");
+		float air_quality = Float.parseFloat((input.getStringByField("OBSVAL")).split(",")[4]);
 
-        String msgId = input.getStringByField("MSGID");
-        String analyticsType = input.getStringByField("ANALAYTICTYPE");
-//        String sensorID=input.getStringByField("sensorID");
-        String sensorMeta=input.getStringByField("META");
-        String obsVal = input.getStringByField("OBSVAL");
-        float air_quality = Float.parseFloat((input.getStringByField("OBSVAL")).split(",")[4]);
+		if (analyticsType.equals("MLR")) {
+			Res = input.getStringByField("RES");
+		}
 
+		if (analyticsType.equals("AVG")) {
+			avgRes = input.getStringByField("AVGRES");
 
+			if (l.isInfoEnabled())
+				l.info("avgRes:" + avgRes);
+		}
 
-        if(analyticsType.equals("MLR")) {
-            Res  = input.getStringByField("RES");
-        }
+		// float air_quality= Float.parseFloat(obsVal.split(",")[4]);
 
+		if (l.isInfoEnabled())
+			l.info("analyticsType:{},Res:{},avgRes:{}", analyticsType, Res, avgRes);
 
-        if(analyticsType.equals("AVG")) {
-            avgRes = input.getStringByField("AVGRES");
+		if (analyticsType.equals("MLR")) {
+			float errval = (air_quality - Float.parseFloat(Res)) / Float.parseFloat(avgRes);
+			System.out.println(this.getClass().getName() + " - AQ: " + air_quality + " - Res: " + Res +" - Average: " + avgRes);
+			
+			if (l.isInfoEnabled())
+				l.info(("errval - " + errval));
+			
+			Values values = new Values(sensorMeta, errval, msgId, analyticsType, obsVal);
+            System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+			collector.emit(values);
 
-            if(l.isInfoEnabled())
-            l.info("avgRes:"+avgRes);
-        }
+		}
+	}
 
+	@Override
+	public void cleanup() {
+	}
 
-//        float air_quality= Float.parseFloat(obsVal.split(",")[4]);
-
-        if(l.isInfoEnabled())
-            l.info("analyticsType:{},Res:{},avgRes:{}",analyticsType,Res,avgRes);
-
-        if(analyticsType.equals("MLR")) {
-        float errval= (air_quality-Float.parseFloat(Res)) /Float.parseFloat(avgRes);
-
-        if(l.isInfoEnabled())
-            l.info(("errval - "+errval));
-            collector.emit(new Values(sensorMeta, errval, msgId,analyticsType,obsVal));
-
-            }
-        }
-
-
-
-    @Override
-    public void cleanup() {
-    }
-
-    @Override
-    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("META","ERROR","MSGID","ANALAYTICTYPE","OBSVAL"));
-    }
+	@Override
+	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
+		outputFieldsDeclarer.declare(new Fields("META", "ERROR", "MSGID", "ANALAYTICTYPE", "OBSVAL"));
+	}
 
 }

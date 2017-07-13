@@ -19,67 +19,70 @@ import java.util.Properties;
 
 public class AzureBlobDownloadTaskBolt extends BaseRichBolt {
 
-    Properties p; String csvFileNameOutSink;  //Full path name of the file at the sink bolt
-    public AzureBlobDownloadTaskBolt( Properties p_){
-        this.csvFileNameOutSink = csvFileNameOutSink; p=p_;
+	Properties p;
+	String csvFileNameOutSink; // Full path name of the file at the sink bolt
 
-    }
-    OutputCollector collector;
+	public AzureBlobDownloadTaskBolt(Properties p_) {
+		this.csvFileNameOutSink = csvFileNameOutSink;
+		p = p_;
 
-    AzureBlobDownloadTask azureBlobDownloadTask;
+	}
 
+	OutputCollector collector;
 
-    private static Logger l; // TODO: Ensure logger is initialized before use
-    public static void initLogger(Logger l_) {
-        l = l_;
-    }
+	AzureBlobDownloadTask azureBlobDownloadTask;
 
-    @Override
-    public void prepare(Map conf, TopologyContext topologyContext, OutputCollector outputCollector) {
+	private static Logger l; // TODO: Ensure logger is initialized before use
 
-        this.collector=outputCollector; initLogger(LoggerFactory.getLogger("APP"));
+	public static void initLogger(Logger l_) {
+		l = l_;
+	}
 
-        azureBlobDownloadTask=new AzureBlobDownloadTask();
+	@Override
+	public void prepare(Map conf, TopologyContext topologyContext, OutputCollector outputCollector) {
 
+		this.collector = outputCollector;
+		initLogger(LoggerFactory.getLogger("APP"));
 
-        initLogger(LoggerFactory.getLogger("APP"));
+		azureBlobDownloadTask = new AzureBlobDownloadTask();
 
-        azureBlobDownloadTask.setup(l,p);
-    }
+		initLogger(LoggerFactory.getLogger("APP"));
 
-    @Override
-    public void execute(Tuple input) {
+		azureBlobDownloadTask.setup(l, p);
+	}
 
-        // path for both model files
-        String BlobModelPath = input.getStringByField("BlobModelPath");
-        String analyticsType = input.getStringByField("ANALAYTICTYPE");
+	@Override
+	public void execute(Tuple input) {
 
-        String msgId = input.getString(input.size()-1);
+		// path for both model files
+		String BlobModelPath = input.getStringByField("BlobModelPath");
+		String analyticsType = input.getStringByField("ANALAYTICTYPE");
 
+		String msgId = input.getString(input.size() - 1);
 
-//        azureBlobDownloadTask.doTask(rowString);
-        HashMap<String, String> map = new HashMap();
+		// azureBlobDownloadTask.doTask(rowString);
+		HashMap<String, String> map = new HashMap();
 
-        map.put(AbstractTask.DEFAULT_KEY, BlobModelPath);
-        azureBlobDownloadTask.doTask(map);
-        byte[] BlobModelObject = azureBlobDownloadTask.getLastResult();
+		map.put(AbstractTask.DEFAULT_KEY, BlobModelPath);
+		azureBlobDownloadTask.doTask(map);
+		byte[] BlobModelObject = azureBlobDownloadTask.getLastResult();
 
-        if(l.isInfoEnabled())
-            l.info("downloded updated model file {} with size {}",BlobModelPath,BlobModelObject.length);
+		if (l.isInfoEnabled())
+			l.info("downloded updated model file {} with size {}", BlobModelPath, BlobModelObject.length);
 
+		// FIXME: read and emit model for DTC
+		Values values = new Values(BlobModelObject, msgId, "modelupdate", analyticsType, "meta");
+		System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+		collector.emit(values);
+	}
 
-//FIXME: read and emit model for DTC
-            collector.emit(new Values(BlobModelObject, msgId, "modelupdate", analyticsType,"meta"));
+	@Override
+	public void cleanup() {
+	}
 
-    }
-
-    @Override
-    public void cleanup() {
-    }
-
-    @Override
-    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("BlobModelObject","MSGID","MSGTYPE","ANALAYTICTYPE","META"));
-    }
+	@Override
+	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
+		outputFieldsDeclarer.declare(new Fields("BlobModelObject", "MSGID", "MSGTYPE", "ANALAYTICTYPE", "META"));
+	}
 
 }

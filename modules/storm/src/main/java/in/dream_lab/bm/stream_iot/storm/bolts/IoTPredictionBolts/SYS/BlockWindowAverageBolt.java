@@ -19,90 +19,101 @@ import java.util.Properties;
 
 public class BlockWindowAverageBolt extends BaseRichBolt {
 
-    private Properties p;
-    private ArrayList<String> useMsgList;
-    public BlockWindowAverageBolt(Properties p_){
-        p=p_;
-    }
-    OutputCollector collector; private static Logger l;  public static void initLogger(Logger l_) {     l = l_; }
-    Map<String, BlockWindowAverage> blockWindowAverageMap;
+	private Properties p;
+	private ArrayList<String> useMsgList;
 
-    @Override
-    public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
+	public BlockWindowAverageBolt(Properties p_) {
+		p = p_;
+	}
 
-        this.collector=outputCollector; initLogger(LoggerFactory.getLogger("APP"));
-        blockWindowAverageMap = new HashMap<String, BlockWindowAverage>();
-        String useMsgField = p.getProperty("AGGREGATE.BLOCK_AVERAGE.USE_MSG_FIELD");
-        String [] msgField = useMsgField.split(",");
-        useMsgList = new ArrayList<String>();
-        for(String s : msgField )
-        {
-            useMsgList.add(s);
-        }
-    }
+	OutputCollector collector;
+	private static Logger l;
 
+	public static void initLogger(Logger l_) {
+		l = l_;
+	}
 
-    @Override
-    public void execute(Tuple input) {
+	Map<String, BlockWindowAverage> blockWindowAverageMap;
 
-        String msgId = input.getStringByField("MSGID");
-        String sensorMeta=input.getStringByField("META");
-        String sensorID=input.getStringByField("SENSORID");
-        String obsType=input.getStringByField("OBSTYPE");
-        String obsVal = input.getStringByField("OBSVAL");
+	@Override
+	public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
 
-        String airquality=obsVal.split(",")[4]; // airquality as last obs. in input
+		this.collector = outputCollector;
+		initLogger(LoggerFactory.getLogger("APP"));
+		blockWindowAverageMap = new HashMap<String, BlockWindowAverage>();
+		String useMsgField = p.getProperty("AGGREGATE.BLOCK_AVERAGE.USE_MSG_FIELD"); // dummyobsType
+		String[] msgField = useMsgField.split(",");
+		useMsgList = new ArrayList<String>();
+		for (String s : msgField) {
+			useMsgList.add(s);
+		}
+	}
 
+	@Override
+	public void execute(Tuple input) {
 
-        if(l.isInfoEnabled())
-            l.info("obsVal in BWA:",obsVal);
+		String msgId = input.getStringByField("MSGID");
+		String sensorMeta = input.getStringByField("META");
+		String sensorID = input.getStringByField("SENSORID");
+		String obsType = input.getStringByField("OBSTYPE");
+		String obsVal = input.getStringByField("OBSVAL");
 
+		String airquality = obsVal.split(",")[4]; // airquality as last obs. in
+													// input
 
-        if(useMsgList.contains(obsType))
-        {
-            String key = sensorID + obsType;
-            BlockWindowAverage blockWindowAverage = blockWindowAverageMap.get(key);
-            if(blockWindowAverage == null){
-                blockWindowAverage=new BlockWindowAverage();
-                blockWindowAverage.setup(l,p);
-                blockWindowAverageMap.put(key, blockWindowAverage);
-            }
+		if (l.isInfoEnabled())
+			l.info("obsVal in BWA:", obsVal);
 
-            HashMap<String, String> map = new HashMap<String, String>();
+		if (useMsgList.contains(obsType)) // useMsgList=dumbobstype, obsType (from
+											// SenMLParseBoltPREDSYS)=dumbobstype
+		{
+			String key = sensorID + obsType;
+			BlockWindowAverage blockWindowAverage = blockWindowAverageMap.get(key);
+			if (blockWindowAverage == null) {
+				blockWindowAverage = new BlockWindowAverage();
+				blockWindowAverage.setup(l, p);
+				blockWindowAverageMap.put(key, blockWindowAverage);
+			}
 
-            map.put(AbstractTask.DEFAULT_KEY, airquality);
-            blockWindowAverage.doTask(map);
+			HashMap<String, String> map = new HashMap<String, String>();
 
-            Float avgres = blockWindowAverage.getLastResult();  //  Avg of last window is used till next comes
-            sensorMeta = sensorMeta.concat(",").concat(obsType);
-            obsType = "AVG";
+			map.put(AbstractTask.DEFAULT_KEY, airquality);
+			blockWindowAverage.doTask(map);
 
-            if(avgres!=null ) {
-                if(avgres!=Float.MIN_VALUE)
-                {
-                    if (l.isInfoEnabled())
-                    l.info("avgres AVG:{}",avgres.toString());
+			Float avgres = blockWindowAverage.getLastResult(); // Avg of last
+																// window is
+																// used till
+																// next comes
+			sensorMeta = sensorMeta.concat(",").concat(obsType);
+			obsType = "AVG";
 
-                    collector.emit(new Values(sensorMeta,sensorID,obsType,avgres.toString(),obsVal,msgId,"AVG"));
+			if (avgres != null) {
+				if (avgres != Float.MIN_VALUE) {
+					if (l.isInfoEnabled())
+						l.info("avgres AVG:{}", avgres.toString());
+					Values values = new Values(sensorMeta, sensorID, obsType, avgres.toString(), obsVal, msgId, "AVG");
+					System.out.println(this.getClass().getName() + "sensorMeta: " + sensorMeta);
+					System.out.println(this.getClass().getName() + "Average: " + avgres.toString());
+					System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+					collector.emit(values);
 
-                }
-                else {
-                    if (l.isWarnEnabled()) l.warn("Error in BlockWindowAverageBolt");
-                    throw new RuntimeException();
-                }
-            }
-        }
-    }
+				} else {
+					if (l.isWarnEnabled())
+						l.warn("Error in BlockWindowAverageBolt");
+					throw new RuntimeException();
+				}
+			}
+		}
+	}
 
-    @Override
-    public void cleanup()
-    {
-    }
+	@Override
+	public void cleanup() {
+	}
 
-    @Override
-    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("META","SENSORID","OBSTYPE","AVGRES","OBSVAL","MSGID","ANALAYTICTYPE"));
-    }
-
+	@Override
+	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
+		outputFieldsDeclarer
+				.declare(new Fields("META", "SENSORID", "OBSTYPE", "AVGRES", "OBSVAL", "MSGID", "ANALAYTICTYPE"));
+	}
 
 }

@@ -18,67 +18,75 @@ import java.util.Properties;
 
 public class MQTTPublishBolt extends BaseRichBolt {
 
-    private Properties p;
+	private Properties p;
 
-    public MQTTPublishBolt(Properties p_)
-    {
-         p=p_;
+	public MQTTPublishBolt(Properties p_) {
+		p = p_;
 
-    }
-    OutputCollector collector;
-    private static Logger l; 
-    public static void initLogger(Logger l_) {     l = l_; }
-    MQTTPublishTask mqttPublishTask; 
-    
-    @Override
-    public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
+	}
 
-        this.collector=outputCollector;
-        initLogger(LoggerFactory.getLogger("APP"));
+	OutputCollector collector;
+	private static Logger l;
 
-        mqttPublishTask= new MQTTPublishTask();
+	public static void initLogger(Logger l_) {
+		l = l_;
+	}
 
-        mqttPublishTask.setup(l,p);
-    }
+	MQTTPublishTask mqttPublishTask;
 
-    @Override
-    public void execute(Tuple input) 
-    {
-    	String msgId = (String)input.getValueByField("MSGID");
-    	String meta = (String)input.getValueByField("META");
-//    	String obsType = (String)input.getValueByField("OBSTYPE");
-        String analyticsType = input.getStringByField("ANALAYTICTYPE");
-    	String obsVal = input.getStringByField("OBSVAL");
+	@Override
+	public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
 
-        StringBuffer temp=new StringBuffer();
-        String res="";
-        if(analyticsType.equals("DTC")){
-            res = (String) input.getValueByField("RES");
-            temp.append(msgId).append(",").append(meta).append(",").append(analyticsType).append(",obsVal:").append(obsVal).append(",RES:").append(res);
-        }
-        if(analyticsType.equals("MLR")){
-            res =  (input.getValueByField("ERROR")).toString();
-            temp.append(msgId).append(",").append(meta).append(",").append(analyticsType).append(",obsVal:").append(obsVal).append(",ERROR:").append(res);
-        }
+		this.collector = outputCollector;
+		initLogger(LoggerFactory.getLogger("APP"));
 
-        if(l.isInfoEnabled())
-            l.info("MQTT result:{}",temp);
+		mqttPublishTask = new MQTTPublishTask();
 
-        HashMap<String, String> map = new HashMap();
-        map.put(AbstractTask.DEFAULT_KEY, String.valueOf(temp));
-    	mqttPublishTask.doTask(map);
-    	collector.emit(new Values(msgId, meta, obsVal));
-    }
+		mqttPublishTask.setup(l, p);
+	}
 
-    @Override
-    public void cleanup() {
-    	mqttPublishTask.tearDown();
-    }
+	@Override
+	public void execute(Tuple input) {
+		String msgId = (String) input.getValueByField("MSGID");
+		String meta = (String) input.getValueByField("META");
+		// String obsType = (String)input.getValueByField("OBSTYPE");
+		String analyticsType = input.getStringByField("ANALAYTICTYPE");
+		String obsVal = input.getStringByField("OBSVAL");
 
-    @Override
-    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("MSGID", "META", "OBSVAL"));
-    }
+		StringBuffer temp = new StringBuffer();
+		String res = "";
+		if (analyticsType.equals("DTC")) {
+			res = (String) input.getValueByField("RES");
+			temp.append(msgId).append(",").append(meta).append(",").append(analyticsType).append(",obsVal:")
+					.append(obsVal).append(",RES:").append(res);
+		}
+		if (analyticsType.equals("MLR")) {
+			res = (input.getValueByField("ERROR")).toString();
+			temp.append(msgId).append(",").append(meta).append(",").append(analyticsType).append(",obsVal:")
+					.append(obsVal).append(",ERROR:").append(res);
+		}
+
+		if (l.isInfoEnabled())
+			l.info("MQTT result:{}", temp);
+
+		HashMap<String, String> map = new HashMap();
+		map.put(AbstractTask.DEFAULT_KEY, String.valueOf(temp));
+		mqttPublishTask.doTask(map);
+		
+		Values values = new Values(msgId, meta, obsVal);
+		System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+		collector.emit(values);
+		
+	}
+
+	@Override
+	public void cleanup() {
+		mqttPublishTask.tearDown();
+	}
+
+	@Override
+	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
+		outputFieldsDeclarer.declare(new Fields("MSGID", "META", "OBSVAL"));
+	}
 
 }
-

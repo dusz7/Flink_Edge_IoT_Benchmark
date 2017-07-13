@@ -70,17 +70,21 @@ public class DecisionTreeClassify extends AbstractTask {
 		synchronized (SETUP_LOCK) {
 			if(!doneSetup) { // Do setup only once for this task
 				// If positive, use actual tuple as input else SAMPLE_INPUT
-				useMsgField = Integer.parseInt(p_.getProperty("CLASSIFICATION.DECISION_TREE.USE_MSG_FIELD", "0")); 
-				String modelFilePath = p_.getProperty("CLASSIFICATION.DECISION_TREE.MODEL_PATH");
+				useMsgField = Integer.parseInt(p_.getProperty("CLASSIFICATION.DECISION_TREE.USE_MSG_FIELD", "0")); 			//10
+				String modelFilePath = p_.getProperty("CLASSIFICATION.DECISION_TREE.MODEL_PATH");							//DecisionTreeClassifyHeaderOnly-SYS.arff
+				
 				// attribute index for getting the resulting enum
 				resultAttrNdx = Integer.parseInt(p_.getProperty("CLASSIFICATION.DECISION_TREE.CLASSIFY.RESULT_ATTRIBUTE_INDEX")); 
+				
 				try {
 					j48tree = (J48) weka.core.SerializationHelper.read(modelFilePath);
 					if(l.isInfoEnabled()) l.info("Model is {}", j48tree);
 
 					SAMPLE_HEADER=p_.getProperty("CLASSIFICATION.DECISION_TREE.SAMPLE_HEADER");
 					instanceHeader = WekaUtil.loadDatasetInstances(new StringReader(SAMPLE_HEADER), l);
+					
 					if(l.isInfoEnabled()) l.info("Header is {}", instanceHeader);
+					
 					assert instanceHeader != null;
 					
 					doneSetup=true;
@@ -116,7 +120,6 @@ public class DecisionTreeClassify extends AbstractTask {
 				l.info(" ----------------------------------------- ");
 				l.info("Test data               : {}", testInstance);
 				l.info("Test data classification result {}, {}", result , classification);
-
 			}
 			return Float.valueOf(classification);
 		} catch (Exception e) {

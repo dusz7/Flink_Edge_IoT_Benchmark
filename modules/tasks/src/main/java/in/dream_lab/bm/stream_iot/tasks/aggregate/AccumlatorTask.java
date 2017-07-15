@@ -22,23 +22,37 @@ public class AccumlatorTask extends AbstractTask<String, Map<String, Map<String,
 	private static boolean doneSetup = false;
 	private static ArrayList<String> multiValueObsType;
 	private static int tupleWindowSize;
-	//For indication postion of timestamp field among other fields present in meta
-	private static int timestampField; 
+	// For indication postion of timestamp field among other fields present in
+	// meta
+	private static int timestampField;
 	private Map<String, Map<String, Queue<TimestampValue>>> valuesMap;
 	private int counter;
-	private HashMap<String, String> bmMap ;
+	private HashMap<String, String> bmMap;
+
 	public void setup(Logger l_, Properties p_) {
 		super.setup(l_, p_);
 		synchronized (SETUP_LOCK) {
 			if (!doneSetup) {
-				String multiValueObs = p_.getProperty("AGGREGATE.ACCUMLATOR.MULTIVALUE_OBSTYPE");
-				String [] multiValObs =  multiValueObs.split(",");
+				String multiValueObs = p_.getProperty("AGGREGATE.ACCUMLATOR.MULTIVALUE_OBSTYPE"); // SLR
+				String[] multiValObs = multiValueObs.split(",");
 				multiValueObsType = new ArrayList<String>();
-				for(String s : multiValObs)
+				for (String s : multiValObs)
 					multiValueObsType.add(s);
-				
-				tupleWindowSize = Integer.parseInt(p_.getProperty("AGGREGATE.ACCUMLATOR.TUPLE_WINDOW_SIZE")); //TODO: Move to aggregate property namespace
-				timestampField = Integer.parseInt(p_.getProperty("AGGREGATE.ACCUMLATOR.META_TIMESTAMP_FIELD")); // TODO: What do we use this for?
+				// 20
+				tupleWindowSize = Integer.parseInt(p_.getProperty("AGGREGATE.ACCUMLATOR.TUPLE_WINDOW_SIZE")); // TODO:
+																												// Move
+																												// to
+																												// aggregate
+																												// property
+																												// namespace
+				// index of the timestamp field in meta i.e. 0
+				timestampField = Integer.parseInt(p_.getProperty("AGGREGATE.ACCUMLATOR.META_TIMESTAMP_FIELD")); // TODO:
+																												// What
+																												// do
+																												// we
+																												// use
+																												// this
+																												// for?
 				doneSetup = true;
 			}
 			valuesMap = new HashMap<String, Map<String, Queue<TimestampValue>>>();
@@ -52,35 +66,46 @@ public class AccumlatorTask extends AbstractTask<String, Map<String, Map<String,
 		String metaValues = map.get("META");
 		String obsVal = map.get("OBSVALUE");
 		String obsType = map.get("OBSTYPE");
-		
+
 		String[] metaVal = metaValues.split(",");
+
 		assert metaVal.length > 0;
-		String meta = metaVal[metaVal.length - 1];
-		
-		//Used to store timestamp of obsVal  
-		String ts = metaVal[timestampField];
-		
+		String meta = metaVal[metaVal.length - 1];		//meta=source
+
+		// Used to store timestamp of obsVal
+		String ts = metaVal[timestampField]; // metaVal[0]
+
 		Map<String, Queue<TimestampValue>> innerHashMap;
 		Queue<TimestampValue> queue = null;
+
 		try {
 			counter++;
 			StringBuilder key = new StringBuilder().append(sensorId).append(obsType);
 			innerHashMap = valuesMap.get(key.toString());
+
 			if (innerHashMap == null) {
 				innerHashMap = new HashMap<String, Queue<TimestampValue>>();
 				queue = new PriorityQueue<TimestampValue>();
-				innerHashMap.put(meta, queue);
+				innerHashMap.put(meta, queue); // meta=source
 				valuesMap.put(key.toString(), innerHashMap);
 			}
-			// If obsType is already present we need to append the incoming new value
+
+			// If obsType is already present we need to append the incoming new
+			// value
+
 			queue = innerHashMap.get(meta);
+
 			if (queue == null) {
 				queue = new PriorityQueue<TimestampValue>();
 				innerHashMap.put(meta, queue);
 			}
-			// Considering special case of SLR values since it sends multiple values
-			// separated by hash
-			if (multiValueObsType.contains(obsType)) { // FIXME: Make generic by using a property for values that require split!
+
+			// Considering special case of SLR values since it sends multiple
+			// values separated by hash
+			if (multiValueObsType.contains(obsType)) { // FIXME: Make generic by
+														// using a property for
+														// values that require
+														// split!
 				String[] predValues = obsVal.split("#");
 				TimestampValue tsVal;
 				for (String s : predValues) {
@@ -93,8 +118,10 @@ public class AccumlatorTask extends AbstractTask<String, Map<String, Map<String,
 				TimestampValue tsVal = new TimestampValue(obsVal, ts);
 				queue.add(tsVal);
 			}
+
 			innerHashMap.put(meta, queue);
 			valuesMap.put(key.toString(), innerHashMap);
+
 			// accumlate msg till it reaches threshold
 			if (counter == tupleWindowSize) {
 				// setlast result to outerhashmap
@@ -104,10 +131,8 @@ public class AccumlatorTask extends AbstractTask<String, Map<String, Map<String,
 				return 1.0f;
 			} else
 				return 0.0f;
-		}
-		catch(Exception e)
-		{
-			l.error("Exception occured in Accumlator do task :  "+ e.getMessage());
+		} catch (Exception e) {
+			l.error("Exception occured in Accumlator do task :  " + e.getMessage());
 			return -1.0f;
 		}
 	}

@@ -19,67 +19,76 @@ import java.util.Properties;
 
 public class DistinctApproxCountBolt extends BaseRichBolt {
 
-    private Properties p;
+	private Properties p;
 
-    public DistinctApproxCountBolt(Properties p_){
-         p=p_;
-    }
-    OutputCollector collector; private static Logger l;  public static void initLogger(Logger l_) {     l = l_; }
-    DistinctApproxCount distinctApproxCount;
-    String useMsgField;
-//    Map<String, DistinctApproxCount> distinctApproxCountMap ;
+	public DistinctApproxCountBolt(Properties p_) {
+		p = p_;
+	}
 
-    @Override
-    public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
+	OutputCollector collector;
+	private static Logger l;
 
-        this.collector=outputCollector; initLogger(LoggerFactory.getLogger("APP"));
-        this.useMsgField = p.getProperty("AGGREGATE.DISTINCT_APPROX_COUNT.USE_MSG_FIELD");
-//        distinctApproxCountMap = new HashMap<String, DistinctApproxCount>();
-        System.out.println("use msg  " +useMsgField);
-        distinctApproxCount=new DistinctApproxCount();
-        distinctApproxCount.setup(l,p);
-    }
+	public static void initLogger(Logger l_) {
+		l = l_;
+	}
 
-    @Override
-    public void execute(Tuple input) {
+	DistinctApproxCount distinctApproxCount;
+	String useMsgField;
+	// Map<String, DistinctApproxCount> distinctApproxCountMap ;
 
-        String msgId = input.getStringByField("MSGID");
-        String sensorMeta=input.getStringByField("META");
-        String sensorID=input.getStringByField("SENSORID");
-        
-        String obsType=input.getStringByField("OBSTYPE");
-        HashMap<String, String> map = new HashMap();
-        map.put(AbstractTask.DEFAULT_KEY, sensorID);
-        Float res = null;
-        if(obsType.equals(useMsgField))
-        {
-        	distinctApproxCount.doTask(map);
-        	res= (Float) distinctApproxCount.getLastResult();
-        }
-       
-        if(res!=null ) {
-        	sensorMeta = sensorMeta.concat(",").concat(obsType);
-            obsType = "DA";
-        	if(res!=Float.MIN_VALUE)
-            {
-            	collector.emit(new Values(sensorMeta,sensorID,obsType,res.toString(),msgId));
-            }
-            else {
-                if (l.isWarnEnabled()) l.warn("Error in distinct approx");
-                throw new RuntimeException();
-            }
-        }
-    }
+	@Override
+	public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
 
-    @Override
-    public void cleanup()
-    {
-//    	distinctApproxCount.tearDown();
-    }
+		this.collector = outputCollector;
+		initLogger(LoggerFactory.getLogger("APP"));
+		this.useMsgField = p.getProperty("AGGREGATE.DISTINCT_APPROX_COUNT.USE_MSG_FIELD");
+		// distinctApproxCountMap = new HashMap<String, DistinctApproxCount>();
+		System.out.println("use msg  " + useMsgField);
+		distinctApproxCount = new DistinctApproxCount();
+		distinctApproxCount.setup(l, p);
+	}
 
-    @Override
-    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("META","SENSORID","OBSTYPE","res","MSGID"));
-    }
+	@Override
+	public void execute(Tuple input) {
+
+		String msgId = input.getStringByField("MSGID");
+		String sensorMeta = input.getStringByField("META");
+		String sensorID = input.getStringByField("SENSORID");
+		String obsType = input.getStringByField("OBSTYPE");
+
+		HashMap<String, String> map = new HashMap();
+		map.put(AbstractTask.DEFAULT_KEY, sensorID);
+
+		Float res = null;
+
+		if (obsType.equals(useMsgField)) { // useMsgField=source
+			distinctApproxCount.doTask(map);
+			res = (Float) distinctApproxCount.getLastResult();
+		}
+
+		if (res != null) {
+			sensorMeta = sensorMeta.concat(",").concat(obsType);
+			obsType = "DA";
+			if (res != Float.MIN_VALUE) {
+				Values values = new Values(sensorMeta, sensorID, obsType, res.toString(), msgId);
+				System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+				collector.emit(values);
+			} else {
+				if (l.isWarnEnabled())
+					l.warn("Error in distinct approx");
+				throw new RuntimeException();
+			}
+		}
+	}
+
+	@Override
+	public void cleanup() {
+		// distinctApproxCount.tearDown();
+	}
+
+	@Override
+	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
+		outputFieldsDeclarer.declare(new Fields("META", "SENSORID", "OBSTYPE", "res", "MSGID"));
+	}
 
 }

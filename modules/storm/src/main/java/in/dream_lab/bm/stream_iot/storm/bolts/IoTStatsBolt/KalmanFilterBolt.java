@@ -20,90 +20,94 @@ import java.util.Properties;
 
 public class KalmanFilterBolt extends BaseRichBolt {
 
-    private Properties p;
-    private ArrayList<String> useMsgList;
-    public KalmanFilterBolt(Properties p_){
-         p=p_;
-    }
+	private Properties p;
+	private ArrayList<String> useMsgList;
 
-    OutputCollector collector; private static Logger l;  public static void initLogger(Logger l_) {     l = l_; }
-    Map<String, KalmanFilter> kmap; //kalmanFilter;
-//    KalmanFilter kalmanFilter;
+	public KalmanFilterBolt(Properties p_) {
+		p = p_;
+	}
 
-    @Override
-    public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
+	OutputCollector collector;
+	private static Logger l;
 
-        this.collector=outputCollector; initLogger(LoggerFactory.getLogger("APP"));
-        kmap = new HashMap<String, KalmanFilter>();
-        String useMsgField = p.getProperty("STATISTICS.KALMAN_FILTER.USE_MSG_FIELDLIST");
-        String [] msgField = useMsgField.split(",");
-        useMsgList = new ArrayList<String>();
-        for(String s : msgField )
-        {
-        	useMsgList.add(s);
-        }
-        
-//        kalmanFilter=new KalmanFilter();
-//        kalmanFilter.setup(l,p);
-    }
+	public static void initLogger(Logger l_) {
+		l = l_;
+	}
 
-//from bloom -    outputFieldsDeclarer.declare(new Fields("sensorMeta","sensorID","obsType","obsVal","MSGID"));
+	Map<String, KalmanFilter> kmap; // kalmanFilter;
+	// KalmanFilter kalmanFilter;
 
-    @Override
-    public void execute(Tuple input) {
+	@Override
+	public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
 
-    	   String msgId = input.getStringByField("MSGID");
-           String sensorMeta=input.getStringByField("META");
-           String sensorID=input.getStringByField("SENSORID");
-           String obsType=input.getStringByField("OBSTYPE");
-           String obsVal = input.getStringByField("OBSVAL");
-           
-           if(useMsgList.contains(obsType))
-           {	
-           
-           
-	           String key = sensorID + obsType;
-	
-	
-	        KalmanFilter kalmanFilter = kmap.get(key);
-	        if(kalmanFilter == null){
-	            kalmanFilter=new KalmanFilter();
-	            kalmanFilter.setup(l,p);
-	            kmap.put(key, kalmanFilter);
-	        }
-	
-	
-	        HashMap<String, String> map = new HashMap();
-	        map.put(AbstractTask.DEFAULT_KEY, obsVal);
-	        Float kalmanUpdatedVal =kalmanFilter.doTask(map);
-	        
-	//        if(l.isInfoEnabled())
-	//        	System.out.println("INFO is enabled");
-	//        
-	        
-	//        if(l.isInfoEnabled())
-	//        	l.info("TEST1:kalmanUpdatedVal-"+kalmanUpdatedVal);
-	
-	        if(kalmanUpdatedVal!=null ) 
-	        {
-	        	collector.emit(new Values(sensorMeta, sensorID, obsType, kalmanUpdatedVal.toString(), msgId));
-	        }
-	            else {
-	                if (l.isWarnEnabled()) l.warn("Error in KalmanFilterBolt and Val is -"+kalmanUpdatedVal);
-	                throw new RuntimeException();
-	            }
-           }
-    }
+		this.collector = outputCollector;
+		initLogger(LoggerFactory.getLogger("APP"));
+		kmap = new HashMap<String, KalmanFilter>();
+		String useMsgField = p.getProperty("STATISTICS.KALMAN_FILTER.USE_MSG_FIELDLIST");
+		String[] msgField = useMsgField.split(",");
+		useMsgList = new ArrayList<String>();
+		for (String s : msgField) {
+			useMsgList.add(s);
+		}
 
-    @Override
-    public void cleanup() 
-    {
-//        kalmanFilter.tearDown();
-    }
+		// kalmanFilter=new KalmanFilter();
+		// kalmanFilter.setup(l,p);
+	}
 
-    @Override
-    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("META","SENSORID","OBSTYPE","kalmanUpdatedVal","MSGID"));
-    }
+	// from bloom - outputFieldsDeclarer.declare(new
+	// Fields("sensorMeta","sensorID","obsType","obsVal","MSGID"));
+
+	@Override
+	public void execute(Tuple input) {
+
+		String msgId = input.getStringByField("MSGID");
+		String sensorMeta = input.getStringByField("META");
+		String sensorID = input.getStringByField("SENSORID");
+		String obsType = input.getStringByField("OBSTYPE");
+		String obsVal = input.getStringByField("OBSVAL");
+
+		if (useMsgList.contains(obsType)) {
+
+			String key = sensorID + obsType;
+
+			KalmanFilter kalmanFilter = kmap.get(key);
+			if (kalmanFilter == null) {
+				kalmanFilter = new KalmanFilter();
+				kalmanFilter.setup(l, p);
+				kmap.put(key, kalmanFilter);
+			}
+
+			HashMap<String, String> map = new HashMap();
+			map.put(AbstractTask.DEFAULT_KEY, obsVal);
+			Float kalmanUpdatedVal = kalmanFilter.doTask(map);
+
+			// if(l.isInfoEnabled())
+			// System.out.println("INFO is enabled");
+			//
+
+			// if(l.isInfoEnabled())
+			// l.info("TEST1:kalmanUpdatedVal-"+kalmanUpdatedVal);
+
+			if (kalmanUpdatedVal != null) {
+				Values values = new Values(sensorMeta, sensorID, obsType, kalmanUpdatedVal.toString(), msgId);
+				System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+				collector.emit(values);
+			} else {
+				if (l.isWarnEnabled())
+					l.warn("Error in KalmanFilterBolt and Val is -" + kalmanUpdatedVal);
+				throw new RuntimeException();
+			}
+		}
+	}
+
+	@Override
+	public void cleanup() {
+		// kalmanFilter.tearDown();
+	}
+
+	@Override
+	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
+		outputFieldsDeclarer.declare(new Fields("META", "SENSORID", "OBSTYPE", "kalmanUpdatedVal", "MSGID"));
+	}
 
 }

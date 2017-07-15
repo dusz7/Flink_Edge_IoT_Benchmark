@@ -30,51 +30,52 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 	double scalingFactor;
 	BatchedFileLogging ba;
 	long msgId;
-	public SampleSenMLSpout(){
-		//			this.csvFileName = "/home/ubuntu/sample100_sense.csv";
-		//			System.out.println("Inside  sample spout code");
+
+	public SampleSenMLSpout() {
+		// this.csvFileName = "/home/ubuntu/sample100_sense.csv";
+		// System.out.println("Inside sample spout code");
 		this.csvFileName = "/home/tarun/j2ee_workspace/eventGen-anshu/eventGen/bangalore.csv";
 		this.scalingFactor = GlobalConstants.accFactor;
-		//			System.out.print("the output is as follows");
+		// System.out.print("the output is as follows");
 	}
 
-	public SampleSenMLSpout(String csvFileName, String outSpoutCSVLogFileName, double scalingFactor, String experiRunId){
+	public SampleSenMLSpout(String csvFileName, String outSpoutCSVLogFileName, double scalingFactor,
+			String experiRunId) {
 		this.csvFileName = csvFileName;
 		this.outSpoutCSVLogFileName = outSpoutCSVLogFileName;
 		this.scalingFactor = scalingFactor;
 		this.experiRunId = experiRunId;
 	}
 
-	public SampleSenMLSpout(String csvFileName, String outSpoutCSVLogFileName, double scalingFactor){
+	public SampleSenMLSpout(String csvFileName, String outSpoutCSVLogFileName, double scalingFactor) {
 		this(csvFileName, outSpoutCSVLogFileName, scalingFactor, "");
 	}
 
 	@Override
-	public void nextTuple() 
-	{
-		int count = 0, MAX_COUNT=10; // FIXME?
-		while(count < MAX_COUNT) 
-		{
-			List<String> entry = this.eventQueue.poll(); // nextTuple should not block!
-			if(entry == null) return;
+	public void nextTuple() {
+		int count = 0, MAX_COUNT = 10; // FIXME?
+		while (count < MAX_COUNT) {
+			List<String> entry = this.eventQueue.poll(); // nextTuple should not
+															// block!
+			if (entry == null)
+				return;
 			count++;
 			Values values = new Values();
 			StringBuilder rowStringBuf = new StringBuilder();
-			for(String s : entry){
+			for (String s : entry) {
 				rowStringBuf.append(",").append(s);
 			}
 			String rowString = rowStringBuf.toString().substring(1);
-			String newRow = rowString.substring(rowString.indexOf(",")+1);
+			String newRow = rowString.substring(rowString.indexOf(",") + 1);
 			msgId++;
 			values.add(Long.toString(msgId));
 			values.add(newRow);
-			
+
 			System.out.println(this.getClass().getName() + " - LOGS - " + values.toString());
-			
+
 			this._collector.emit(values);
-			try 
-			{
-				ba.batchLogwriter(System.currentTimeMillis(),"MSGID," + msgId);
+			try {
+				ba.batchLogwriter(System.currentTimeMillis(), "MSGID," + msgId);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -82,45 +83,37 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 	}
 
 	@Override
-	public void open(Map map, TopologyContext context, SpoutOutputCollector collector) 
-	{
-		BatchedFileLogging.writeToTemp(this,this.outSpoutCSVLogFileName);
-		Random r=new Random();
-		try 
-		{
-			msgId= (long) (1*Math.pow(10,12)+(r.nextInt(1000)*Math.pow(10,9))+r.nextInt(10));
-			
+	public void open(Map map, TopologyContext context, SpoutOutputCollector collector) {
+		BatchedFileLogging.writeToTemp(this, this.outSpoutCSVLogFileName);
+		Random r = new Random();
+		try {
+			msgId = (long) (1 * Math.pow(10, 12) + (r.nextInt(1000) * Math.pow(10, 9)) + r.nextInt(10));
+
 		} catch (Exception e) {
 
 			e.printStackTrace();
 		}
 		_collector = collector;
-		this.eventGen = new EventGen(this,this.scalingFactor);
+		this.eventGen = new EventGen(this, this.scalingFactor);
 		this.eventQueue = new LinkedBlockingQueue<List<String>>();
-		String uLogfilename=this.outSpoutCSVLogFileName+msgId;
-		this.eventGen.launch(this.csvFileName, uLogfilename, -1, true); //Launch threads
+		String uLogfilename = this.outSpoutCSVLogFileName + msgId;
+		this.eventGen.launch(this.csvFileName, uLogfilename, -1, true); // Launch
+																		// threads
 
-		ba=new BatchedFileLogging(uLogfilename, context.getThisComponentId());
-
-
+		ba = new BatchedFileLogging(uLogfilename, context.getThisComponentId());
 	}
 
 	@Override
-	public void declareOutputFields(OutputFieldsDeclarer declarer) 
-	{
-		declarer.declare(new Fields("MSGID" , "PAYLOAD"));
+	public void declareOutputFields(OutputFieldsDeclarer declarer) {
+		declarer.declare(new Fields("MSGID", "PAYLOAD"));
 	}
 
 	@Override
-	public void receive(List<String> event) 
-	{
-		try 
-		{
+	public void receive(List<String> event) {
+		try {
 			this.eventQueue.put(event);
-		} 
-		catch (InterruptedException e) {
+		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 	}
 }
-

@@ -36,6 +36,7 @@ public class BlockWindowAverageBolt extends BaseRichBolt {
         String useMsgField = p.getProperty("AGGREGATE.BLOCK_AVERAGE.USE_MSG_FIELD");
         String [] msgField = useMsgField.split(",");
         useMsgList = new ArrayList<String>();
+        /*temperature,humidity,light,dust,airquality_raw*/
         for(String s : msgField )
         {
         	useMsgList.add(s);
@@ -73,7 +74,9 @@ public class BlockWindowAverageBolt extends BaseRichBolt {
 	        if(res!=null ) {
 	            if(res!=Float.MIN_VALUE) 
 	            {
-	            	collector.emit(new Values(sensorMeta,sensorID,obsType,res.toString(),msgId));
+	            	Values values = new Values(sensorMeta,sensorID,obsType,res.toString(),msgId);
+	            	System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+	            	collector.emit(values);
 	            	
 	            }
 	            else {

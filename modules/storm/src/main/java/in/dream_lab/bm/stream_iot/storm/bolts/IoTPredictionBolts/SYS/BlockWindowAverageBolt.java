@@ -92,8 +92,6 @@ public class BlockWindowAverageBolt extends BaseRichBolt {
 					if (l.isInfoEnabled())
 						l.info("avgres AVG:{}", avgres.toString());
 					Values values = new Values(sensorMeta, sensorID, obsType, avgres.toString(), obsVal, msgId, "AVG");
-					System.out.println(this.getClass().getName() + "sensorMeta: " + sensorMeta);
-					System.out.println(this.getClass().getName() + "Average: " + avgres.toString());
 					System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
 					collector.emit(values);
 

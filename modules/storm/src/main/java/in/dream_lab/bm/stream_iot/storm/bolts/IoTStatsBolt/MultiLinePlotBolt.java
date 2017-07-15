@@ -31,12 +31,14 @@ import org.slf4j.LoggerFactory;
 public class MultiLinePlotBolt extends BaseRichBolt {
 
 	private Properties p;
+
 	public MultiLinePlotBolt(Properties p_) {
 		p = p_;
 	}
 
 	OutputCollector collector;
 	private static Logger l;
+
 	public static void initLogger(Logger l_) {
 		l = l_;
 	}
@@ -44,7 +46,6 @@ public class MultiLinePlotBolt extends BaseRichBolt {
 	XChartMultiLinePlotTask plotTask;
 	AccumlatorTask accumlatorTask;
 	ZipMultipleBufferTask zipTask;
-
 
 	@Override
 	public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
@@ -67,54 +68,63 @@ public class MultiLinePlotBolt extends BaseRichBolt {
 		map.put("OBSTYPE", input.getStringByField("OBSTYPE"));
 		map.put("OBSVALUE", input.getStringByField("res"));
 		map.put("META", input.getStringByField("META"));
-	
-	
-//		map.put("SENSORID", "aaab2");
-//		map.put("OBSTYPE", "AVG");
-//		map.put("OBSVALUE", "26");
-//		map.put("META", "aaab2,electronic,temperature ");
-	
-		
+
+		System.out.println(this.getClass().getName() + " INPUT: " + map.get("SENSORID") + " - " + map.get("OBSTYPE")
+				+ " - " + map.get("OBSVALUE") + " - " + map.get("META"));
+
 		// call accumulator with tuple
 		float res = accumlatorTask.doTaskLogic(map);
+		System.out.println(this.getClass().getName() + " - accumulator task result: " + res);
+
 		if (res == 1.0f) { // finished accumulate
 			try {
 				// get accumulated values
+				/*
+				 * the returned map is a map from SensorID:Observation ->
+				 * Map[Sensor -> Queue of timestamp values for the sensor]
+				 * Timestamp value contains timestamp and observed value of the sensor
+				 */
 				Map<String, Map<String, Queue<TimestampValue>>> valuesMap = accumlatorTask.getLastResult();
-				
+
 				Set<Entry<String, Map<String, Queue<TimestampValue>>>> entrySet = valuesMap.entrySet();
-				
-//				System.out.println("Size of entry set "+entrySet.size());
+
 				// For each type of accumulated observation
 				for (Entry<String, Map<String, Queue<TimestampValue>>> entry : entrySet) {
-					// send accumulated values for observation to plotting routine, in-memory
+					// send accumulated values for observation to plotting
+					// routine, in-memory
 					// and get an input stream with response
 					Map<String, Queue<TimestampValue>> inputForPlotMap = entry.getValue();
-					plotTask.doTaskLogic(inputForPlotMap);					
+					plotTask.doTaskLogic(inputForPlotMap);
 					InputStream byteInputStream = plotTask.getLastResult();
-					
-					// send generated chart from input stream, and send to zip task
+
+					// send generated chart from input stream, and send to zip
+					// task
 					HashMap<String, InputStream> inputForZipMap = new HashMap<String, InputStream>();
 					inputForZipMap.put(AbstractTask.DEFAULT_KEY, byteInputStream);
+
 					float zipres = zipTask.doTask(inputForZipMap);
-					// if zip is done batching one set of requests, send zip path downstream
+
+					System.out.println(this.getClass().getName() + " - Zip result: " + zipres);
+
+					// if zip is done batching one set of requests, send zip
+					// path downstream
 					if (zipres == 1.0f) {
 						// emit the path sent as last result from zip task
 						String path = zipTask.getLastResult();
 						collector.emit(new Values(msgId, path));
-						// FIXME: garbase collect zip file at destination, once uploaded to blob
+						// FIXME: garbase collect zip file at destination, once
+						// uploaded to blob
 					}
 				}
 			} catch (Exception e) {
-				l.error("Exception occured in MultiLinePlotBolt exceute method "+e.getMessage());
+				l.error("Exception occured in MultiLinePlotBolt exceute method " + e.getMessage());
 			}
 		}
 	}
 
 	@Override
-	public void cleanup()
-	{
-		//plotTask.tearDown();
+	public void cleanup() {
+		// plotTask.tearDown();
 	}
 
 	@Override

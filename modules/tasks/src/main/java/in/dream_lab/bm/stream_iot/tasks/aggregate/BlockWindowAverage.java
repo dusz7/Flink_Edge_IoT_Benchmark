@@ -56,6 +56,7 @@ public class BlockWindowAverage extends AbstractTask<String,Float> {
 
 		aggSum+=item;
 		aggCount++;
+		
 		if(aggCount<aggCountWindowSize){
 //			return null;    //TODO: check for null while return in bolt code
 			return super.setLastResult(null);

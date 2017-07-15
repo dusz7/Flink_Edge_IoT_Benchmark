@@ -95,7 +95,7 @@ public class StatsWithVisualizationTopology
                 1);
 //        
         builder.setBolt("ParseSenML",
-                new SenMLParseBolt(p_), 1)
+                new SenMLParseBolt(p_), 10)
                 	.shuffleGrouping("spout");
 //			        .shuffleGrouping("spout2")
 //			        .shuffleGrouping("spout3")

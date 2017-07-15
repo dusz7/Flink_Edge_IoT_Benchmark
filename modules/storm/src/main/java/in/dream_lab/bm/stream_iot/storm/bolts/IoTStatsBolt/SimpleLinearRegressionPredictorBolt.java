@@ -19,83 +19,88 @@ import java.util.Properties;
 
 public class SimpleLinearRegressionPredictorBolt extends BaseRichBolt {
 
-    private Properties p;
-    public SimpleLinearRegressionPredictorBolt(Properties p_){
-         p=p_;
-    }
+	private Properties p;
 
-    OutputCollector collector; private static Logger l;  public static void initLogger(Logger l_) {     l = l_; }
-//    SimpleLinearRegressionPredictor simpleLinearRegressionPredictor;
+	public SimpleLinearRegressionPredictorBolt(Properties p_) {
+		p = p_;
+	}
 
-    Map<String, SimpleLinearRegressionPredictor> slrmap; //kalmanFilter;
+	OutputCollector collector;
+	private static Logger l;
 
-//    outputFieldsDeclarer.declare(new Fields("sensorMeta","sensorID","obsType","kalmanUpdatedVal","MSGID"));
+	public static void initLogger(Logger l_) {
+		l = l_;
+	}
+	// SimpleLinearRegressionPredictor simpleLinearRegressionPredictor;
 
-    @Override
-    public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
+	Map<String, SimpleLinearRegressionPredictor> slrmap; // kalmanFilter;
 
-        this.collector=outputCollector; initLogger(LoggerFactory.getLogger("APP"));
+	// outputFieldsDeclarer.declare(new
+	// Fields("sensorMeta","sensorID","obsType","kalmanUpdatedVal","MSGID"));
 
-        slrmap = new HashMap<String, SimpleLinearRegressionPredictor>();
-//        simpleLinearRegressionPredictor=new SimpleLinearRegressionPredictor();
-//        simpleLinearRegressionPredictor.setup(l,p);
-    }
+	@Override
+	public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
 
-    @Override
-    public void execute(Tuple input) {
-        String msgId = input.getStringByField("MSGID");
-        String sensorMeta=input.getStringByField("META");
+		this.collector = outputCollector;
+		initLogger(LoggerFactory.getLogger("APP"));
 
-        String sensorID=input.getStringByField("SENSORID");
-        String obsType=input.getStringByField("OBSTYPE");
-        String key = sensorID + obsType;
+		slrmap = new HashMap<String, SimpleLinearRegressionPredictor>();
+		// simpleLinearRegressionPredictor=new
+		// SimpleLinearRegressionPredictor();
+		// simpleLinearRegressionPredictor.setup(l,p);
+	}
 
-        String kalmanUpdatedVal = input.getStringByField("kalmanUpdatedVal");
-       
-        
-//        simpleLinearRegressionPredictor.doTask(kalmanUpdatedVal);
+	@Override
+	public void execute(Tuple input) {
+		String msgId = input.getStringByField("MSGID");
+		String sensorMeta = input.getStringByField("META");
 
-        SimpleLinearRegressionPredictor simpleLinearRegressionPredictor = slrmap.get(key);
-        if(simpleLinearRegressionPredictor == null){
-            simpleLinearRegressionPredictor=new SimpleLinearRegressionPredictor();
-            simpleLinearRegressionPredictor.setup(l,p);
-            slrmap.put(key, simpleLinearRegressionPredictor);
-        }
-        HashMap<String, String> map = new HashMap();
-        map.put(AbstractTask.DEFAULT_KEY, kalmanUpdatedVal);
-        simpleLinearRegressionPredictor.doTask(map);
+		String sensorID = input.getStringByField("SENSORID");
+		String obsType = input.getStringByField("OBSTYPE");
+		String key = sensorID + obsType;
 
+		String kalmanUpdatedVal = input.getStringByField("kalmanUpdatedVal");
 
-        float[] res= simpleLinearRegressionPredictor.getLastResult();
+		// simpleLinearRegressionPredictor.doTask(kalmanUpdatedVal);
 
-        if(res!=null) {
-            StringBuffer resTostring = new StringBuffer();
+		SimpleLinearRegressionPredictor simpleLinearRegressionPredictor = slrmap.get(key);
+		if (simpleLinearRegressionPredictor == null) {
+			simpleLinearRegressionPredictor = new SimpleLinearRegressionPredictor();
+			simpleLinearRegressionPredictor.setup(l, p);
+			slrmap.put(key, simpleLinearRegressionPredictor);
+		}
+		HashMap<String, String> map = new HashMap();
+		map.put(AbstractTask.DEFAULT_KEY, kalmanUpdatedVal);
+		simpleLinearRegressionPredictor.doTask(map);
 
-// replacing , by # Because MQTT  uses comma for seperating
+		float[] res = simpleLinearRegressionPredictor.getLastResult();
 
-            for (int c = 0; c < res.length; c++) {
-                resTostring.append(res[c]);
-                resTostring.append("#");
-            }
+		if (res != null) {
+			StringBuffer resTostring = new StringBuffer();
 
-//            if(l.isInfoEnabled())
-//            l.info("simpleLinearRegressionPredictorRes:" + resTostring);
-//            
-            sensorMeta = sensorMeta.concat(",").concat(obsType);
-            obsType = "SLR";
-            collector.emit(new Values(sensorID ,sensorMeta, obsType, resTostring.toString(), msgId));
-        }
+			// replacing , by # Because MQTT uses comma for seperating
 
-    }
+			for (int c = 0; c < res.length; c++) {
+				resTostring.append(res[c]);
+				resTostring.append("#");
+			}
 
-    @Override
-    public void cleanup() 
-    {
-    }
+			sensorMeta = sensorMeta.concat(",").concat(obsType);
+			obsType = "SLR";
+			Values values = new Values(sensorID, sensorMeta, obsType, resTostring.toString(), msgId);
+			System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+			collector.emit(values);
+		}
 
-    @Override
-    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("SENSORID","META","OBSTYPE","res","MSGID"));
-    }
+	}
+
+	@Override
+	public void cleanup() {
+	}
+
+	@Override
+	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
+		outputFieldsDeclarer.declare(new Fields("SENSORID", "META", "OBSTYPE", "res", "MSGID"));
+	}
 
 }

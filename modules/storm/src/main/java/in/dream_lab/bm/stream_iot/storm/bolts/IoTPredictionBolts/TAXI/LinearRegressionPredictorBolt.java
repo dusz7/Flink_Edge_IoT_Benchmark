@@ -102,8 +102,11 @@ public class LinearRegressionPredictorBolt extends BaseRichBolt {
         l.info("res linearRegressionPredictor-"+res);
 
         if(res!=null ) {
-            if(res!=Float.MIN_VALUE)
-                collector.emit(new Values(sensorMeta,obsVal, msgId, res.toString(),"MLR"));
+            if(res!=Float.MIN_VALUE) {
+            	Values values = new Values(sensorMeta,obsVal, msgId, res.toString(),"MLR");
+            	System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+                collector.emit(values);
+            }
             else {
                 if (l.isWarnEnabled()) l.warn("Error in LinearRegressionPredictorBolt");
                 throw new RuntimeException();

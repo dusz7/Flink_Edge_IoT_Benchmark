@@ -85,7 +85,7 @@ public class CsvSplitter {
 			int timestampColIndex = 0;
 			DateTime date = null;
 			if(datasetType.equals("TAXI")){
-				timestampColIndex = 5;
+				timestampColIndex = 3;
 				date = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").parseDateTime(nextLine[timestampColIndex]);
 			}
 			else if(datasetType.equals("SYS")){

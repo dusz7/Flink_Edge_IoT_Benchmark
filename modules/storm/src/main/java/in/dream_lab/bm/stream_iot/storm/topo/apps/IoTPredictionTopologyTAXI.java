@@ -61,23 +61,21 @@ public class IoTPredictionTopologyTAXI {
         TopologyBuilder builder = new TopologyBuilder();
 
 
+//        String basePathForMultipleSpout="/Users/anshushukla/PycharmProjects/DataAnlytics1/Storm-Scheduler-SC-scripts/TAXI-inputcsv-predict-10spouts200mps-480sec-file/";
 
+        String spout1InputFilePath="/home/user/storm/riot/riot-bench/modules/tasks/src/main/resources/TAXI_sample_data_senml.csv";
 
-        String basePathForMultipleSpout="/Users/anshushukla/PycharmProjects/DataAnlytics1/Storm-Scheduler-SC-scripts/TAXI-inputcsv-predict-10spouts200mps-480sec-file/";
-
-        System.out.println("basePathForMultipleSpout is used -"+basePathForMultipleSpout);
-
-        String spout1InputFilePath="/Users/anshushukla/Downloads/Incomplete/stream/iot-bm/modules/tasks/src/main/resources/TAXI_sample_data_senml.csv";
-//        String spout1InputFilePath=basePathForMultipleSpout+"TAXI-inputcsv-predict-10spouts200mps-480sec-file1.csv";
-        String spout2InputFilePath=basePathForMultipleSpout+"TAXI-inputcsv-predict-10spouts200mps-480sec-file2.csv";
-        String spout3InputFilePath=basePathForMultipleSpout+"TAXI-inputcsv-predict-10spouts200mps-480sec-file3.csv";
-        String spout4InputFilePath=basePathForMultipleSpout+"TAXI-inputcsv-predict-10spouts200mps-480sec-file4.csv";
-        String spout5InputFilePath=basePathForMultipleSpout+"TAXI-inputcsv-predict-10spouts200mps-480sec-file5.csv";
-        String spout6InputFilePath=basePathForMultipleSpout+"TAXI-inputcsv-predict-10spouts200mps-480sec-file6.csv";
-        String spout7InputFilePath=basePathForMultipleSpout+"TAXI-inputcsv-predict-10spouts200mps-480sec-file7.csv";
-        String spout8InputFilePath=basePathForMultipleSpout+"TAXI-inputcsv-predict-10spouts200mps-480sec-file8.csv";
-        String spout9InputFilePath=basePathForMultipleSpout+"TAXI-inputcsv-predict-10spouts200mps-480sec-file9.csv";
-        String spout10InputFilePath=basePathForMultipleSpout+"TAXI-inputcsv-predict-10spouts200mps-480sec-file10.csv";
+        
+        //        String spout1InputFilePath=basePathForMultipleSpout+"TAXI-inputcsv-predict-10spouts200mps-480sec-file1.csv";
+//        String spout2InputFilePath=basePathForMultipleSpout+"TAXI-inputcsv-predict-10spouts200mps-480sec-file2.csv";
+//        String spout3InputFilePath=basePathForMultipleSpout+"TAXI-inputcsv-predict-10spouts200mps-480sec-file3.csv";
+//        String spout4InputFilePath=basePathForMultipleSpout+"TAXI-inputcsv-predict-10spouts200mps-480sec-file4.csv";
+//        String spout5InputFilePath=basePathForMultipleSpout+"TAXI-inputcsv-predict-10spouts200mps-480sec-file5.csv";
+//        String spout6InputFilePath=basePathForMultipleSpout+"TAXI-inputcsv-predict-10spouts200mps-480sec-file6.csv";
+//        String spout7InputFilePath=basePathForMultipleSpout+"TAXI-inputcsv-predict-10spouts200mps-480sec-file7.csv";
+//        String spout8InputFilePath=basePathForMultipleSpout+"TAXI-inputcsv-predict-10spouts200mps-480sec-file8.csv";
+//        String spout9InputFilePath=basePathForMultipleSpout+"TAXI-inputcsv-predict-10spouts200mps-480sec-file9.csv";
+//        String spout10InputFilePath=basePathForMultipleSpout+"TAXI-inputcsv-predict-10spouts200mps-480sec-file10.csv";
 
 
 

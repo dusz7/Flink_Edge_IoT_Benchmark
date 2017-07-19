@@ -104,6 +104,7 @@ public class LinearRegressionTrainBolt extends BaseRichBolt {
         HashMap<String, String> map = new HashMap();
 //        obsVal="22.7,49.3,0,1955.22,27"; //dummy
         map.put(AbstractTask.DEFAULT_KEY, trainData);
+        
         String filename=datasetName+"-MLR-"+rowkeyend+".model";
         map.put("FILENAME", filename);
 

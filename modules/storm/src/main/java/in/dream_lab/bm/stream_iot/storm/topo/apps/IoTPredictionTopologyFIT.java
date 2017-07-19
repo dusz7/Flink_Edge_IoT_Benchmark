@@ -68,57 +68,57 @@ public class IoTPredictionTopologyFIT {
         String basePathForMultipleSpout="/home/anshu/data/storm/dataset/FIT_splitted_data/";
 
 
-        System.out.println("basePathForMultipleSpout is used -"+basePathForMultipleSpout);
+//        System.out.println("basePathForMultipleSpout is used -"+basePathForMultipleSpout);
 
-//        String spout1InputFilePath="/Users/anshushukla/Downloads/Incomplete/stream/iot-bm/modules/tasks/src/main/resources/FIT_sample_data_senml.csv";
-        String spout1InputFilePath=basePathForMultipleSpout+"mhealth-inputcsv-predict-10spouts600mps-480sec-file1.csv";
-        String spout2InputFilePath=basePathForMultipleSpout+"mhealth-inputcsv-predict-10spouts600mps-480sec-file1.csv";
-        String spout3InputFilePath=basePathForMultipleSpout+"mhealth-inputcsv-predict-10spouts600mps-480sec-file1.csv";
-        String spout4InputFilePath=basePathForMultipleSpout+"mhealth-inputcsv-predict-10spouts600mps-480sec-file1.csv";
-        String spout5InputFilePath=basePathForMultipleSpout+"mhealth-inputcsv-predict-10spouts600mps-480sec-file1.csv";
-        String spout6InputFilePath=basePathForMultipleSpout+"mhealth-inputcsv-predict-10spouts600mps-480sec-file1.csv";
-        String spout7InputFilePath=basePathForMultipleSpout+"mhealth-inputcsv-predict-10spouts600mps-480sec-file1.csv";
-        String spout8InputFilePath=basePathForMultipleSpout+"mhealth-inputcsv-predict-10spouts600mps-480sec-file1.csv";
-        String spout9InputFilePath=basePathForMultipleSpout+"mhealth-inputcsv-predict-10spouts600mps-480sec-file1.csv";
-        String spout10InputFilePath=basePathForMultipleSpout+"mhealth-inputcsv-predict-10spouts600mps-480sec-file1.csv";
+        String spout1InputFilePath="/home/user/storm/riot/riot-bench/modules/tasks/src/main/resources/FIT_sample_data_senml.csv";
+//        String spout1InputFilePath=basePathForMultipleSpout+"mhealth-inputcsv-predict-10spouts600mps-480sec-file1.csv";
+//        String spout2InputFilePath=basePathForMultipleSpout+"mhealth-inputcsv-predict-10spouts600mps-480sec-file1.csv";
+//        String spout3InputFilePath=basePathForMultipleSpout+"mhealth-inputcsv-predict-10spouts600mps-480sec-file1.csv";
+//        String spout4InputFilePath=basePathForMultipleSpout+"mhealth-inputcsv-predict-10spouts600mps-480sec-file1.csv";
+//        String spout5InputFilePath=basePathForMultipleSpout+"mhealth-inputcsv-predict-10spouts600mps-480sec-file1.csv";
+//        String spout6InputFilePath=basePathForMultipleSpout+"mhealth-inputcsv-predict-10spouts600mps-480sec-file1.csv";
+//        String spout7InputFilePath=basePathForMultipleSpout+"mhealth-inputcsv-predict-10spouts600mps-480sec-file1.csv";
+//        String spout8InputFilePath=basePathForMultipleSpout+"mhealth-inputcsv-predict-10spouts600mps-480sec-file1.csv";
+//        String spout9InputFilePath=basePathForMultipleSpout+"mhealth-inputcsv-predict-10spouts600mps-480sec-file1.csv";
+//        String spout10InputFilePath=basePathForMultipleSpout+"mhealth-inputcsv-predict-10spouts600mps-480sec-file1.csv";
 
 
 
         builder.setSpout("spout1", new SampleSenMLSpout(spout1InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
                 1);
-        builder.setSpout("spout2", new SampleSenMLSpout(spout2InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
-                1);
-        builder.setSpout("spout3", new SampleSenMLSpout(spout3InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
-                1);
-        builder.setSpout("spout4", new SampleSenMLSpout(spout4InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
-                1);
-        builder.setSpout("spout5", new SampleSenMLSpout(spout5InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
-                1);
-        builder.setSpout("spout6", new SampleSenMLSpout(spout6InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
-                1);
-        builder.setSpout("spout7", new SampleSenMLSpout(spout7InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
-                1);
-        builder.setSpout("spout8", new SampleSenMLSpout(spout8InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
-                1);
-        builder.setSpout("spout9", new SampleSenMLSpout(spout9InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
-                1);
-        builder.setSpout("spout10", new SampleSenMLSpout(spout10InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
-                1);
+//        builder.setSpout("spout2", new SampleSenMLSpout(spout2InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
+//                1);
+//        builder.setSpout("spout3", new SampleSenMLSpout(spout3InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
+//                1);
+//        builder.setSpout("spout4", new SampleSenMLSpout(spout4InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
+//                1);
+//        builder.setSpout("spout5", new SampleSenMLSpout(spout5InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
+//                1);
+//        builder.setSpout("spout6", new SampleSenMLSpout(spout6InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
+//                1);
+//        builder.setSpout("spout7", new SampleSenMLSpout(spout7InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
+//                1);
+//        builder.setSpout("spout8", new SampleSenMLSpout(spout8InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
+//                1);
+//        builder.setSpout("spout9", new SampleSenMLSpout(spout9InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
+//                1);
+//        builder.setSpout("spout10", new SampleSenMLSpout(spout10InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
+//                1);
 
 
 //
         builder.setBolt("SenMLParseBoltPREDTAXI",
                 new SenMLParseBoltPREDFIT(p_), 1)
-                .shuffleGrouping("spout1")
-                 	.shuffleGrouping("spout2")
-         			.shuffleGrouping("spout3")
-         			.shuffleGrouping("spout4")
-         			.shuffleGrouping("spout5")
-         			.shuffleGrouping("spout6")
-         			.shuffleGrouping("spout7")
-         			.shuffleGrouping("spout8")
-         			.shuffleGrouping("spout9")
-		            .shuffleGrouping("spout10");
+                .shuffleGrouping("spout1");
+//                 	.shuffleGrouping("spout2")
+//         			.shuffleGrouping("spout3")
+//         			.shuffleGrouping("spout4")
+//         			.shuffleGrouping("spout5")
+//         			.shuffleGrouping("spout6")
+//         			.shuffleGrouping("spout7")
+//         			.shuffleGrouping("spout8")
+//         			.shuffleGrouping("spout9")
+//		            .shuffleGrouping("spout10");
 
 
 

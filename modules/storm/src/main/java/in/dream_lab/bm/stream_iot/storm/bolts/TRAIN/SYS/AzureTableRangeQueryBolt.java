@@ -20,95 +20,103 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class AzureTableRangeQueryBolt extends BaseRichBolt {
 
-    Properties p; String csvFileNameOutSink;  //Full path name of the file at the sink bolt
-    public AzureTableRangeQueryBolt(Properties p_){
-        this.csvFileNameOutSink = csvFileNameOutSink; p=p_;
+	Properties p;
+	String csvFileNameOutSink; // Full path name of the file at the sink bolt
 
-    }
-    OutputCollector collector;
+	public AzureTableRangeQueryBolt(Properties p_) {
+		this.csvFileNameOutSink = csvFileNameOutSink;
+		p = p_;
 
-    AzureTableRangeQueryTaskSYS azureTableRangeQueryTaskSYS;
+	}
 
+	OutputCollector collector;
 
-    private static Logger l; // TODO: Ensure logger is initialized before use
-    public static void initLogger(Logger l_) {
-        l = l_;
-    }
-    String ROWKEYSTART;
-    String ROWKEYEND;
+	AzureTableRangeQueryTaskSYS azureTableRangeQueryTaskSYS;
 
+	private static Logger l; // TODO: Ensure logger is initialized before use
 
-    @Override
-    public void prepare(Map conf, TopologyContext topologyContext, OutputCollector outputCollector) {
+	public static void initLogger(Logger l_) {
+		l = l_;
+	}
 
-        this.collector=outputCollector; initLogger(LoggerFactory.getLogger("APP"));
+	String ROWKEYSTART;
+	String ROWKEYEND;
 
-        azureTableRangeQueryTaskSYS =new AzureTableRangeQueryTaskSYS();
+	@Override
+	public void prepare(Map conf, TopologyContext topologyContext, OutputCollector outputCollector) {
 
+		this.collector = outputCollector;
+		initLogger(LoggerFactory.getLogger("APP"));
 
-        initLogger(LoggerFactory.getLogger("APP"));
+		azureTableRangeQueryTaskSYS = new AzureTableRangeQueryTaskSYS();
 
-        azureTableRangeQueryTaskSYS.setup(l,p);
-    }
+		initLogger(LoggerFactory.getLogger("APP"));
 
-    @Override
-    public void execute(Tuple input) {
+		azureTableRangeQueryTaskSYS.setup(l, p);
+	}
 
-        // path for both model files
-//        String BlobModelPath = input.getStringByField("BlobModelPath");
-//        String analyticsType = input.getStringByField("analyticsType");
+	@Override
+	public void execute(Tuple input) {
 
-        String msgId = input.getStringByField("MSGID");
-        ROWKEYSTART= (input.getStringByField("ROWKEYSTART"));
-        ROWKEYEND= (input.getStringByField("ROWKEYEND"));
+		// path for both model files
+		// String BlobModelPath = input.getStringByField("BlobModelPath");
+		// String analyticsType = input.getStringByField("analyticsType");
 
+		String msgId = input.getStringByField("MSGID");
+		ROWKEYSTART = (input.getStringByField("ROWKEYSTART"));
+		ROWKEYEND = (input.getStringByField("ROWKEYEND"));
 
+		HashMap<String, String> map = new HashMap();
+		map.put("ROWKEYSTART", ROWKEYSTART);
+		map.put("ROWKEYEND", ROWKEYEND);
 
+		Stopwatch stopwatch = null;
+		if (l.isInfoEnabled()) {
+			stopwatch = Stopwatch.createStarted(); //
+		}
 
-        HashMap<String, String> map = new HashMap();
-        map.put("ROWKEYSTART", ROWKEYSTART);
-        map.put("ROWKEYEND", ROWKEYEND);
+		azureTableRangeQueryTaskSYS.doTask(map);
 
-        Stopwatch stopwatch=null;
-        if(l.isInfoEnabled()) {
-            stopwatch = Stopwatch.createStarted(); //
-        }
+		Iterable<AzureTableRangeQueryTaskSYS.SYS_City> result = (Iterable<AzureTableRangeQueryTaskSYS.SYS_City>) azureTableRangeQueryTaskSYS
+				.getLastResult();
+		
+		if (l.isInfoEnabled()) {
+			stopwatch.stop(); // optional
+			l.info("Time elapsed for azureTableRangeQueryTask() is {}", stopwatch.elapsed(MILLISECONDS)); //
+		}
 
-        azureTableRangeQueryTaskSYS.doTask(map);
+		StringBuffer bf = new StringBuffer();
+		// Loop through the results, displaying information about the entity
+		System.out.println("Loop through the results, displaying information about the entity: ");
+		for (AzureTableRangeQueryTaskSYS.SYS_City entity : result) {
+			// System.out.println(entity.getPartitionKey() + " " +
+			// entity.getRangeKey() + "\t" + entity.getAirquality_raw() );
+			bf.append(entity.getTemperature()).append(",")
+					.append(entity.getHumidity()).append(",")
+					.append(entity.getLight()).append(",")
+					.append(entity.getDust()).append(",")
+					.append(entity.getAirquality_raw()).append("\n");
 
-        Iterable<AzureTableRangeQueryTaskSYS.SYS_City> result= (Iterable<AzureTableRangeQueryTaskSYS.SYS_City>) azureTableRangeQueryTaskSYS.getLastResult();
-        if(l.isInfoEnabled()) {
-            stopwatch.stop(); // optional
-            l.info("Time elapsed for azureTableRangeQueryTask() is {}", stopwatch.elapsed(MILLISECONDS)); //
-        }
+			System.out.println("AzureTableRangeQueryBolt: " + bf.toString());
+		}
 
-        StringBuffer bf=new StringBuffer();
-        // Loop through the results, displaying information about the entity
-        for (AzureTableRangeQueryTaskSYS.SYS_City entity : result) {
-//            System.out.println(entity.getPartitionKey() + " " + entity.getRangeKey() + "\t" + entity.getAirquality_raw() );
-            bf  .append(entity.getTemperature()).append(",")
-                .append(entity.getHumidity()).append(",")
-                .append(entity.getLight()).append(",")
-                .append(entity.getDust()).append(",")
-                .append(entity.getAirquality_raw())
-                    .append("\n");
-        }
+		if (l.isInfoEnabled())
+			l.info(bf.toString());
 
-        if(l.isInfoEnabled())
-            l.info(bf.toString());
+		// FIXME: read and emit model for DTC
+		Values values = new Values(bf.toString(), msgId, ROWKEYEND);
+		System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+		collector.emit(values);
 
-//FIXME: read and emit model for DTC
-            collector.emit(new Values(bf.toString(), msgId,ROWKEYEND ));
+	}
 
-    }
+	@Override
+	public void cleanup() {
+	}
 
-    @Override
-    public void cleanup() {
-    }
-
-    @Override
-    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("TRAINDATA","MSGID","ROWKEYEND"));
-    }
+	@Override
+	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
+		outputFieldsDeclarer.declare(new Fields("TRAINDATA", "MSGID", "ROWKEYEND"));
+	}
 
 }

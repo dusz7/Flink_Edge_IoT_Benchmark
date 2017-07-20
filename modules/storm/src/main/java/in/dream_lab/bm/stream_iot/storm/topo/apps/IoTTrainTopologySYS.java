@@ -58,7 +58,7 @@ public class IoTTrainTopologySYS {
 
 		// String
 		// basePathForMultipleSpout="/Users/anshushukla/PycharmProjects/DataAnlytics1/Storm-Scheduler-SC-scripts/SYS-inputcsv-10spouts600mps-480sec-file/";
-		String basePathForMultipleSpout = "/home/user/storm/riot/riot-bench/modules/tasks/src/main/resources/";
+		String basePathForMultipleSpout = "/home/talha/iot/storm/benchmarks/riot/riot-bench/modules/tasks/src/main/resources/";
 		// String basePathForMultipleSpout="/home/anshu/data/storm/resources/";
 
 		System.out.println("basePathForMultipleSpout is used -" + basePathForMultipleSpout);

@@ -54,10 +54,13 @@ public class AzureTableRangeQueryTaskSYS extends AbstractTask {
 //			rowKey = m.split(",")[useMsgField - 1];
 			rowKeyStart = (String)map.get("ROWKEYSTART");
 			rowKeyEnd = (String)map.get("ROWKEYEND");
+			
+			System.out.println("rowkeystart: " + rowKeyStart + " rowKeyEnd: " + rowKeyEnd);
+			
 			assert Integer.parseInt(rowKeyStart)>=startRowKey;
 			assert Integer.parseInt(rowKeyEnd)<=endRowKey;
 			if(l.isInfoEnabled())
-			l.info("1-row key accesed till - "+rowKeyEnd);
+				l.info("1-row key accesed till - "+rowKeyEnd);
 		}
 		else {
 			rowKeyStart= String.valueOf(rn.nextInt(endRowKey));
@@ -70,7 +73,9 @@ public class AzureTableRangeQueryTaskSYS extends AbstractTask {
 		System.out.println("Result = "+ result);
 
 		super.setLastResult(result);
-
+		
+		System.out.println("Lists.newArrayList(result).size() = " + Lists.newArrayList(result).size());
+		
 		return Float.valueOf(Lists.newArrayList(result).size());  // may need updation
 	}
 
@@ -120,10 +125,10 @@ public class AzureTableRangeQueryTaskSYS extends AbstractTask {
 			String partitionFilter = TableQuery.generateFilterCondition(
 					"PartitionKey",
 					TableQuery.QueryComparisons.EQUAL,
-					"sys_range");
+					partitionKey);
 
-			String filter2 = TableQuery.generateFilterCondition("RangeTs", TableQuery.QueryComparisons.GREATER_THAN_OR_EQUAL, Long.parseLong(rowkeyStart)); // recordStart i.e.: "123"
-			String filter3 = TableQuery.generateFilterCondition("RangeTs", TableQuery.QueryComparisons.LESS_THAN, Long.parseLong(rowkeyEnd)); // recordEnd i.e.: "567"
+			String filter2 = TableQuery.generateFilterCondition("Timestamp", TableQuery.QueryComparisons.GREATER_THAN_OR_EQUAL, Long.parseLong(rowkeyStart)); // recordStart i.e.: "123"
+			String filter3 = TableQuery.generateFilterCondition("Timestamp", TableQuery.QueryComparisons.LESS_THAN, Long.parseLong(rowkeyEnd)); // recordEnd i.e.: "567"
 
 			String filterRange = TableQuery.combineFilters(filter2, TableQuery.Operators.AND, filter3);
 
@@ -136,17 +141,19 @@ public class AzureTableRangeQueryTaskSYS extends AbstractTask {
 							.where(combinedFilter);
 
 			Iterable<SYS_City> queryRes = cloudTable.execute(rangeQuery);
-
+			
 			// Loop through the results, displaying information about the entity
-//			for (SYS_City entity : queryRes) {
-//				System.out.println(entity.getPartitionKey() +
-//						" " + entity.getRangeKey() +
-//						"\t" + entity.getAirquality_raw()
-//				);
-//			}
-
-
+			
+			System.out.println("getAzTableRangeByKeySYS - Listing:");
+			for (SYS_City entity : queryRes) {
+				System.out.println(entity.getPartitionKey() +
+						" " + entity.getRangeKey() +
+						"\t" + entity.getAirquality_raw()
+				);
+			}
+			
 			return queryRes;
+			
 		} catch (Exception e) {
 			l.warn("Exception in getAzTableRowByKey:"+cloudTable+"; rowkeyEnd: "+rowkeyEnd, e);
 		}

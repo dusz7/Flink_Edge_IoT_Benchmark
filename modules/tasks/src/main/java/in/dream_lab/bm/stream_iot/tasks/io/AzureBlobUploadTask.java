@@ -42,10 +42,10 @@ public class AzureBlobUploadTask extends AbstractTask<String,Float> {
 		synchronized (SETUP_LOCK) {
 			if(!doneSetup) { // Do setup only once for this task
 				// If positive, use it for index over file names else read randomly
-				useMsgField = Integer.parseInt(p_.getProperty("IO.AZURE_BLOB.USE_MSG_FIELD"));
-				storageConnStr = p_.getProperty("IO.AZURE_STORAGE_CONN_STR");
+				useMsgField = Integer.parseInt(p_.getProperty("IO.AZURE_BLOB.USE_MSG_FIELD")); // 0
+				storageConnStr = p_.getProperty("IO.AZURE_STORAGE_CONN_STR");	
 				System.out.println("Storage container  "+ storageConnStr);
-				containerName = p_.getProperty("IO.AZURE_BLOB.CONTAINER_NAME");
+				containerName = p_.getProperty("IO.AZURE_BLOB.CONTAINER_NAME");	//riotbenchstormcontainer
 				doneSetup=true;
 			}
 

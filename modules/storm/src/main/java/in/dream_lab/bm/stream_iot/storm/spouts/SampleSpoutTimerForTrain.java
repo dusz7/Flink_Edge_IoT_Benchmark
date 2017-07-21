@@ -70,7 +70,7 @@ public class SampleSpoutTimerForTrain extends BaseRichSpout implements ISyntheti
 			String rowString = rowStringBuf.toString().substring(1);
 			String ROWKEYSTART=rowString.split(",")[2];
 			String ROWKEYEND=rowString.split(",")[3];
-;			System.out.println("rowString:"+rowString.split(",")[2]);
+			System.out.println("rowString:"+rowString.split(",")[2]);
 
 			values.add(rowString);
 			msgId++;
@@ -79,17 +79,11 @@ public class SampleSpoutTimerForTrain extends BaseRichSpout implements ISyntheti
 			values.add(ROWKEYSTART);
 			values.add(ROWKEYEND);
 
-			// sending rowkeystart and rowkeyend
-//			rowStringBuf.
-//			rowString.split(",")[3];
-
-
-			//
-
-
+			System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());			
+			
 			this._collector.emit(values);
+			
 			try {
-//				msgId++;
 				ba.batchLogwriter(System.currentTimeMillis(),"MSGID," + msgId);
 				//ba.batchLogwriter(System.nanoTime(),"MSGID," + msgId);
 			} catch (Exception e) {

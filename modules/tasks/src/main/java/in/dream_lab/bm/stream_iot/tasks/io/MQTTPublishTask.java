@@ -31,18 +31,16 @@ public class MQTTPublishTask extends AbstractTask implements MqttCallback {
 
 	private static String topic;
 
-
 	// local fields assigned to each thread
 	private MqttClient mqttClient;
 	private String apolloClient;
-	private static String   apolloURL;
-	Random rn =new Random();
+	private static String apolloURL;
+	Random rn = new Random();
 
 	public void setup(Logger l_, Properties p_) {
 		super.setup(l_, p_);
-		synchronized (SETUP_LOCK) { 
-			if (!doneSetup) 
-			{ 
+		synchronized (SETUP_LOCK) {
+			if (!doneSetup) {
 				useMsgField = Integer.parseInt(p_.getProperty("IO.MQTT_PUBLISH.USE_MSG_FIELD"));
 
 				apolloUserName = p_.getProperty("IO.MQTT_PUBLISH.APOLLO_USER");
@@ -57,43 +55,43 @@ public class MQTTPublishTask extends AbstractTask implements MqttCallback {
 		apolloClient = UUID.randomUUID().toString();
 		mqttClient = connectToMQTT(apolloURL, apolloClient, this, l);
 		assert mqttClient != null;
-		if (l.isInfoEnabled()) l.info("Client ID {} is connected.", mqttClient.getClientId());
+		if (l.isInfoEnabled())
+			l.info("Client ID {} is connected.", mqttClient.getClientId());
 	}
 
 	@Override
-	protected Float doTaskLogic(Map map) 
-	{
-		String m = (String)map.get(AbstractTask.DEFAULT_KEY);
-//		System.out.println("TestS: Map size null in task " +map.size());
+	protected Float doTaskLogic(Map map) {
+		String m = (String) map.get(AbstractTask.DEFAULT_KEY);
+		// System.out.println("TestS: Map size null in task " +map.size());
 		String input;
-		if (useMsgField > 0) 
-		{
+		if (useMsgField > 0) {
 			input = m.split(",")[useMsgField - 1];
-		} else if(useMsgField == -1) 
-		{
+		} else if (useMsgField == -1) {
 			input = String.valueOf(ThreadLocalRandom.current().nextInt(100));
-		}
-		else 
+		} else
 			input = m;
 
 		try { /* publish the message */
-			if(!mqttClient.isConnected()) 
-			{
+			if (!mqttClient.isConnected()) {
 				System.out.println("MQTT not connected ");
 				l.warn("Client ID {} was not connected. Reconnecting...", mqttClient.getClientId());
-				mqttClient = connectToMQTT(apolloURL,apolloClient, this, l); // connect on demand
+				mqttClient = connectToMQTT(apolloURL, apolloClient, this, l); // connect
+																				// on
+																				// demand
 			}
-			if(mqttClient == null )
+			if (mqttClient == null)
 				System.out.println("MQTT client null");
-			if(topic == null )
+			if (topic == null)
 				System.out.println("Topic null");
-			if(input == null )
+			if (input == null)
 				System.out.println("input null");
-			
+
 			mqttClient.publish(topic, input.getBytes(), 0, false);
+
+			System.out.println(this.getClass().getName() + ": Publishing to topic: " + topic);
 		} catch (MqttException e) {
-			l.warn("Exception when publishing mqtt message " + input +
-					", to topic " + topic + ", using client " + mqttClient, e);
+			l.warn("Exception when publishing mqtt message " + input + ", to topic " + topic + ", using client "
+					+ mqttClient, e);
 		}
 
 		// set parent to have the actual predictions
@@ -123,30 +121,31 @@ public class MQTTPublishTask extends AbstractTask implements MqttCallback {
 			// clean session, keep alive for 18hrs
 			MqttConnectOptions connOpt = new MqttConnectOptions();
 			connOpt.setCleanSession(true);
-			connOpt.setKeepAliveInterval(64800);// 18 hr keep connection if no message will get from the client
+			connOpt.setKeepAliveInterval(64800);// 18 hr keep connection if no
+												// message will get from the
+												// client
 			connOpt.setConnectionTimeout(64800);
 			connOpt.setUserName(apolloUserName);
 			connOpt.setPassword(apolloPassword.toCharArray());
 
 			if (l.isInfoEnabled())
-				l.info("Apollo Client {}, URL {}, Username {}, Pass {}", apolloClient, apolloURL, apolloUserName, apolloPassword);
+				l.info("Apollo Client {}, URL {}, Username {}, Pass {}", apolloClient, apolloURL, apolloUserName,
+						apolloPassword);
 
 			// client with no persistence
 			MqttClient myClient = new MqttClient(apolloURL, apolloClient, null);
-//			MqttAsyncClient myClient=new MqttAsyncClient(apolloURL,apolloClient,null);
+			// MqttAsyncClient myClient=new
+			// MqttAsyncClient(apolloURL,apolloClient,null);
 
 			myClient.setCallback(callback);
 			myClient.connect(connOpt);
-
-
 
 			if (l.isInfoEnabled())
 				l.info("Connected to Apollo thru client {} - ", myClient);
 
 			return myClient;
-		} catch (Exception e) 
-		{
-			System.out.println("Exception in connect to MQTT" + e.getMessage() );
+		} catch (Exception e) {
+			System.out.println("Exception in connect to MQTT" + e.getMessage());
 			e.printStackTrace();
 			l.warn("unable to create apollo client ID " + apolloClient + " for URL " + apolloURL, e);
 			return null;

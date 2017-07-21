@@ -26,7 +26,6 @@ public class AzureTableRangeQueryBolt extends BaseRichBolt {
 	public AzureTableRangeQueryBolt(Properties p_) {
 		this.csvFileNameOutSink = csvFileNameOutSink;
 		p = p_;
-
 	}
 
 	OutputCollector collector;
@@ -79,7 +78,7 @@ public class AzureTableRangeQueryBolt extends BaseRichBolt {
 
 		Iterable<AzureTableRangeQueryTaskSYS.SYS_City> result = (Iterable<AzureTableRangeQueryTaskSYS.SYS_City>) azureTableRangeQueryTaskSYS
 				.getLastResult();
-		
+
 		if (l.isInfoEnabled()) {
 			stopwatch.stop(); // optional
 			l.info("Time elapsed for azureTableRangeQueryTask() is {}", stopwatch.elapsed(MILLISECONDS)); //
@@ -91,10 +90,8 @@ public class AzureTableRangeQueryBolt extends BaseRichBolt {
 		for (AzureTableRangeQueryTaskSYS.SYS_City entity : result) {
 			// System.out.println(entity.getPartitionKey() + " " +
 			// entity.getRangeKey() + "\t" + entity.getAirquality_raw() );
-			bf.append(entity.getTemperature()).append(",")
-					.append(entity.getHumidity()).append(",")
-					.append(entity.getLight()).append(",")
-					.append(entity.getDust()).append(",")
+			bf.append(entity.getTemperature()).append(",").append(entity.getHumidity()).append(",")
+					.append(entity.getLight()).append(",").append(entity.getDust()).append(",")
 					.append(entity.getAirquality_raw()).append("\n");
 
 			System.out.println("AzureTableRangeQueryBolt: " + bf.toString());

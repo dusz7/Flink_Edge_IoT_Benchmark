@@ -23,71 +23,82 @@ import java.util.Properties;
 
 public class DecisionTreeTrainBolt extends BaseRichBolt {
 
-    private Properties p;
+	private Properties p;
 
-    public DecisionTreeTrainBolt(Properties p_){
-         p=p_;
+	public DecisionTreeTrainBolt(Properties p_) {
+		p = p_;
 
-    }
-    OutputCollector collector; private static Logger l;  public static void initLogger(Logger l_) {     l = l_; }
+	}
 
-    DecisionTreeTrainBatched decisionTreeTrainBatched;
-    String datasetName="";
+	OutputCollector collector;
+	private static Logger l;
 
-//    J48 j48tree;
-//    LinearRegression lr;
-    @Override
-    public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
+	public static void initLogger(Logger l_) {
+		l = l_;
+	}
 
-        this.collector=outputCollector;
-        initLogger(LoggerFactory.getLogger("APP"));
-        datasetName=p.getProperty("TRAIN.DATASET_NAME").toString();
+	DecisionTreeTrainBatched decisionTreeTrainBatched;
+	String datasetName = "";
 
-        decisionTreeTrainBatched= new DecisionTreeTrainBatched();
+	// J48 j48tree;
+	// LinearRegression lr;
+	@Override
+	public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
 
-        decisionTreeTrainBatched.setup(l,p);
-    }
+		this.collector = outputCollector;
+		initLogger(LoggerFactory.getLogger("APP"));
+		datasetName = p.getProperty("TRAIN.DATASET_NAME").toString();
 
-    @Override
-    public void execute(Tuple input) {
+		decisionTreeTrainBatched = new DecisionTreeTrainBatched();
 
-        String msgid = input.getStringByField("MSGID");
-        String annotData = input.getStringByField("ANNOTDATA");
-        String rowkeyend = input.getStringByField("ROWKEYEND");
+		decisionTreeTrainBatched.setup(l, p);
+	}
 
+	@Override
+	public void execute(Tuple input) {
 
-//        String obsVal="22.7,49.3,0,1955.22,27"; //dummy
-//        String msgId="0";
+		String msgid = input.getStringByField("MSGID");
+		String annotData = input.getStringByField("ANNOTDATA");
+		String rowkeyend = input.getStringByField("ROWKEYEND");
 
-        HashMap<String, String> map = new HashMap();
-        map.put(AbstractTask.DEFAULT_KEY, annotData);
-        String filename=datasetName+"-DTC-"+rowkeyend+".model";
-        map.put("FILENAME", filename);
+		// String obsVal="22.7,49.3,0,1955.22,27"; //dummy
+		// String msgId="0";
 
-        Float res = decisionTreeTrainBatched.doTask(map);  // index of result-class/enum as return
-        ByteArrayOutputStream model= (ByteArrayOutputStream) decisionTreeTrainBatched.getLastResult();
+		HashMap<String, String> map = new HashMap();
+		map.put(AbstractTask.DEFAULT_KEY, annotData);
 
-        if(l.isInfoEnabled())
-            l.info("result from res:{}",res);
+		String filename = datasetName + "-DTC-" + rowkeyend + ".model";
+		map.put("FILENAME", filename);
 
-        if(res!=null ) {
-            if(res!=Float.MIN_VALUE)
-                collector.emit(new Values(model, msgid, rowkeyend,"DTC",filename));
-            else {
-                if (l.isWarnEnabled()) l.warn("Error in DecisionTreeClassifyBolt");
-                throw new RuntimeException();
-            }
-        }
-    }
+		Float res = decisionTreeTrainBatched.doTask(map); // index of
+															// result-class/enum
+															// as return
+		ByteArrayOutputStream model = (ByteArrayOutputStream) decisionTreeTrainBatched.getLastResult();
 
-    @Override
-    public void cleanup() {
-        decisionTreeTrainBatched.tearDown();
-    }
+		if (l.isInfoEnabled())
+			l.info("result from res:{}", res);
 
-    @Override
-    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("MODEL","MSGID","ROWKEYEND","ANALAYTICTYPE","FILENAME"));
-    }
+		if (res != null) {
+			if (res != Float.MIN_VALUE) {
+				Values values = new Values(model, msgid, rowkeyend, "DTC", filename);
+				System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+				collector.emit(values);
+			} else {
+				if (l.isWarnEnabled())
+					l.warn("Error in DecisionTreeClassifyBolt");
+				throw new RuntimeException();
+			}
+		}
+	}
+
+	@Override
+	public void cleanup() {
+		decisionTreeTrainBatched.tearDown();
+	}
+
+	@Override
+	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
+		outputFieldsDeclarer.declare(new Fields("MODEL", "MSGID", "ROWKEYEND", "ANALAYTICTYPE", "FILENAME"));
+	}
 
 }

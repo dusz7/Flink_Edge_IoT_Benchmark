@@ -23,69 +23,69 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class AnnotateDTClassBolt extends BaseRichBolt {
 
-    private Properties p;
+	private Properties p;
 
-    public AnnotateDTClassBolt(Properties p_)
-    {
-         p=p_;
+	public AnnotateDTClassBolt(Properties p_) {
+		p = p_;
 
-    }
-    OutputCollector collector;
-    private static Logger l; 
-    public static void initLogger(Logger l_) {     l = l_; }
-    AnnotateDTClass annotateDTClass;
-    
-    @Override
-    public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
+	}
 
-        this.collector=outputCollector;
-        initLogger(LoggerFactory.getLogger("APP"));
+	OutputCollector collector;
+	private static Logger l;
 
-        annotateDTClass= new AnnotateDTClass();
+	public static void initLogger(Logger l_) {
+		l = l_;
+	}
 
-        annotateDTClass.setup(l,p);
-    }
+	AnnotateDTClass annotateDTClass;
 
-    @Override
-    public void execute(Tuple input) 
-    {
-    	String msgId = (String)input.getValueByField("MSGID");
-    	String data = input.getStringByField("TRAINDATA");
-        String rowkeyend = input.getStringByField("ROWKEYEND");
+	@Override
+	public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
 
-//        System.out.println("inside annotate bolt");
-//        String annotatedData =null;
-//        for(String s :data.split("\n")){
-//            annotatedData
-//        }
+		this.collector = outputCollector;
+		initLogger(LoggerFactory.getLogger("APP"));
 
+		annotateDTClass = new AnnotateDTClass();
 
+		annotateDTClass.setup(l, p);
+	}
 
-    	HashMap<String, String> map = new HashMap();
-        map.put(AbstractTask.DEFAULT_KEY, data);
+	@Override
+	public void execute(Tuple input) {
+		String msgId = (String) input.getValueByField("MSGID");
+		String data = input.getStringByField("TRAINDATA");
+		String rowkeyend = input.getStringByField("ROWKEYEND");
 
-//        Stopwatch stopwatch = Stopwatch.createStarted(); //
+		// System.out.println(this.getClass().getName() + " - GOT - msgId: " +
+		// msgId + " rowKeyEnd: " + rowkeyend
+		// + "\ndata: \n" + data);
 
-        annotateDTClass.doTask(map);
+		HashMap<String, String> map = new HashMap();
+		map.put(AbstractTask.DEFAULT_KEY, data);
 
-//        stopwatch.stop(); // optional
-//        System.out.println("Time elapsed for annotateDTClass() is "+ stopwatch.elapsed(MILLISECONDS)); //
+		// Stopwatch stopwatch = Stopwatch.createStarted(); //
 
-        String annotData=annotateDTClass.getLastResult();
+		annotateDTClass.doTask(map);
 
+		// stopwatch.stop(); // optional
+		// System.out.println("Time elapsed for annotateDTClass() is "+
+		// stopwatch.elapsed(MILLISECONDS)); //
 
-    	collector.emit(new Values(msgId,annotData,rowkeyend));
-    }
+		String annotData = annotateDTClass.getLastResult();
 
-    @Override
-    public void cleanup() {
-        annotateDTClass.tearDown();
-    }
+		Values values = new Values(msgId, annotData, rowkeyend);
+		System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+		collector.emit(values);
+	}
 
-    @Override
-    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("MSGID","ANNOTDATA","ROWKEYEND"));
-    }
+	@Override
+	public void cleanup() {
+		annotateDTClass.tearDown();
+	}
+
+	@Override
+	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
+		outputFieldsDeclarer.declare(new Fields("MSGID", "ANNOTDATA", "ROWKEYEND"));
+	}
 
 }
-

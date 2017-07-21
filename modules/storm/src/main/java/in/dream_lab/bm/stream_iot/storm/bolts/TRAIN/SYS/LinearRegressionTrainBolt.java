@@ -117,14 +117,16 @@ public class LinearRegressionTrainBolt extends BaseRichBolt {
         }
 
         if(res!=null ) {
-            if(res!=Float.MIN_VALUE)
-                collector.emit(new Values(model, msgId, rowkeyend,"MLR",filename));
+            if(res!=Float.MIN_VALUE) {
+            	Values values = new Values(model, msgId, rowkeyend,"MLR",filename);
+            	System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+                collector.emit(values);
+            }
             else {
                 if (l.isWarnEnabled()) l.warn("Error in LinearRegressionPredictorBolt");
                 throw new RuntimeException();
             }
         }
-
     }
 
     @Override

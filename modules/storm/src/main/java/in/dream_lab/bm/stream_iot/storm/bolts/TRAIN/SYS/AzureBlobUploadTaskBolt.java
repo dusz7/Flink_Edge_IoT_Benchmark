@@ -23,86 +23,86 @@ import java.util.UUID;
 
 public class AzureBlobUploadTaskBolt extends BaseRichBolt {
 
-    private Properties p;
+	private Properties p;
 
-    public AzureBlobUploadTaskBolt(Properties p_){
-        p=p_;
+	public AzureBlobUploadTaskBolt(Properties p_) {
+		p = p_;
 
-    }
+	}
 
-    OutputCollector collector;
-    private static Logger l; // TODO: Ensure logger is initialized before use
-    public static void initLogger(Logger l_) {
-        l = l_;
-    }
+	OutputCollector collector;
+	private static Logger l; // TODO: Ensure logger is initialized before use
 
-    AzureBlobUploadTask azureBlobUploadTask;
-    String baseDirname="";
-    String fileName="T";
-    String datasetName="";
+	public static void initLogger(Logger l_) {
+		l = l_;
+	}
 
-    @Override
-    public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
+	AzureBlobUploadTask azureBlobUploadTask;
+	String baseDirname = "";
+	String fileName = "T";
+	String datasetName = "";
 
-        this.collector=outputCollector;
-        initLogger(LoggerFactory.getLogger("APP"));
+	@Override
+	public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
 
-        azureBlobUploadTask=new AzureBlobUploadTask();
+		this.collector = outputCollector;
+		initLogger(LoggerFactory.getLogger("APP"));
 
-        //ToDO:  unique file path for every thread in local before uploading
+		azureBlobUploadTask = new AzureBlobUploadTask();
 
+		// ToDO: unique file path for every thread in local before uploading
 
-        baseDirname=p.getProperty("IO.AZURE_BLOB_UPLOAD.DIR_NAME").toString();
-        datasetName=p.getProperty("TRAIN.DATASET_NAME").toString();
+		baseDirname = p.getProperty("IO.AZURE_BLOB_UPLOAD.DIR_NAME").toString();
+		datasetName = p.getProperty("TRAIN.DATASET_NAME").toString();
 
-//        fileName= baseDirname+"/"+UUID.randomUUID().toString();
+		// fileName= baseDirname+"/"+UUID.randomUUID().toString();
 
+		// p.setProperty("IO.AZURE_BLOB_UPLOAD.FILE_SOURCE_PATH",fileName);
+		azureBlobUploadTask.setup(l, p);
 
-//        p.setProperty("IO.AZURE_BLOB_UPLOAD.FILE_SOURCE_PATH",fileName);
-        azureBlobUploadTask.setup(l,p);
+	}
 
+	@Override
+	public void execute(Tuple input) {
+		String res = "0";
+		String msgId = input.getStringByField("MSGID");
+		// String analaytictype = input.getStringByField("ANALAYTICTYPE");
+		// String rowkeyend = input.getStringByField("ROWKEYEND");
 
-    }
+		fileName = input.getStringByField("FILENAME");
+		String filepath = baseDirname + fileName;
 
-    @Override
-    public void execute(Tuple input) {
-        String res = "0";
-        String msgId = input.getStringByField("MSGID");
-//        String analaytictype = input.getStringByField("ANALAYTICTYPE");
-//        String rowkeyend = input.getStringByField("ROWKEYEND");
+		if (l.isInfoEnabled())
+			l.info("filapth in upload bolt{} and name is {}", filepath, fileName);
 
-        fileName=input.getStringByField("FILENAME");
-        String filepath=baseDirname+fileName;
+		HashMap<String, String> map = new HashMap();
+		map.put(AbstractTask.DEFAULT_KEY, filepath);
 
-        if(l.isInfoEnabled())
-            l.info("filapth in upload bolt{} and name is {}",filepath,fileName);
+		Float blobRes = azureBlobUploadTask.doTask(map);
 
+		System.out.println(this.getClass().getName() + " - Upload Result - " + blobRes);
 
-        HashMap<String, String> map = new HashMap();
-        map.put(AbstractTask.DEFAULT_KEY, filepath);
+		if (res != null) {
+			if (blobRes != Float.MIN_VALUE) {
+				Values values = new Values(msgId, fileName);
+				System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+				collector.emit(values);
+			} else {
+				if (l.isWarnEnabled())
+					l.warn("Error in AzureBlobUploadTaskBolt");
+				throw new RuntimeException();
+			}
+		}
+	}
 
-        Float blobRes = azureBlobUploadTask.doTask(map);
+	@Override
+	public void cleanup() {
+		azureBlobUploadTask.tearDown();
+	}
 
-// TODO: previous check      if(res==1)
-
-        if(res!=null ) {
-            if(blobRes!=Float.MIN_VALUE)
-                collector.emit(new Values(msgId,fileName));
-            else {
-                if (l.isWarnEnabled()) l.warn("Error in AzureBlobUploadTaskBolt");
-                throw new RuntimeException();
-            }
-        }
-    }
-
-    @Override
-    public void cleanup() {
-        azureBlobUploadTask.tearDown();
-    }
-
-    @Override
-    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("MSGID","FILENAME"));
-    }
+	@Override
+	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
+		outputFieldsDeclarer.declare(new Fields("MSGID", "FILENAME"));
+	}
 
 }

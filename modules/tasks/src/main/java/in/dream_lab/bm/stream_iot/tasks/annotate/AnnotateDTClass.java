@@ -44,9 +44,10 @@ public class AnnotateDTClass extends AbstractTask<String,String>
 		String result=map.get(AbstractTask.DEFAULT_KEY);
 //		 Loop through the results, displaying information about the entity
 		for (String entity : result.split("\n")) {
+			System.out.println(this.getClass().getName() + " - GOT - " + entity);
 //			if(l.isInfoEnabled())
 //				l.info("val at annotate {}",entity);
-			doubleValues.add(Double.valueOf(entity.split(",")[useMsgField]));// 4 for sys
+			doubleValues.add(Double.valueOf(entity.split(",")[useMsgField]));// 4 for sys	(air_quality)
 		}
 
 		double[] data = Doubles.toArray(doubleValues);

@@ -30,6 +30,7 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 	double scalingFactor;
 	BatchedFileLogging ba;
 	long msgId;
+	int inputRate;
 
 	public SampleSenMLSpout() {
 		// this.csvFileName = "/home/ubuntu/sample100_sense.csv";
@@ -50,10 +51,15 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 	public SampleSenMLSpout(String csvFileName, String outSpoutCSVLogFileName, double scalingFactor) {
 		this(csvFileName, outSpoutCSVLogFileName, scalingFactor, "");
 	}
+	
+	public SampleSenMLSpout(String csvFileName, String outSpoutCSVLogFileName, double scalingFactor, int inputRate) {
+		this(csvFileName, outSpoutCSVLogFileName, scalingFactor, "");
+		this.inputRate = inputRate;
+	}
 
 	@Override
 	public void nextTuple() {
-		int count = 0, MAX_COUNT = 10; // FIXME?
+		int count = 0, MAX_COUNT = 1; // FIXME?		-> Now, only emit one tuple per nextTuple() call.
 		while (count < MAX_COUNT) {
 			List<String> entry = this.eventQueue.poll(); // nextTuple should not
 															// block!
@@ -94,9 +100,9 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 			e.printStackTrace();
 		}
 		_collector = collector;
-		this.eventGen = new EventGen(this, this.scalingFactor);
+		this.eventGen = new EventGen(this, this.scalingFactor, this.inputRate);		/*added rate=100 here for now, make it a CLI arg*/ 
 		this.eventQueue = new LinkedBlockingQueue<List<String>>();
-		String uLogfilename = this.outSpoutCSVLogFileName + msgId;
+		String uLogfilename = this.outSpoutCSVLogFileName;
 		this.eventGen.launch(this.csvFileName, uLogfilename, -1, true); // Launch
 																		// threads
 

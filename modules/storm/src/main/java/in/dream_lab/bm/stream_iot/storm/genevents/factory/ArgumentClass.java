@@ -12,6 +12,7 @@ public class ArgumentClass{
     String outputDirName;  //Path where the output log file from spout and sink has to be kept
     String tasksPropertiesFilename;
     String tasksName;
+    int inputRate;
 
     public String getTasksName() {
 		return tasksName;
@@ -67,6 +68,14 @@ public class ArgumentClass{
 
     public void setScalingFactor(double scalingFactor) {
         this.scalingFactor = scalingFactor;
+    }
+    
+    public int getInputRate() {
+        return inputRate;
+    }
+
+    public void setInputRate(int inputRate) {
+        this.inputRate = inputRate;
     }
 
     public String getTasksPropertiesFilename() {

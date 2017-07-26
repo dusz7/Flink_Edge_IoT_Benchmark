@@ -14,7 +14,7 @@ public class ArgumentParser {
      */
     public static ArgumentClass parserCLI(String [] args)
     {
-    	if(args == null || args.length != 8){
+    	if(args == null || args.length != 9){
             System.out.println("invalid number of arguments");
             return null;
         }
@@ -28,6 +28,7 @@ public class ArgumentParser {
             argumentClass.setOutputDirName(args[5]);
             argumentClass.setTasksPropertiesFilename(args[6]);
             argumentClass.setTasksName(args[7]);
+            argumentClass.setInputRate(Integer.parseInt(args[8]));
             return argumentClass;
         }
     }

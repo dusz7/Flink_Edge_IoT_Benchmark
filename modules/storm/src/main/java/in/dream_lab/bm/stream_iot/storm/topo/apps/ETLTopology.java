@@ -45,6 +45,7 @@ public class ETLTopology {
 		
 		Config conf = new Config();
 		conf.setDebug(false);
+		
 		conf.setNumAckers(0);
 		
 		

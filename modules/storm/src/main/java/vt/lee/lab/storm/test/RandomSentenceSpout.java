@@ -60,11 +60,10 @@ public class RandomSentenceSpout extends BaseRichSpout implements ISyntheticSent
 		String snetence = this.eventQueue.poll();
 		if (snetence == null)
 			return;
-		
+
 		msgId++;
 
 		_collector.emit(new Values(Long.toString(msgId), snetence));
-		System.out.println("RandomSentenceSpout: Emitted event");
 		try {
 			ba.batchLogwriter(System.currentTimeMillis(), "MSGID," + msgId);
 		} catch (Exception e) {
@@ -75,6 +74,19 @@ public class RandomSentenceSpout extends BaseRichSpout implements ISyntheticSent
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		declarer.declare(new Fields("MSGID", "sentence"));
+	}
+
+	@Override
+	public void ack(Object msgId) {
+		System.out.println("RandomSentenceSpout: ack method triggered (Backpressure was enabled). Input Rate = "
+				+ this.rate + ". msgId = " + msgId.toString());
+	}
+
+	@Override
+	public void fail(Object msgId) {
+		System.out.println(
+				"RandomSentenceSpout: fail method triggered (One or more receive queues reached high watermark). Input Rate = "
+						+ this.rate + ". msgId = " + msgId.toString());
 	}
 
 	@Override

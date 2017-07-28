@@ -27,7 +27,7 @@ public class Utils {
 			long initMsg = Long.parseLong(first[msgIdIndex]);
 			long finalTs = Long.parseLong(lastSplit[tsIndex]);
 			long finalMsg = Long.parseLong(lastSplit[msgIdIndex]);
-			rate = (double)(finalMsg - initMsg) / ((finalTs - initTs) / 1000);
+			rate = (double) (finalMsg - initMsg) / ((finalTs - initTs) / 1000);
 			reader.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -35,4 +35,11 @@ public class Utils {
 		}
 		return rate;
 	}
+
+	public static double getLatency(String inFile, String oFile, int inFileTsIndex, int inFileMsgIndex,
+			int outFileTsIndex, int outFileMsgIndexs) {
+		
+		return 0;
+	}
+
 }

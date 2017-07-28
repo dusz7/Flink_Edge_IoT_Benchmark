@@ -33,21 +33,20 @@ public class WordCountTestTopology {
 
 		Config config = new Config();
 		config.setNumAckers(0);
-		config.put(Config.TOPOLOGY_BACKPRESSURE_ENABLE, false);
+		config.put(Config.TOPOLOGY_BACKPRESSURE_ENABLE, true);
 		config.setDebug(false);
 
 		builder.setSpout("random_sentence_spout",
 				new RandomSentenceSpout(spoutLogFileName, inputRate, experimentDuration));
-		builder.setBolt("sentence_split_bolt", new SentenceSplitBolt()).shuffleGrouping("random_sentence_spout");
-		builder.setBolt("word_count_bolt_1", new CountBolt(20)).shuffleGrouping("sentence_split_bolt");
-		builder.setBolt("word_count_bolt_2", new CountBolt(100)).shuffleGrouping("word_count_bolt_1");
-		builder.setBolt("word_count_bolt_3", new CountBolt(10)).shuffleGrouping("word_count_bolt_2");
-		builder.setBolt("word_count_bolt_4", new CountBolt(50)).shuffleGrouping("word_count_bolt_3");
-		builder.setBolt("word_count_bolt_5", new CountBolt(35)).shuffleGrouping("word_count_bolt_4");
-		builder.setBolt("word_count_bolt_6", new CountBolt(70)).shuffleGrouping("word_count_bolt_5");
-		builder.setBolt("word_count_bolt_7", new CountBolt(10)).shuffleGrouping("word_count_bolt_6");
-		builder.setBolt("word_count_bolt_8", new CountBolt(1)).shuffleGrouping("word_count_bolt_7");
-		builder.setBolt("word_count_bolt_9", new CountBolt(30)).shuffleGrouping("word_count_bolt_8");
+		builder.setBolt("word_count_bolt_1", new CountBolt(20), 1).shuffleGrouping("random_sentence_spout");
+		builder.setBolt("word_count_bolt_2", new CountBolt(100), 1).shuffleGrouping("word_count_bolt_1");
+		builder.setBolt("word_count_bolt_3", new CountBolt(10), 1).shuffleGrouping("word_count_bolt_2");
+		builder.setBolt("word_count_bolt_4", new CountBolt(50), 1).shuffleGrouping("word_count_bolt_3");
+		builder.setBolt("word_count_bolt_5", new CountBolt(35), 1).shuffleGrouping("word_count_bolt_4");
+		builder.setBolt("word_count_bolt_6", new CountBolt(70), 1).shuffleGrouping("word_count_bolt_5");
+		builder.setBolt("word_count_bolt_7", new CountBolt(10), 1).shuffleGrouping("word_count_bolt_6");
+		builder.setBolt("word_count_bolt_8", new CountBolt(1), 1).shuffleGrouping("word_count_bolt_7");
+		builder.setBolt("word_count_bolt_9", new CountBolt(30), 1).shuffleGrouping("word_count_bolt_8");
 		builder.setBolt("sink", new Sink(sinkLogFileName), 1).shuffleGrouping("word_count_bolt_9");
 
 		StormTopology stormTopology = builder.createTopology();

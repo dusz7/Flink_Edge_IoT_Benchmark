@@ -29,6 +29,7 @@ public class InbalanceWordCountTopology {
 		String topologyName = argumentClass.getTopoName();
 		String sinkLogFileName = outDir + "/sink-" + logFilePrefix;
 		String spoutLogFileName = outDir + "/spout-" + logFilePrefix;
+		long numEvents = argumentClass.getNumEvents();
 
 		long experimentDuration = 60000L; // get it as a CLI arg
 
@@ -40,7 +41,7 @@ public class InbalanceWordCountTopology {
 		config.setDebug(false);
 
 		builder.setSpout("random_sentence_spout",
-				new RandomSentenceSpout(spoutLogFileName, inputRate, experimentDuration));
+				new RandomSentenceSpout(spoutLogFileName, inputRate, experimentDuration, numEvents));
 		builder.setBolt("word_count_bolt_1", new InbalanceCountBolt(20)).shuffleGrouping("random_sentence_spout");
 		builder.setBolt("word_count_bolt_2", new InbalanceCountBolt(100)).shuffleGrouping("word_count_bolt_1");
 		builder.setBolt("word_count_bolt_3", new InbalanceCountBolt(10)).shuffleGrouping("word_count_bolt_2");

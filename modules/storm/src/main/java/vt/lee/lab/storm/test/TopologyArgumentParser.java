@@ -21,7 +21,7 @@ public class TopologyArgumentParser {
 	 * */
 	
 	public static TopologyArgumentClass parserCLI(String[] args) {
-		if (args == null || args.length != 5) {
+		if (args == null || args.length != 6) {
 			System.out.println("invalid number of arguments");
 			return null;
 		} else {
@@ -31,6 +31,7 @@ public class TopologyArgumentParser {
 			argumentClass.setExperiRunId(args[2]);
 			argumentClass.setOutputDirName(args[3]);
 			argumentClass.setInputRate(Integer.parseInt(args[4]));
+			argumentClass.setNumEvents(Integer.parseInt(args[5]));
 			return argumentClass;
 		}
 	}

@@ -7,6 +7,7 @@ public class TopologyArgumentClass {
 	String outputDirName; // Path where the output log file from spout and sink
 							// has to be kept
 	int inputRate;
+	long numEvents;
 
 	public String getOutputDirName() {
 		return outputDirName;
@@ -46,6 +47,14 @@ public class TopologyArgumentClass {
 
 	public void setInputRate(int inputRate) {
 		this.inputRate = inputRate;
+	}
+	
+	public long getNumEvents() {
+		return inputRate;
+	}
+
+	public void setNumEvents(long numEvents) {
+		this.numEvents = numEvents;
 	}
 
 }

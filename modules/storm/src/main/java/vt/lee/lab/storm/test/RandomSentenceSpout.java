@@ -27,11 +27,14 @@ public class RandomSentenceSpout extends BaseRichSpout implements ISyntheticSent
 	String spoutLogFile;
 	BatchedFileLogging ba;
 	long msgId;
+	long startingMsgID; 
+	long numEvents;
 
-	public RandomSentenceSpout(String logFile, int rate, long expDuration) {
+	public RandomSentenceSpout(String logFile, int rate, long expDuration, long numEvents) {
 		this.rate = rate;
 		this.expDuration = expDuration;
 		this.spoutLogFile = logFile;
+		this.numEvents = numEvents;
 	}
 
 	@Override
@@ -42,6 +45,7 @@ public class RandomSentenceSpout extends BaseRichSpout implements ISyntheticSent
 		Random r = new Random();
 		try {
 			msgId = (long) (1 * Math.pow(10, 12) + (r.nextInt(1000) * Math.pow(10, 9)) + r.nextInt(10));
+			startingMsgID = msgId;
 
 		} catch (Exception e) {
 
@@ -58,11 +62,12 @@ public class RandomSentenceSpout extends BaseRichSpout implements ISyntheticSent
 	@Override
 	public void nextTuple() {
 		String snetence = this.eventQueue.poll();
-		if (snetence == null)
+		System.out.println("RandomSentenceSpout : Executing nextTuple");
+		if (snetence == null || msgId > (startingMsgID + numEvents))
 			return;
 
 		msgId++;
-
+		
 		_collector.emit(new Values(Long.toString(msgId), snetence));
 		try {
 			ba.batchLogwriter(System.currentTimeMillis(), "MSGID," + msgId);

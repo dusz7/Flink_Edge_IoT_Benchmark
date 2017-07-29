@@ -1,5 +1,7 @@
 package vt.lee.lab.storm.test;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
@@ -27,14 +29,20 @@ public class RandomSentenceSpout extends BaseRichSpout implements ISyntheticSent
 	String spoutLogFile;
 	BatchedFileLogging ba;
 	long msgId;
-	long startingMsgID; 
+	long startingMsgID;
 	long numEvents;
+	String outDir;
 
 	public RandomSentenceSpout(String logFile, int rate, long expDuration, long numEvents) {
 		this.rate = rate;
 		this.expDuration = expDuration;
 		this.spoutLogFile = logFile;
 		this.numEvents = numEvents;
+	}
+
+	public RandomSentenceSpout(String logFile, int rate, long expDuration, long numEvents, String outDir) {
+		this(logFile, rate, expDuration, numEvents);
+		this.outDir = outDir;
 	}
 
 	@Override
@@ -67,7 +75,7 @@ public class RandomSentenceSpout extends BaseRichSpout implements ISyntheticSent
 			return;
 
 		msgId++;
-		
+
 		_collector.emit(new Values(Long.toString(msgId), snetence));
 		try {
 			ba.batchLogwriter(System.currentTimeMillis(), "MSGID," + msgId);
@@ -83,15 +91,35 @@ public class RandomSentenceSpout extends BaseRichSpout implements ISyntheticSent
 
 	@Override
 	public void ack(Object msgId) {
-		System.out.println("RandomSentenceSpout: ack method triggered (Backpressure was enabled). Input Rate = "
-				+ this.rate + ". msgId = " + msgId.toString());
+		String ackSignal = outDir + "/ack-" + rate + "-" + numEvents;
+		try {
+			PrintWriter writer = new PrintWriter(ackSignal, "UTF-8");
+			writer.println("RandomSentenceSpout: ack method triggered (Backpressure was enabled). Input Rate = "
+					+ this.rate + ". msgId = " + msgId.toString());
+			writer.close();
+			System.out.println("RandomSentenceSpout: ack method triggered (Backpressure was enabled). Input Rate = "
+					+ this.rate + ". msgId = " + msgId.toString());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
 	}
 
 	@Override
 	public void fail(Object msgId) {
-		System.out.println(
-				"RandomSentenceSpout: fail method triggered (One or more receive queues reached high watermark). Input Rate = "
-						+ this.rate + ". msgId = " + msgId.toString());
+		String ackSignal = outDir + "/fail-" + rate + "-" + numEvents;
+		try {
+			PrintWriter writer = new PrintWriter(ackSignal, "UTF-8");
+			writer.println(
+					"RandomSentenceSpout: fail method triggered (One or more receive queues reached high watermark). Input Rate = "
+							+ this.rate + ". msgId = " + msgId.toString());
+			writer.close();
+			System.out.println(
+					"RandomSentenceSpout: fail method triggered (One or more receive queues reached high watermark). Input Rate = "
+							+ this.rate + ". msgId = " + msgId.toString());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override

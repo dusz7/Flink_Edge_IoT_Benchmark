@@ -165,7 +165,7 @@ public class BatchedFileLogging  {
         {
             //System.out.print("data is inside hashmap");
 //            batch.put(ts,identifierData);
-        	System.out.println(this.getClass().getName() + " - Adding data to batch");
+        	//System.out.println(this.getClass().getName() + " - Adding data to batch");
             batch.add(new TupleType(ts, identifierData));
             counter += 1;
         }
@@ -190,10 +190,10 @@ public class BatchedFileLogging  {
 //            //3-insert new tuple to map
 //            counter=1;
 //            batch.put(ts,identifierData);
-        	System.out.println(this.getClass().getName() + " - Writing from batch to outFile");
+        	//System.out.println(this.getClass().getName() + " - Writing from batch to outFile");
             for(TupleType tp : batch){
-            	System.out.println(Thread.currentThread().getId() + Thread.currentThread().getName() + this.getClass().getName() + 
-        				"Writing to batch file logs" + this.logStringPrefix + "," + tp.ts + "," + tp.identifier);
+            	//System.out.println(Thread.currentThread().getId() + Thread.currentThread().getName() + this.getClass().getName() + 
+        		//		"Writing to batch file logs" + this.logStringPrefix + "," + tp.ts + "," + tp.identifier);
                 this.out.write( this.logStringPrefix + "," + tp.ts + "," + tp.identifier + "\n");
             }
             this.out.flush();

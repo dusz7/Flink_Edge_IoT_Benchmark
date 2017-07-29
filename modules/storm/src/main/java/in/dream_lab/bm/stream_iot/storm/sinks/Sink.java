@@ -27,8 +27,8 @@ public class Sink extends BaseRichBolt {
     public Sink(String csvFileNameOutSink){
     	Random ran = new Random();
         this.csvFileNameOutSink = csvFileNameOutSink;
-        System.out.println(Thread.currentThread().getId() + Thread.currentThread().getName() + this.getClass().getName() + 
-        		"SINK: Output log File Name: " + csvFileNameOutSink);
+        /*System.out.println(Thread.currentThread().getId() + Thread.currentThread().getName() + this.getClass().getName() + 
+        		"SINK: Output log File Name: " + csvFileNameOutSink);*/
     }
 
     @Override
@@ -37,16 +37,16 @@ public class Sink extends BaseRichBolt {
         BatchedFileLogging.writeToTemp(this, this.csvFileNameOutSink);
          //ba=new BatchedFileLogging();
         ba=new BatchedFileLogging(this.csvFileNameOutSink, topologyContext.getThisComponentId());
-        if (ba != null)
+        /*if (ba != null)
         	System.out.println(Thread.currentThread().getId() + Thread.currentThread().getName() + this.getClass().getName() 
-        			+ "Created new BatchedFileLogging. " + ba.toString());
+        			+ "Created new BatchedFileLogging. " + ba.toString());*/
     }
 
     @Override
     public void execute(Tuple input) {
         String msgId = input.getStringByField("MSGID");
-        System.out.println(Thread.currentThread().getId() + Thread.currentThread().getName() + this.getClass().getName() + 
-				"Sink Bolt received the tuple with msgId: " + msgId);
+        //System.out.println(Thread.currentThread().getId() + Thread.currentThread().getName() + this.getClass().getName() + 
+		//		"Sink Bolt received the tuple with msgId: " + msgId);
 //        String exe_time = input.getStringByField("time");  //addon
         //collector.emit(input,new Values(msgId));
         try {

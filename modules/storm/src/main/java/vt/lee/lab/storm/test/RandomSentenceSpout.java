@@ -70,7 +70,6 @@ public class RandomSentenceSpout extends BaseRichSpout implements ISyntheticSent
 	@Override
 	public void nextTuple() {
 		String snetence = this.eventQueue.poll();
-		System.out.println("RandomSentenceSpout : Executing nextTuple");
 		if (snetence == null || (msgId > (startingMsgID + numEvents)))
 			return;
 
@@ -91,35 +90,12 @@ public class RandomSentenceSpout extends BaseRichSpout implements ISyntheticSent
 
 	@Override
 	public void ack(Object msgId) {
-		String ackSignal = outDir + "/ack-" + rate + "-" + numEvents;
-		try {
-			PrintWriter writer = new PrintWriter(ackSignal, "UTF-8");
-			writer.println("RandomSentenceSpout: ack method triggered (Backpressure was enabled). Input Rate = "
-					+ this.rate + ". msgId = " + msgId.toString());
-			writer.close();
-			System.out.println("RandomSentenceSpout: ack method triggered (Backpressure was enabled). Input Rate = "
-					+ this.rate + ". msgId = " + msgId.toString());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
+		System.out.println("Acker called");
 	}
 
 	@Override
 	public void fail(Object msgId) {
-		String ackSignal = outDir + "/fail-" + rate + "-" + numEvents;
-		try {
-			PrintWriter writer = new PrintWriter(ackSignal, "UTF-8");
-			writer.println(
-					"RandomSentenceSpout: fail method triggered (One or more receive queues reached high watermark). Input Rate = "
-							+ this.rate + ". msgId = " + msgId.toString());
-			writer.close();
-			System.out.println(
-					"RandomSentenceSpout: fail method triggered (One or more receive queues reached high watermark). Input Rate = "
-							+ this.rate + ". msgId = " + msgId.toString());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		System.out.println("Failure called");
 	}
 
 	@Override

@@ -46,6 +46,17 @@ public class SimpleWordCountToplogy {
 			declarer.declare(new Fields("word"));
 
 		}
+		
+		@Override
+		public void ack(Object msgId) {
+			System.out.println("Acker called");
+		}
+		
+		@Override
+		public void fail(Object msgId) {
+			System.out.println("Failure called");
+		}
+		
 	}
 
 	public static class WordCountBolt extends BaseRichBolt {

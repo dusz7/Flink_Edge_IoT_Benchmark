@@ -26,7 +26,10 @@ def getThroughput(outFile):
 def getRate(_file, timestampIndex, msgIdIndex):
     with open(_file, "r") as f:
         first = f.readline().split(",")
-        last = f.readlines()[-1].split(",")
+        for line in f:
+            pass
+
+        last = line.split(",")
         startTime = long(first[timestampIndex])
         endTime = long(last[timestampIndex])
         startMsg = long(first[msgIdIndex])
@@ -39,16 +42,14 @@ def getLatency(in_file, out_file, in_ts_index, in_msg_index, out_ts_index, out_m
     out_map = {}
     latency_map = {}
     with open(in_file, "r") as f:
-        lines = f.readlines()
-        for line in lines:
+        for line in f:
             line_arr = line.split(",")
             ts = line_arr[in_ts_index]
             msg_id = line_arr[in_msg_index]
             in_map[msg_id] = ts
     
     with open(out_file, "r") as f:
-        lines = f.readlines()
-        for line in lines:
+        for line in f:
             line_arr = line.split(",")
             ts = line_arr[out_ts_index]
             msg_id = line_arr[out_msg_index]

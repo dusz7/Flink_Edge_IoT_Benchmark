@@ -30,15 +30,19 @@ public class CountBolt extends BaseRichBolt {
 	@Override
 	public void execute(Tuple input) {
 		String sentence = input.getStringByField("sentence");
-		String[] splitSentence = sentence.split(" ");
 		String msgId = input.getStringByField("MSGID");
-		for (String word : splitSentence) {
-			if (!map.containsKey(word)) {
-				map.put(word, 1);
-			} else {
-				while (this.iter-- >= 0)
+		int i = 0;
+		while (i < this.iter) {
+			String[] splitSentence = sentence.split(" ");
+			for (String word : splitSentence) {
+
+				if (!map.containsKey(word)) {
+					map.put(word, 1);
+				} else {
 					map.put(word, map.get(word) + 1);
+				}
 			}
+			i++;
 		}
 		this.collector.emit(new Values(msgId, sentence));
 	}

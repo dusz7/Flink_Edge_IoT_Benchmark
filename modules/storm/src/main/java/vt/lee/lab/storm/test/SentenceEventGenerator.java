@@ -43,7 +43,7 @@ class SentenceGenerator implements Runnable {
 		this.events = events;
 		if (rate != 0) {
 			this.delay = (1 / (double) rate) * 1000000000; /* delay in ns */
-			//System.out.println(Thread.currentThread().getName() + "Delay: " + this.delay);
+			System.out.println(Thread.currentThread().getName() + "Delay: " + this.delay);
 		}
 	}
 

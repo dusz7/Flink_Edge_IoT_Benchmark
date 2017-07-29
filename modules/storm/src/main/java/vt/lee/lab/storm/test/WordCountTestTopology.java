@@ -47,10 +47,10 @@ public class WordCountTestTopology {
 				new RandomSentenceSpout(spoutLogFileName, inputRate, experimentDuration, numEvents));
 		builder.setBolt("word_count_bolt_1", new CountBolt(20), 1).shuffleGrouping("random_sentence_spout");
 		builder.setBolt("word_count_bolt_2", new CountBolt(10), 1).shuffleGrouping("word_count_bolt_1");
-		builder.setBolt("word_count_bolt_3", new CountBolt(100), 1).shuffleGrouping("word_count_bolt_2");
+		builder.setBolt("word_count_bolt_3", new CountBolt(500), 1).shuffleGrouping("word_count_bolt_2");
 		builder.setBolt("word_count_bolt_4", new CountBolt(50), 1).shuffleGrouping("word_count_bolt_3");
 		builder.setBolt("word_count_bolt_5", new CountBolt(30), 1).shuffleGrouping("word_count_bolt_4");
-		builder.setBolt("word_count_bolt_6", new CountBolt(10), 1).shuffleGrouping("word_count_bolt_5");
+		builder.setBolt("word_count_bolt_6", new CountBolt(100), 1).shuffleGrouping("word_count_bolt_5");
 		builder.setBolt("word_count_bolt_7", new CountBolt(70), 1).shuffleGrouping("word_count_bolt_6");
 		builder.setBolt("word_count_bolt_8", new CountBolt(1), 1).shuffleGrouping("word_count_bolt_7");
 		builder.setBolt("word_count_bolt_9", new CountBolt(30), 1).shuffleGrouping("word_count_bolt_8");

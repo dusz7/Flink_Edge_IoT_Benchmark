@@ -32,7 +32,7 @@ public class WordCountTestTopology {
 		String sinkLogFileName = outDir + "/sink-" + logFilePrefix;
 		String spoutLogFileName = outDir + "/spout-" + logFilePrefix;
 
-		long experimentDuration = 60000L; // get it as a CLI arg
+		long experimentDuration = 600000L; // get it as a CLI arg
 
 		System.out.println("Will emit " + numEvents + " events at " + inputRate + " (events/sec) rate");
 		

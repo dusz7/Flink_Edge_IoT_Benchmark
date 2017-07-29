@@ -50,7 +50,7 @@ public class TopologyArgumentClass {
 	}
 	
 	public long getNumEvents() {
-		return inputRate;
+		return numEvents;
 	}
 
 	public void setNumEvents(long numEvents) {

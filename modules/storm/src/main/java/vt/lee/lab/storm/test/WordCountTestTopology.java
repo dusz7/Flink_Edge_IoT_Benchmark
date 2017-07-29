@@ -34,6 +34,8 @@ public class WordCountTestTopology {
 
 		long experimentDuration = 60000L; // get it as a CLI arg
 
+		System.out.println("Will emit " + numEvents + " events at " + inputRate + " (events/sec) rate");
+		
 		TopologyBuilder builder = new TopologyBuilder();
 
 		Config config = new Config();

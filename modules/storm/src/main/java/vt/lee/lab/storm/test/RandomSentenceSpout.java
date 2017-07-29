@@ -63,7 +63,7 @@ public class RandomSentenceSpout extends BaseRichSpout implements ISyntheticSent
 	public void nextTuple() {
 		String snetence = this.eventQueue.poll();
 		System.out.println("RandomSentenceSpout : Executing nextTuple");
-		if (snetence == null || msgId > (startingMsgID + numEvents))
+		if (snetence == null || (msgId > (startingMsgID + numEvents)))
 			return;
 
 		msgId++;

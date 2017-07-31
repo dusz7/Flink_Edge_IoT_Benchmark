@@ -51,7 +51,7 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 	public Float doTaskLogic(Map map) 
 	{
 		String tuple;
-		System.out.println("Size of map in azure insert task " + map.size());
+		//System.out.println("Size of map in azure insert task " + map.size());
 		 // Define a batch operation.
 	    TableBatchOperation batchOperation = new TableBatchOperation();
 		try 

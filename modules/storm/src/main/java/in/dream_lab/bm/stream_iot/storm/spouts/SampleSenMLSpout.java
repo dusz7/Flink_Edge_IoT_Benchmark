@@ -122,6 +122,18 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 
 		ba = new BatchedFileLogging(uLogfilename, context.getThisComponentId());
 	}
+	
+	
+	@Override
+	public void ack(Object msgId) {
+		System.out.println("Acker called");
+	}
+
+	@Override
+	public void fail(Object msgId) {
+		System.out.println("Failure called");
+	}
+
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {

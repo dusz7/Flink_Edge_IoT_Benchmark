@@ -63,7 +63,7 @@ public class RangeFilterBolt extends BaseRichBolt {
     	String updatedValue = (res != 0) ? obsVal : "null";
     	Values values = new Values(msgId,sensorId ,meta,obsType ,updatedValue); 
     	
-    	System.out.println(this.getClass().getName() + " - LOGS - " + values.toString());
+    	//System.out.println(this.getClass().getName() + " - LOGS - " + values.toString());
     	collector.emit(values);
     }
 

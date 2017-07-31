@@ -96,9 +96,9 @@ public class MultipleBloomFilterCheck extends AbstractTask<String,Float> {
 				obsVal = map.get(useMsgFieldList[i]);
 				bloomFilter = bloomFilterMap.get(obsType);
 				Boolean b = bloomFilter.mightContain(obsVal);
-				if(l.isInfoEnabled()) 
+/*				if(l.isInfoEnabled()) 
 					l.info("Boolean output from bloom - " + b);	
-				return super.setLastResult(b ? 1f :  0f); // FIXME: handle tuple value replacement to NULL in Bolt, not task
+*/				return super.setLastResult(b ? 1f :  0f); // FIXME: handle tuple value replacement to NULL in Bolt, not task
 			}
 		}
 		return 1f;

@@ -73,7 +73,7 @@ public class SenMLParseBolt extends BaseRichBolt {
 			BufferedReader br = new BufferedReader(reader);
 			line = br.readLine();
 			String[] obsType = line.split(",");
-			System.out.println("OBSTYPE: " + obsType);
+			//System.out.println("OBSTYPE: " + obsType);
 
 			/* Observable fields are all those that are not meta fields */
 			for (int i = 0; i < obsType.length; i++) {
@@ -98,7 +98,7 @@ public class SenMLParseBolt extends BaseRichBolt {
 
 			HashMap<String, String> resultMap = (HashMap) senMLParseTask.getLastResult();
 
-			System.out.println("Result Map: \n" + resultMap);
+			//System.out.println("Result Map: \n" + resultMap);
 
 			/*
 			 * loop over to concatenate different meta fields together
@@ -111,10 +111,10 @@ public class SenMLParseBolt extends BaseRichBolt {
 			
 			meta = meta.deleteCharAt(meta.lastIndexOf(","));
 			
-			System.out.println(this.getClass().getName() + "Obs Fields Size: " + observableFields.size());
-			for (int i = 0; i < observableFields.size(); i++) {
+			//System.out.println(this.getClass().getName() + "Obs Fields Size: " + observableFields.size());
+			/*for (int i = 0; i < observableFields.size(); i++) {
 				System.out.println(observableFields.get(i));
-			}
+			}*/
 			
 			
 			for (int j = 0; j < observableFields.size(); j++) {
@@ -122,7 +122,7 @@ public class SenMLParseBolt extends BaseRichBolt {
 				Values value = new Values(msgId, resultMap.get(idField), meta.toString(),
 						(String) observableFields.get(j), (String) resultMap.get((String) observableFields.get(j)));
 				
-				System.out.println(this.getClass().getName() + " - LOGS - " + value.toString());
+				//System.out.println(this.getClass().getName() + " - LOGS - " + value.toString());
 
 				collector.emit(value);
 			}

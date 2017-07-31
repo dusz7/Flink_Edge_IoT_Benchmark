@@ -59,7 +59,7 @@ public class SenMLParse extends AbstractTask<String,Map>
 		JSONParser jsonParser = new JSONParser();
 		JSONObject jsonObject;
 		
-		System.out.println(this.getClass().getName() + ". Executing SenMLParse logic.");
+//		System.out.println(this.getClass().getName() + ". Executing SenMLParse logic.");
 		
 		try 
 		{
@@ -69,10 +69,10 @@ public class SenMLParse extends AbstractTask<String,Map>
 			else
 				 m = (String)map.get(AbstractTask.DEFAULT_KEY);
 			
-			System.out.println(this.getClass().getName() + ". m = " + m);
+			//System.out.println(this.getClass().getName() + ". m = " + m);
 			
 			jsonObject = (JSONObject) jsonParser.parse(m);
-			System.out.println(this.getClass().getName() + ". Parsed JSON: " + jsonObject.toString());
+			//System.out.println(this.getClass().getName() + ". Parsed JSON: " + jsonObject.toString());
 			
 			long baseTime =   (long) (jsonObject.get("bt") == null  ? 0L : jsonObject.get("bt")) ; // for sys and taxi
 			//long baseTime =   Long.parseLong(((String)jsonObject.get("bt"))) ;     // for fit dataset
@@ -106,7 +106,7 @@ public class SenMLParse extends AbstractTask<String,Map>
 				/* Add to  Hashmap  each key value pair */
 				mapkeyValues.put(n, v);			
 			}
-			System.out.println("MapKeyValues: \n" + mapkeyValues);
+			//System.out.println("MapKeyValues: \n" + mapkeyValues);
 			super.setLastResult(mapkeyValues);	
 			return null; 
 		}

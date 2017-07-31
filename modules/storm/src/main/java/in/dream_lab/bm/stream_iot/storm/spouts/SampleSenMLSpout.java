@@ -31,6 +31,8 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 	BatchedFileLogging ba;
 	long msgId;
 	int inputRate;
+	long numEvents;
+	long startingMsgId;
 
 	public SampleSenMLSpout() {
 		// this.csvFileName = "/home/ubuntu/sample100_sense.csv";
@@ -56,6 +58,12 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 		this(csvFileName, outSpoutCSVLogFileName, scalingFactor, "");
 		this.inputRate = inputRate;
 	}
+	
+	public SampleSenMLSpout(String csvFileName, String outSpoutCSVLogFileName, double scalingFactor, int inputRate, long numEvents) {
+		this(csvFileName, outSpoutCSVLogFileName, scalingFactor, "");
+		this.inputRate = inputRate;
+		this.numEvents = numEvents;
+	}
 
 	@Override
 	public void nextTuple() {
@@ -64,8 +72,9 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 		while (count < MAX_COUNT) {
 			List<String> entry = this.eventQueue.poll(); // nextTuple should not
 															// block!
-			if (entry == null)
+			if (entry == null || (this.msgId > this.startingMsgId + this.numEvents))
 				return;
+			
 			count++;
 			Values values = new Values();
 			StringBuilder rowStringBuf = new StringBuilder();
@@ -78,7 +87,7 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 			values.add(Long.toString(msgId));
 			values.add(newRow);
 
-			System.out.println(this.getClass().getName() + " - LOGS - " + values.toString());
+			//System.out.println(this.getClass().getName() + " - LOGS - " + values.toString());
 
 			this._collector.emit(values);
 			try {
@@ -95,7 +104,7 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 		Random r = new Random();
 		try {
 			msgId = (long) (1 * Math.pow(10, 12) + (r.nextInt(1000) * Math.pow(10, 9)) + r.nextInt(10));
-
+			this.startingMsgId = msgId;
 		} catch (Exception e) {
 
 			e.printStackTrace();

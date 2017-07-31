@@ -90,7 +90,7 @@ public class KalmanFilterBolt extends BaseRichBolt {
 
 			if (kalmanUpdatedVal != null) {
 				Values values = new Values(sensorMeta, sensorID, obsType, kalmanUpdatedVal.toString(), msgId);
-				System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+				//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
 				collector.emit(values);
 			} else {
 				if (l.isWarnEnabled())

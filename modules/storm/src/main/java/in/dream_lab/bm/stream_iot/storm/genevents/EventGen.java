@@ -67,11 +67,11 @@ public class EventGen {
 			List<TableClass> nestedList = CsvSplitter.roundRobinSplitCsvToMemory(csvFileName, numThreads, scalingFactor,
 					datasetType);
 
-			System.out.println(this.getClass().getName() + " splitted csv files to memory. nestedList");
+/*			System.out.println(this.getClass().getName() + " splitted csv files to memory. nestedList");
 			for (TableClass c : nestedList)
 				System.out.println(this.getClass().getName() + " " + c.toString() + " \n + Header" + c.getHeader()
 						+ "\n # Rows" + c.getRows());
-
+*/
 			this.executorService = Executors.newFixedThreadPool(numThreads);
 
 			Semaphore sem1 = new Semaphore(0);
@@ -83,13 +83,13 @@ public class EventGen {
 				// this.executorService.execute(new SubEventGen(this.iseg,
 				// nestedList.get(i)));
 				subEventGenArr[i] = new SubEventGen(this.iseg, nestedList.get(i), sem1, sem2, this.rate);
-				System.out.println(this.getClass().getName() + " submitting first runnable");
+				//System.out.println(this.getClass().getName() + " submitting first runnable");
 				this.executorService.execute(subEventGenArr[i]);
 			}
 
 			sem1.acquire(numThreads);
 
-			System.out.println(this.getClass().getName() + " acquired sem1");
+			//System.out.println(this.getClass().getName() + " acquired sem1");
 
 			long experiStartTs = System.currentTimeMillis();
 			// set the start time to all the thread objects
@@ -102,8 +102,7 @@ public class EventGen {
 				this.executorService.execute(subEventGenArr[i]);
 			}
 			sem2.release(numThreads);
-			System.out.println(this.getClass().getName() + " released sem2");
-
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -174,7 +173,7 @@ class SubEventGen implements Runnable {
 	TableClass eventList;
 	Long experiStartTime; // in millis since epoch
 	Semaphore sem1, sem2;
-	Long experiDuration = 60000L;
+	Long experiDuration = 600000L;
 	double delay = 0;
 
 	public SubEventGen(ISyntheticEventGen iseg, TableClass eventList, Semaphore sem1, Semaphore sem2) {
@@ -208,8 +207,6 @@ class SubEventGen implements Runnable {
 		System.out.println(this.getClass().getName() + " - runOnce: " + runOnce);
 		long currentRuntime = 0;
 
-		System.out.println(Thread.currentThread().getId() + "-" + Thread.currentThread().getName()
-				+ "186: Executing SubEventGen runnable. sem2 had been acquired acquired");
 
 		do {
 			for (int i = 0; i < rowLen && (runOnce || (currentRuntime < experiDuration)); i++) {

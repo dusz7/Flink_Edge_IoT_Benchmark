@@ -13,6 +13,7 @@ public class ArgumentClass{
     String tasksPropertiesFilename;
     String tasksName;
     int inputRate;
+    long numEvents;
 
     public String getTasksName() {
 		return tasksName;
@@ -77,6 +78,15 @@ public class ArgumentClass{
     public void setInputRate(int inputRate) {
         this.inputRate = inputRate;
     }
+    
+    public long getNumEvents() {
+        return numEvents;
+    }
+
+    public void setNumEvents(long numEvents) {
+        this.numEvents = numEvents;
+    }
+
 
     public String getTasksPropertiesFilename() {
         return tasksPropertiesFilename;

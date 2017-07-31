@@ -86,7 +86,7 @@ public class Annotate extends AbstractTask<String,String>
 		    setLastResult(annotatedValue);
 		}
 		
-		System.out.println(Thread.currentThread().getId() + "Executing Bolt.");
+		//System.out.println(Thread.currentThread().getId() + "Executing Bolt.");
 		
 		return 0f;
 	}

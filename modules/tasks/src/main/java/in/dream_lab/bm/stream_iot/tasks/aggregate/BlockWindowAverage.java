@@ -64,9 +64,9 @@ public class BlockWindowAverage extends AbstractTask<String,Float> {
 		else {
 			
 			avgRes=Float.valueOf(aggSum/aggCount);
-			System.out.println(this.getClass().getName() + " - AVERAGE: " + avgRes + 
+/*			System.out.println(this.getClass().getName() + " - AVERAGE: " + avgRes + 
 					" - AGG_COUNT: " + aggCount + " AGG_SUM: " + aggSum);
-			aggCount = 0;
+*/			aggCount = 0;
 			aggSum=0;
 //			l.info("CHECK: Block Average = " +avgRes);
 			

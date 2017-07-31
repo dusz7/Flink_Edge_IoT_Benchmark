@@ -69,12 +69,12 @@ public class MultiLinePlotBolt extends BaseRichBolt {
 		map.put("OBSVALUE", input.getStringByField("res"));
 		map.put("META", input.getStringByField("META"));
 
-		System.out.println(this.getClass().getName() + " INPUT: " + map.get("SENSORID") + " - " + map.get("OBSTYPE")
+/*		System.out.println(this.getClass().getName() + " INPUT: " + map.get("SENSORID") + " - " + map.get("OBSTYPE")
 				+ " - " + map.get("OBSVALUE") + " - " + map.get("META"));
-
+*/
 		// call accumulator with tuple
 		float res = accumlatorTask.doTaskLogic(map);
-		System.out.println(this.getClass().getName() + " - accumulator task result: " + res);
+		//System.out.println(this.getClass().getName() + " - accumulator task result: " + res);
 
 		if (res == 1.0f) { // finished accumulate
 			try {
@@ -104,7 +104,7 @@ public class MultiLinePlotBolt extends BaseRichBolt {
 
 					float zipres = zipTask.doTask(inputForZipMap);
 
-					System.out.println(this.getClass().getName() + " - Zip result: " + zipres);
+					//System.out.println(this.getClass().getName() + " - Zip result: " + zipres);
 
 					// if zip is done batching one set of requests, send zip
 					// path downstream

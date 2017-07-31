@@ -2,6 +2,9 @@ package in.dream_lab.bm.stream_iot.storm.topo.apps;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.Properties;
 import java.util.Random;
 
@@ -25,8 +28,10 @@ import in.dream_lab.bm.stream_iot.storm.bolts.ETL.TAXI.SenMLParseBolt;
 import in.dream_lab.bm.stream_iot.storm.bolts.IoTPredictionBolts.SYS.LinearRegressionPredictorBolt;
 import in.dream_lab.bm.stream_iot.storm.genevents.factory.ArgumentClass;
 import in.dream_lab.bm.stream_iot.storm.genevents.factory.ArgumentParser;
+import in.dream_lab.bm.stream_iot.storm.sinks.EtlTopologySinkBolt;
 import in.dream_lab.bm.stream_iot.storm.sinks.Sink;
 import in.dream_lab.bm.stream_iot.storm.spouts.SampleSenMLSpout;
+import vt.lee.lab.storm.riot_resources.RiotResourceFileProps;
 import in.dream_lab.bm.stream_iot.storm.spouts.SampleSenMLSpout;
 
 public class ETLTopology {
@@ -36,96 +41,56 @@ public class ETLTopology {
 			System.out.println("ERROR! INVALID NUMBER OF ARGUMENTS");
 			return;
 		}
+
+		String resourceDir = System.getenv("RIOT_RESOURCES");
+		String inputPath = System.getenv("RIOT_INPUT_PROP_PATH");
+
+		System.out.println("RESOURCE DIR: " + resourceDir);
+
 		String logFilePrefix = argumentClass.getTopoName() + "-" + argumentClass.getExperiRunId() + "-"
 				+ argumentClass.getScalingFactor() + ".log";
 		String sinkLogFileName = argumentClass.getOutputDirName() + "/sink-" + logFilePrefix;
 		String spoutLogFileName = argumentClass.getOutputDirName() + "/spout-" + logFilePrefix;
-		String taskPropFilename = argumentClass.getTasksPropertiesFilename();
+		String taskPropFilename = inputPath + "/" + argumentClass.getTasksPropertiesFilename();
 		int inputRate = argumentClass.getInputRate();
+		long numEvents = argumentClass.getNumEvents();
 		
+		
+		List<String> resourceFileProps = RiotResourceFileProps.getRiotResourceFileProps();
+
 		Config conf = new Config();
+		conf.put(Config.TOPOLOGY_BACKPRESSURE_ENABLE, true);
 		conf.setDebug(false);
-		
 		conf.setNumAckers(0);
-		
-		
+
 		Properties p_ = new Properties();
 		InputStream input = new FileInputStream(taskPropFilename);
 		p_.load(input);
+
+		Enumeration e = p_.propertyNames();
+
+		while (e.hasMoreElements()) {
+			String key = (String) e.nextElement();
+			if (resourceFileProps.contains(key)) {
+				String prop_fike_path = resourceDir + "/" + p_.getProperty(key);
+				p_.put(key, prop_fike_path);
+				System.out.println(key + " -- " + p_.getProperty(key));
+			}
+		}
+
 		TopologyBuilder builder = new TopologyBuilder();
 
-		// String
-		// basePathForMultipleSpout="/home/anshu/shilpa/code/data/SYS-6hrs-10filles-splitted-data/";
-		// String
-		// basePathForMultipleSpout="/home/shilpa/Datasets/CityCanvasData/SYS_6hrs_data_10Files/SYS-inputcsv-predict-10spouts200mps-480sec-file/";
-		// String spout1InputFilePath=basePathForMultipleSpout+"test.csv";
+		String spout1InputFilePath = resourceDir + "/SYS_sample_data_senml.csv";
+
+		System.out.println(spout1InputFilePath);
+		
 		// String spout1InputFilePath =
 		// "/home/talha/iot/storm/benchmarks/riot/riot-bench/modules/tasks/src/main/resources/SYS_sample_data_senml.csv";
 
-		String spout1InputFilePath = "/home/talha/iot/storm/benchmarks/riot/riot-bench/modules/tasks/src/main/resources/SYS_sample_data_senml.csv";
-		// String
-		// spout1InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts200mps-480sec-file1.csv";
-		// String
-		// spout2InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts200mps-480sec-file2.csv";
-		// String
-		// spout3InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts200mps-480sec-file3.csv";
-		//
-		// String
-		// spout4InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts200mps-480sec-file4.csv";
-		// String
-		// spout5InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts200mps-480sec-file5.csv";
-		// String
-		// spout6InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts200mps-480sec-file6.csv";
-		// String
-		// spout7InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts200mps-480sec-file7.csv";
-		// String
-		// spout8InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts200mps-480sec-file8.csv";
-		// String
-		// spout9InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts200mps-480sec-file9.csv";
-		// String
-		// spout10InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts200mps-480sec-file10.csv";
+		builder.setSpout("spout1", new SampleSenMLSpout(spout1InputFilePath, spoutLogFileName,
+				argumentClass.getScalingFactor(), inputRate, numEvents), 1);
 
-		builder.setSpout("spout1",
-				new SampleSenMLSpout(spout1InputFilePath, spoutLogFileName, argumentClass.getScalingFactor(), inputRate), 1);
-		// builder.setSpout("spout2", new SampleSenMLSpout(spout2InputFilePath,
-		// spoutLogFileName, argumentClass.getScalingFactor()),
-		// 1);
-		// builder.setSpout("spout3", new SampleSenMLSpout(spout3InputFilePath,
-		// spoutLogFileName, argumentClass.getScalingFactor()),
-		// 1);
-		// builder.setSpout("spout4", new SampleSenMLSpout(spout4InputFilePath,
-		// spoutLogFileName, argumentClass.getScalingFactor()),
-		// 1);
-		// builder.setSpout("spout5", new SampleSenMLSpout(spout5InputFilePath,
-		// spoutLogFileName, argumentClass.getScalingFactor()),
-		// 1);
-		// builder.setSpout("spout6", new SampleSenMLSpout(spout6InputFilePath,
-		// spoutLogFileName, argumentClass.getScalingFactor()),
-		// 1);
-		// builder.setSpout("spout7", new SampleSenMLSpout(spout7InputFilePath,
-		// spoutLogFileName, argumentClass.getScalingFactor()),
-		// 1);
-		// builder.setSpout("spout8", new SampleSenMLSpout(spout8InputFilePath,
-		// spoutLogFileName, argumentClass.getScalingFactor()),
-		// 1);
-		// builder.setSpout("spout9", new SampleSenMLSpout(spout9InputFilePath,
-		// spoutLogFileName, argumentClass.getScalingFactor()),
-		// 1);
-		// builder.setSpout("spout10", new
-		// SampleSenMLSpout(spout10InputFilePath, spoutLogFileName,
-		// argumentClass.getScalingFactor()),
-		// 1);
-
-		builder.setBolt("SenMlParseBolt", new SenMLParseBolt(p_), 10).shuffleGrouping("spout1");
-		// .shuffleGrouping("spout2")
-		// .shuffleGrouping("spout3")
-		// .shuffleGrouping("spout4")
-		// .shuffleGrouping("spout5")
-		// .shuffleGrouping("spout6")
-		// .shuffleGrouping("spout7")
-		// .shuffleGrouping("spout8")
-		// .shuffleGrouping("spout9")
-		// .shuffleGrouping("spout10");
+		builder.setBolt("SenMlParseBolt", new SenMLParseBolt(p_), 1).shuffleGrouping("spout1");
 
 		builder.setBolt("RangeFilterBolt", new RangeFilterBolt(p_), 1).fieldsGrouping("SenMlParseBolt",
 				new Fields("OBSTYPE"));
@@ -146,9 +111,12 @@ public class ETLTopology {
 
 		builder.setBolt("PublishBolt", new MQTTPublishBolt(p_), 1).shuffleGrouping("CsvToSenMLBolt");
 
-		builder.setBolt("sink", new Sink(sinkLogFileName), 1).shuffleGrouping("PublishBolt")
-				.shuffleGrouping("AzureInsert");
+/*		builder.setBolt("sink", new Sink(sinkLogFileName), 1).shuffleGrouping("PublishBolt")
+				.shuffleGrouping("AzureInsert");*/
 
+		builder.setBolt("sink", new EtlTopologySinkBolt(sinkLogFileName), 1).shuffleGrouping("PublishBolt")
+		.shuffleGrouping("AzureInsert");
+		
 		StormTopology stormTopology = builder.createTopology();
 
 		if (argumentClass.getDeploymentMode().equals("C")) {
@@ -158,7 +126,7 @@ public class ETLTopology {
 		} else {
 			LocalCluster cluster = new LocalCluster();
 			cluster.submitTopology(argumentClass.getTopoName(), conf, stormTopology);
-			Utils.sleep(30000);
+			Utils.sleep(600000);
 			cluster.killTopology(argumentClass.getTopoName());
 			cluster.shutdown();
 			System.out.println("Input Rate: " + metric_utils.Utils.getInputRate(spoutLogFileName));

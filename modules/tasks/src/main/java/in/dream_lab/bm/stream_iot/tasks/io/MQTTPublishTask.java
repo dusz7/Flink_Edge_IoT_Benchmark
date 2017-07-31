@@ -88,7 +88,7 @@ public class MQTTPublishTask extends AbstractTask implements MqttCallback {
 
 			mqttClient.publish(topic, input.getBytes(), 0, false);
 
-			System.out.println(this.getClass().getName() + ": Publishing to topic: " + topic);
+			//System.out.println(this.getClass().getName() + ": Publishing to topic: " + topic);
 		} catch (MqttException e) {
 			l.warn("Exception when publishing mqtt message " + input + ", to topic " + topic + ", using client "
 					+ mqttClient, e);

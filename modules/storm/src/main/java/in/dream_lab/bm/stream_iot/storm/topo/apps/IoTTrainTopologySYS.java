@@ -11,6 +11,8 @@ import in.dream_lab.bm.stream_iot.storm.sinks.Sink;
 import in.dream_lab.bm.stream_iot.storm.spouts.SampleSenMLSpout;
 import in.dream_lab.bm.stream_iot.storm.spouts.SampleSpoutTimerForTrain;
 import in.dream_lab.bm.stream_iot.storm.spouts.TimeSpout;
+import vt.lee.lab.storm.riot_resources.RiotResourceFileProps;
+
 import org.apache.storm.Config;
 import org.apache.storm.LocalCluster;
 import org.apache.storm.StormSubmitter;
@@ -21,6 +23,8 @@ import org.apache.storm.utils.Utils;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.Properties;
 
 //import in.dream_lab.bm.stream_iot.storm.spouts.TimeSpout;
@@ -37,81 +41,49 @@ public class IoTTrainTopologySYS {
 			System.out.println("ERROR! INVALID NUMBER OF ARGUMENTS");
 			return;
 		}
+		String resourceDir = System.getenv("RIOT_RESOURCES");
+		String inputPath = System.getenv("RIOT_INPUT_PROP_PATH");
 
 		String logFilePrefix = argumentClass.getTopoName() + "-" + argumentClass.getExperiRunId() + "-"
 				+ argumentClass.getScalingFactor() + ".log";
 		String sinkLogFileName = argumentClass.getOutputDirName() + "/sink-" + logFilePrefix;
 		String spoutLogFileName = argumentClass.getOutputDirName() + "/spout-" + logFilePrefix;
-		String taskPropFilename = argumentClass.getTasksPropertiesFilename();
+		String taskPropFilename = inputPath + "/" + argumentClass.getTasksPropertiesFilename();
 		System.out.println("taskPropFilename-" + taskPropFilename);
+		int inputRate = argumentClass.getInputRate();
+		long numEvents = argumentClass.getNumEvents();
+
+		List<String> resourceFileProps = RiotResourceFileProps.getPredTaxiResourceFileProps();
 
 		Config conf = new Config();
+		conf.put(Config.TOPOLOGY_BACKPRESSURE_ENABLE, true);
 		conf.setDebug(false);
-		conf.put("topology.backpressure.enable", false);
+		conf.setNumAckers(0);
 		// conf.setNumWorkers(12);
 
 		Properties p_ = new Properties();
 		InputStream input = new FileInputStream(taskPropFilename);
 		p_.load(input);
 
+		Enumeration e = p_.propertyNames();
+
+		while (e.hasMoreElements()) {
+			String key = (String) e.nextElement();
+			if (resourceFileProps.contains(key)) {
+				String prop_fike_path = resourceDir + "/" + p_.getProperty(key);
+				p_.put(key, prop_fike_path);
+				System.out.println(key + " -- " + p_.getProperty(key));
+			}
+		}
+
 		TopologyBuilder builder = new TopologyBuilder();
 
-		// String
-		// basePathForMultipleSpout="/Users/anshushukla/PycharmProjects/DataAnlytics1/Storm-Scheduler-SC-scripts/SYS-inputcsv-10spouts600mps-480sec-file/";
-		String basePathForMultipleSpout = "/home/talha/iot/storm/benchmarks/riot/riot-bench/modules/tasks/src/main/resources/";
-		// String basePathForMultipleSpout="/home/anshu/data/storm/resources/";
 
-		System.out.println("basePathForMultipleSpout is used -" + basePathForMultipleSpout);
+		String spout1InputFilePath = resourceDir + "inputFileForTimerSpout-CITY.csv";
 
-		String spout1InputFilePath = basePathForMultipleSpout + "inputFileForTimerSpout-CITY.csv";
-/*		String spout2InputFilePath = basePathForMultipleSpout + "SYS-inputcsv-predict-10spouts600mps-480sec-file2.csv";
-		String spout3InputFilePath = basePathForMultipleSpout + "SYS-inputcsv-predict-10spouts600mps-480sec-file3.csv";
-		String spout4InputFilePath = basePathForMultipleSpout + "SYS-inputcsv-predict-10spouts600mps-480sec-file4.csv";
-		String spout5InputFilePath = basePathForMultipleSpout + "SYS-inputcsv-predict-10spouts600mps-480sec-file5.csv";
-		String spout6InputFilePath = basePathForMultipleSpout + "SYS-inputcsv-predict-10spouts600mps-480sec-file6.csv";
-		String spout7InputFilePath = basePathForMultipleSpout + "SYS-inputcsv-predict-10spouts600mps-480sec-file7.csv";
-		String spout8InputFilePath = basePathForMultipleSpout + "SYS-inputcsv-predict-10spouts600mps-480sec-file8.csv";
-		String spout9InputFilePath = basePathForMultipleSpout + "SYS-inputcsv-predict-10spouts600mps-480sec-file9.csv";
-		String spout10InputFilePath = basePathForMultipleSpout
-				+ "SYS-inputcsv-predict-10spouts600mps-480sec-file10.csv";
-*/
 		builder.setSpout("TimeSpout",
 				new SampleSpoutTimerForTrain(spout1InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
 				1);
-		// builder.setSpout("TimeSpout", new
-		// SampleSenMLSpout(spout1InputFilePath, spoutLogFileName,
-		// argumentClass.getScalingFactor()),
-		// 1);
-		// builder.setSpout("spout2", new SampleSenMLSpout(spout2InputFilePath,
-		// spoutLogFileName, argumentClass.getScalingFactor()),
-		// 1);
-		// builder.setSpout("spout3", new SampleSenMLSpout(spout3InputFilePath,
-		// spoutLogFileName, argumentClass.getScalingFactor()),
-		// 1);
-		// builder.setSpout("spout4", new SampleSenMLSpout(spout4InputFilePath,
-		// spoutLogFileName, argumentClass.getScalingFactor()),
-		// 1);
-		// builder.setSpout("spout5", new SampleSenMLSpout(spout5InputFilePath,
-		// spoutLogFileName, argumentClass.getScalingFactor()),
-		// 1);
-		// builder.setSpout("spout6", new SampleSenMLSpout(spout6InputFilePath,
-		// spoutLogFileName, argumentClass.getScalingFactor()),
-		// 1);
-		// builder.setSpout("spout7", new SampleSenMLSpout(spout7InputFilePath,
-		// spoutLogFileName, argumentClass.getScalingFactor()),
-		// 1);
-		// builder.setSpout("spout8", new SampleSenMLSpout(spout8InputFilePath,
-		// spoutLogFileName, argumentClass.getScalingFactor()),
-		// 1);
-		// builder.setSpout("spout9", new SampleSenMLSpout(spout9InputFilePath,
-		// spoutLogFileName, argumentClass.getScalingFactor()),
-		// 1);
-		// builder.setSpout("spout10", new
-		// SampleSenMLSpout(spout10InputFilePath, spoutLogFileName,
-		// argumentClass.getScalingFactor()),
-		// 1);
-
-		// builder.setSpout("TimeSpout", new TimeSpout(),1);
 
 		builder.setBolt("AzureTableRangeQueryBolt", new AzureTableRangeQueryBolt(p_), 1)
 				.shuffleGrouping("TimeSpout");
@@ -137,6 +109,8 @@ public class IoTTrainTopologySYS {
 		StormTopology stormTopology = builder.createTopology();
 
 		if (argumentClass.getDeploymentMode().equals("C")) {
+			System.out.println("Spout Log File: " + spoutLogFileName);
+			System.out.println("Sink Log File: " + sinkLogFileName);
 			StormSubmitter.submitTopology(argumentClass.getTopoName(), conf, stormTopology);
 		} else {
 			LocalCluster cluster = new LocalCluster();
@@ -144,6 +118,8 @@ public class IoTTrainTopologySYS {
 			Utils.sleep(1000000000);
 			cluster.killTopology(argumentClass.getTopoName());
 			cluster.shutdown();
+			System.out.println("Input Rate: " + metric_utils.Utils.getInputRate(spoutLogFileName));
+			System.out.println("Throughput: " + metric_utils.Utils.getThroughput(sinkLogFileName));
 		}
 	}
 }

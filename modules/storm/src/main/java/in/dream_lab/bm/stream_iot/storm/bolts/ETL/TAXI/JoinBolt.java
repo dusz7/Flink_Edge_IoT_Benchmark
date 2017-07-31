@@ -99,8 +99,8 @@ public class JoinBolt extends BaseRichBolt {
 			map.put(obsType, obsVal);
 			msgIdCountMap.put(msgIdLong, map);
 
-			System.out.println(this.getClass().getName() + msgIdLong + " found in the map msgIdCountMap. map.size = "
-					+ map.size() + "\n" + map);
+			/*System.out.println(this.getClass().getName() + msgIdLong + " found in the map msgIdCountMap. map.size = "
+					+ map.size() + "\n" + map);*/
 
 			if (map.size() == maxCountPossible) {
 				/*
@@ -113,7 +113,7 @@ public class JoinBolt extends BaseRichBolt {
 				}
 				joinedValues = joinedValues.deleteCharAt(joinedValues.length() - 1);
 				msgIdCountMap.remove(msgIdLong);
-				System.out.println(this.getClass().getName() + msgIdLong + " found in the map msgIdCountMap. EMITTING");
+				//System.out.println(this.getClass().getName() + msgIdLong + " found in the map msgIdCountMap. EMITTING");
 				collector.emit(new Values(msgId, meta, "joinedValue", joinedValues.toString()));
 			}
 		}
@@ -141,9 +141,9 @@ public class JoinBolt extends BaseRichBolt {
 			
 			msgIdCountMap.put(msgIdLong, map);
 
-			System.out.println(this.getClass().getName() + msgIdLong
+/*			System.out.println(this.getClass().getName() + msgIdLong
 					+ " NOT FOUND in the map msgIdCountMap. map.size = " + map.size() + "\n" + map);
-
+*/
 			if (map.size() == maxCountPossible) {
 				/*
 				 * emit the msg as it has received all its field values also
@@ -155,9 +155,9 @@ public class JoinBolt extends BaseRichBolt {
 				}
 				joinedValues = joinedValues.deleteCharAt(joinedValues.length() - 1);
 				msgIdCountMap.remove(msgIdLong);
-				System.out.println(
+/*				System.out.println(
 						this.getClass().getName() + msgIdLong + " NOT FOUND in the map msgIdCountMap. EMITTING");
-				collector.emit(new Values(msgId, meta, "joinedValue", joinedValues.toString()));
+*/				collector.emit(new Values(msgId, meta, "joinedValue", joinedValues.toString()));
 			}
 		}
 	}

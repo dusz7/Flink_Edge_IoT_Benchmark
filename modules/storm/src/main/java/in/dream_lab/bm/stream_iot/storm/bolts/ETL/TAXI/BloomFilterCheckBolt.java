@@ -63,13 +63,13 @@ public class BloomFilterCheckBolt  extends BaseRichBolt {
 	    	Float res = bloomFilterCheckTask.doTask(map); 
 	    	String updatedValue = (res != 0) ? obsVal : "null";
 	    	Values values = new Values(msgId, sensorId ,meta,obsType ,updatedValue);
-	    	System.out.println(this.getClass().getName() + " - LOGS - BloomFilter Applied - " + values.toString());
+	    	//System.out.println(this.getClass().getName() + " - LOGS - BloomFilter Applied - " + values.toString());
 	    	collector.emit(values);
     	}
     	else 
     	{
     		Values values = new Values(msgId, sensorId ,meta,obsType ,obsVal);
-    		System.out.println(this.getClass().getName() + " - LOGS - " + values.toString());
+    		//System.out.println(this.getClass().getName() + " - LOGS - " + values.toString());
     		collector.emit(values);
     	}
     }

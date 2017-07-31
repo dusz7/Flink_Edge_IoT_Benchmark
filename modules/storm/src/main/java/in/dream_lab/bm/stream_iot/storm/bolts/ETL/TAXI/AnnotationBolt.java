@@ -57,7 +57,7 @@ public class AnnotationBolt extends BaseRichBolt {
     	String updatedValue = (String) annotateTask.getLastResult();
     	Values values  = new Values(msgId,meta,"annoatedValue" ,updatedValue);
     	
-    	System.out.println(this.getClass().getName() + " - LOGS - " + values.toString());
+    	//System.out.println(this.getClass().getName() + " - LOGS - " + values.toString());
     	
     	collector.emit(values);
     }

@@ -1,6 +1,5 @@
 package in.dream_lab.bm.stream_iot.storm.sinks;
 
-
 import in.dream_lab.bm.stream_iot.storm.genevents.logging.BatchedFileLogging;
 
 import org.apache.storm.task.OutputCollector;
@@ -18,48 +17,56 @@ import java.util.Random;
  * Created by anshushukla on 19/05/15.
  */
 public class Sink extends BaseRichBolt {
-    private static final Logger LOG = LoggerFactory.getLogger("APP");
+	private static final Logger LOG = LoggerFactory.getLogger("APP");
 
-    OutputCollector collector; private static Logger l;  public static void initLogger(Logger l_) {     l = l_; }
-    BatchedFileLogging ba;
-    String csvFileNameOutSink;  //Full path name of the file at the sink bolt
+	OutputCollector collector;
+	private static Logger l;
 
-    public Sink(String csvFileNameOutSink){
-    	Random ran = new Random();
-        this.csvFileNameOutSink = csvFileNameOutSink;
-        /*System.out.println(Thread.currentThread().getId() + Thread.currentThread().getName() + this.getClass().getName() + 
-        		"SINK: Output log File Name: " + csvFileNameOutSink);*/
-    }
+	public static void initLogger(Logger l_) {
+		l = l_;
+	}
 
-    @Override
-    public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
-        this.collector=outputCollector;
-        BatchedFileLogging.writeToTemp(this, this.csvFileNameOutSink);
-         //ba=new BatchedFileLogging();
-        ba=new BatchedFileLogging(this.csvFileNameOutSink, topologyContext.getThisComponentId());
-        /*if (ba != null)
-        	System.out.println(Thread.currentThread().getId() + Thread.currentThread().getName() + this.getClass().getName() 
-        			+ "Created new BatchedFileLogging. " + ba.toString());*/
-    }
+	BatchedFileLogging ba;
+	String csvFileNameOutSink; // Full path name of the file at the sink bolt
 
-    @Override
-    public void execute(Tuple input) {
-        String msgId = input.getStringByField("MSGID");
-        //System.out.println(Thread.currentThread().getId() + Thread.currentThread().getName() + this.getClass().getName() + 
-		//		"Sink Bolt received the tuple with msgId: " + msgId);
-//        String exe_time = input.getStringByField("time");  //addon
-        //collector.emit(input,new Values(msgId));
-        try {
-        	ba.batchLogwriter(System.currentTimeMillis(),msgId);
-// ba.batchLogwriter(System.currentTimeMillis(),msgId+","+exe_time);//addon
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+	public Sink(String csvFileNameOutSink) {
+		Random ran = new Random();
+		this.csvFileNameOutSink = csvFileNameOutSink;
+		/*
+		 * System.out.println(Thread.currentThread().getId() +
+		 * Thread.currentThread().getName() + this.getClass().getName() +
+		 * "SINK: Output log File Name: " + csvFileNameOutSink);
+		 */
+	}
 
-    }
+	@Override
+	public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
+		this.collector = outputCollector;
+		BatchedFileLogging.writeToTemp(this, this.csvFileNameOutSink);
+		// ba=new BatchedFileLogging();
+		ba = new BatchedFileLogging(this.csvFileNameOutSink, topologyContext.getThisComponentId());
+		/*
+		 * if (ba != null) System.out.println(Thread.currentThread().getId() +
+		 * Thread.currentThread().getName() + this.getClass().getName() +
+		 * "Created new BatchedFileLogging. " + ba.toString());
+		 */
+	}
 
-    @Override
-    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
+	@Override
+	public void execute(Tuple input) {
+		String msgId = input.getStringByField("MSGID");
 
-    }
+		try {
+			ba.batchLogwriter(System.currentTimeMillis(), msgId);
+			// ba.batchLogwriter(System.currentTimeMillis(),msgId+","+exe_time);//addon
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	@Override
+	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
+
+	}
 }

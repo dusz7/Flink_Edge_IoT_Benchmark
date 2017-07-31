@@ -63,7 +63,7 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 				batchOperation.insert(obj);			
 			 }
 			
-			System.out.println("AzureTableBatchInsert - Insert: " + table);			
+			//System.out.println("AzureTableBatchInsert - Insert: " + table);			
 			
 			ArrayList a = table.execute(batchOperation);
 			System.out.println(this.getClass().getName() + " - LOGS - " + a.size() + " - " + a.get(0));
@@ -86,20 +86,16 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 	public static CloudTable connectToAzTable(String azStorageConnStr, String tableName, Logger l) {
 		CloudTable cloudTable = null;
 		try {
-			System.out.println("0. connectToAzTable: " + azStorageConnStr);
-			
+		
 			// Retrieve storage account from connection-string.
 			CloudStorageAccount storageAccount = CloudStorageAccount.parse(azStorageConnStr);
-			System.out.println("1. connectToAzTable: " + azStorageConnStr);
 			
 			// Create the table client
 			CloudTableClient tableClient = storageAccount.createCloudTableClient();
-			System.out.println("2. connectToAzTable: " + azStorageConnStr);
 			
 			// Create a cloud table object for the table.
 			cloudTable = tableClient.getTableReference(tableName);
-			System.out.println("3. connectToAzTable: " + azStorageConnStr);
-			
+		
 		} catch (Exception e) 
 		{
 			l.warn("Exception in connectToAzTable: "+tableName, e);

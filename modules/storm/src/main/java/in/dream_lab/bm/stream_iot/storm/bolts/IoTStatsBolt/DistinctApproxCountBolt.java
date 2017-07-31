@@ -71,7 +71,7 @@ public class DistinctApproxCountBolt extends BaseRichBolt {
 			obsType = "DA";
 			if (res != Float.MIN_VALUE) {
 				Values values = new Values(sensorMeta, sensorID, obsType, res.toString(), msgId);
-				System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+				//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
 				collector.emit(values);
 			} else {
 				if (l.isWarnEnabled())

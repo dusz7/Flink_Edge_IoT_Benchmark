@@ -61,8 +61,8 @@ public class BlockWindowAverageBolt extends BaseRichBolt {
 		String airquality = obsVal.split(",")[4]; // airquality as last obs. in
 													// input
 
-		if (l.isInfoEnabled())
-			l.info("obsVal in BWA:", obsVal);
+/*		if (l.isInfoEnabled())
+			l.info("obsVal in BWA:", obsVal);*/
 
 		if (useMsgList.contains(obsType)) // useMsgList=dumbobstype, obsType (from
 											// SenMLParseBoltPREDSYS)=dumbobstype
@@ -89,10 +89,10 @@ public class BlockWindowAverageBolt extends BaseRichBolt {
 
 			if (avgres != null) {
 				if (avgres != Float.MIN_VALUE) {
-					if (l.isInfoEnabled())
-						l.info("avgres AVG:{}", avgres.toString());
+/*					if (l.isInfoEnabled())
+						l.info("avgres AVG:{}", avgres.toString());*/
 					Values values = new Values(sensorMeta, sensorID, obsType, avgres.toString(), obsVal, msgId, "AVG");
-					System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+					//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
 					collector.emit(values);
 
 				} else {

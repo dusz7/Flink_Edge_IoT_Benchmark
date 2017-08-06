@@ -74,10 +74,7 @@ public class SampleSpout extends BaseRichSpout implements ISyntheticEventGen {
 			values.add(rowString);		// RowString to emit
 			msgId++;
 			values.add(Long.toString(msgId));	// msgId to emit
-			
-			System.out.println("Emitting: Values" + values);
-			System.out.println(Thread.currentThread().getId() + "next_tuple: Emitting tuple from SampleSpout" );
-			
+				
 			this._collector.emit(values);
 			try {
 //				msgId++;

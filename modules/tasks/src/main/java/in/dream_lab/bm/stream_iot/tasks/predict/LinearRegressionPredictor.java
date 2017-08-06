@@ -112,16 +112,15 @@ public class LinearRegressionPredictor extends AbstractTask<String, Float> {
 			} else {
 				testTuple = SAMPLE_INPUT.split(",");
 			}
-			// testTuple="22.7,49.3,0,1955.22,27".split(","); //dummy
 
 			testInstance = WekaUtil.prepareInstance(instanceHeader, testTuple, l);
 
 			int prediction = (int) lr.classifyInstance(testInstance);
-			if (l.isInfoEnabled()) {
+			/*if (l.isInfoEnabled()) {
 				l.info(" ----------------------------------------- ");
 				l.info("Test data               : {}", testInstance);
 				l.info("Test data prediction result {}", prediction);
-			}
+			}*/
 
 			// set parent to have the actual predictions
 			return super.setLastResult((float) prediction);

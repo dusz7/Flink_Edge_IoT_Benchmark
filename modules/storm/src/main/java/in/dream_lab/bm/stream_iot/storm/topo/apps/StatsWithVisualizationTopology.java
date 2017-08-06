@@ -81,27 +81,12 @@ public class StatsWithVisualizationTopology
 
 		String spout1InputFilePath = resourceDir + "/SYS_sample_data_senml.csv";
         
-/*        String basePathForMultipleSpout="/home/anshu/shilpa/code/data/SYS-6hrs-10filles-splitted-data/";
-// 	   String basePathForMultipleSpout="/home/shilpa/Datasets/CityCanvasData/SYS_6hrs_data_10Files/SYS-inputcsv-predict-10spouts200mps-480sec-file/";
- 		 
-        System.out.println("basePathForMultipleSpout is used -"+basePathForMultipleSpout);
-        String spout1InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts200mps-480sec-file1.csv";
-        String spout2InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts200mps-480sec-file2.csv";
-        String spout3InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts200mps-480sec-file3.csv";
-
-        String spout4InputFilePath = basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts200mps-480sec-file4.csv";
-        String spout5InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts200mps-480sec-file5.csv";
-        String spout6InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts200mps-480sec-file6.csv";
-        String spout7InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts200mps-480sec-file7.csv";
-        String spout8InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts200mps-480sec-file8.csv";
-        String spout9InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts200mps-480sec-file9.csv";
-        String spout10InputFilePath=basePathForMultipleSpout+"SYS-inputcsv-predict-10spouts200mps-480sec-file10.csv";
-*/ 		 		 
+ 		 		 
         builder.setSpout("spout", new SampleSenMLSpout(spout1InputFilePath, spoutLogFileName, argumentClass.getScalingFactor(), inputRate, numEvents),
                 1);
         
         builder.setBolt("ParseSenML",
-                new SenMLParseBolt(p_), 10)
+                new SenMLParseBolt(p_), 1)
                 	.shuffleGrouping("spout");
 
         builder.setBolt("BlockWindowAverageBolt",

@@ -54,18 +54,20 @@ public class AzureTableInsertBolt  extends BaseRichBolt {
     	String msgId = (String)input.getValueByField("MSGID");
     	String meta = (String)input.getValueByField("META");
     	String obsType = (String)input.getValueByField("OBSTYPE");
+    	String obsVal = (String)input.getValueByField("OBSVAL");
+    	String val = obsVal + "," + msgId;
     	int count = tuplesMap.size();
     	
     	if(count == 0 )
     		batchFirstMsgId = msgId;
-    	tuplesMap.put(String.valueOf(count), (String)input.getValueByField("OBSVAL"));
+    	tuplesMap.put(String.valueOf(count), val);
     	if(tuplesMap.size() >= insertBatchSize )
     	{
     		Float res = azureTableInsertTask.doTask(tuplesMap);
     		tuplesMap = new HashMap<>();
     	 	//collector.emit(new Values(batchFirstMsgId, meta, obsType, (String)input.getValueByField("OBSVAL")));
     	}
-    	collector.emit(new Values(msgId, meta, obsType, (String)input.getValueByField("OBSVAL")));
+    	collector.emit(new Values(msgId, meta, obsType, val));
     	
     }
 

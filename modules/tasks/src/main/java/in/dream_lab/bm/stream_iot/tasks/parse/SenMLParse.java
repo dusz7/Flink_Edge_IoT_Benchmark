@@ -112,7 +112,7 @@ public class SenMLParse extends AbstractTask<String,Map>
 		}
 		catch (Exception e)
 		 {
-			System.out.println(this.getClass().getName() + ". Exception occurred. " + e.toString());
+			//System.out.println(this.getClass().getName() + ". Exception occurred. " + e.toString());
 			e.printStackTrace();
 		 }
 		return 0.0f;

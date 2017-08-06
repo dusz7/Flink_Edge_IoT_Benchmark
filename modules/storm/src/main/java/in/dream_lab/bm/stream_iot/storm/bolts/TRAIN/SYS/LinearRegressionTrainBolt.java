@@ -111,15 +111,15 @@ public class LinearRegressionTrainBolt extends BaseRichBolt {
         Float res = linearRegressionTrainBatched.doTask(map);
         ByteArrayOutputStream model= (ByteArrayOutputStream) linearRegressionTrainBatched.getLastResult();
 
-        if(l.isInfoEnabled()) {
+/*        if(l.isInfoEnabled()) {
             l.info("Trained Model L.R. after bytestream object-{}", model.toString());
             l.info("res linearRegressionPredictor-" + res);
-        }
+        }*/
 
         if(res!=null ) {
             if(res!=Float.MIN_VALUE) {
             	Values values = new Values(model, msgId, rowkeyend,"MLR",filename);
-            	System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+         //   	System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
                 collector.emit(values);
             }
             else {

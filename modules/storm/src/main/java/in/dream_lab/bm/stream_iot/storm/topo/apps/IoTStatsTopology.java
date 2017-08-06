@@ -9,6 +9,8 @@ import in.dream_lab.bm.stream_iot.storm.genevents.factory.ArgumentClass;
 import in.dream_lab.bm.stream_iot.storm.genevents.factory.ArgumentParser;
 import in.dream_lab.bm.stream_iot.storm.sinks.Sink;
 import in.dream_lab.bm.stream_iot.storm.spouts.SampleSpout;
+import vt.lee.lab.storm.riot_resources.RiotResourceFileProps;
+
 import org.apache.storm.Config;
 import org.apache.storm.LocalCluster;
 import org.apache.storm.StormSubmitter;
@@ -19,6 +21,8 @@ import org.apache.storm.utils.Utils;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.Properties;
 
 
@@ -34,6 +38,8 @@ public class IoTStatsTopology {
             System.out.println("ERROR! INVALID NUMBER OF ARGUMENTS");
             return;
         }
+		String resourceDir = System.getenv("RIOT_RESOURCES");
+		String inputPath = System.getenv("RIOT_INPUT_PROP_PATH");
 
         String logFilePrefix = argumentClass.getTopoName() + "-" + argumentClass.getExperiRunId() + "-" + argumentClass.getScalingFactor() + ".log";
         String sinkLogFileName = argumentClass.getOutputDirName() + "/sink-" + logFilePrefix;
@@ -41,20 +47,33 @@ public class IoTStatsTopology {
         String taskPropFilename=argumentClass.getTasksPropertiesFilename();
         System.out.println("taskPropFilename-"+taskPropFilename);
 
-
+		List<String> resourceFileProps = RiotResourceFileProps.getRiotResourceFileProps();
+        
         Config conf = new Config();
-        conf.setDebug(true);
-        //conf.setNumWorkers(12);
-
+        conf.put(Config.TOPOLOGY_BACKPRESSURE_ENABLE, true);
+		conf.setDebug(false);
+		conf.setNumAckers(0);
 
         Properties p_=new Properties();
         InputStream input = new FileInputStream(taskPropFilename);
         p_.load(input);
+        
+        Enumeration e = p_.propertyNames();
 
+		while (e.hasMoreElements()) {
+			String key = (String) e.nextElement();
+			if (resourceFileProps.contains(key)) {
+				String prop_fike_path = resourceDir + "/" + p_.getProperty(key);
+				p_.put(key, prop_fike_path);
+				System.out.println(key + " -- " + p_.getProperty(key));
+			}
+		}
 
+		String spout1InputFilePath = resourceDir + "/SYS_sample_data_senml.csv";
+		
         TopologyBuilder builder = new TopologyBuilder();
 
-        builder.setSpout("spout", new SampleSpout(argumentClass.getInputDatasetPathName(), spoutLogFileName, argumentClass.getScalingFactor()),
+        builder.setSpout("spout", new SampleSpout(spout1InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
                 1);
 
         builder.setBolt("ParseProjectSYSBolt",

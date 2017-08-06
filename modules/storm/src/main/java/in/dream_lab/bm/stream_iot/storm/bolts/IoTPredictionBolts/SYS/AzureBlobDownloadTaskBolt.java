@@ -72,7 +72,7 @@ public class AzureBlobDownloadTaskBolt extends BaseRichBolt {
 
 		// FIXME: read and emit model for DTC
 		Values values = new Values(BlobModelObject, msgId, "modelupdate", analyticsType, "meta");
-		System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+		//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
 		collector.emit(values);
 	}
 

@@ -62,6 +62,15 @@ public class ETLTopology {
 		conf.put(Config.TOPOLOGY_BACKPRESSURE_ENABLE, true);
 		conf.setDebug(false);
 		conf.setNumAckers(0);
+		
+		conf.put("policy", "signal");
+		conf.put("consume", "constant");
+		conf.put("constant", 100);
+
+
+		System.out.println("Policy: Signal");
+		System.out.println("Consume: CONSTANT-100");
+			
 
 		Properties p_ = new Properties();
 		InputStream input = new FileInputStream(taskPropFilename);

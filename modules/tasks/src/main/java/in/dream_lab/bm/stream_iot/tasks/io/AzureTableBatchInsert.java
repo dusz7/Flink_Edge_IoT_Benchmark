@@ -66,7 +66,7 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 			//System.out.println("AzureTableBatchInsert - Insert: " + table);			
 			
 			ArrayList a = table.execute(batchOperation);
-			System.out.println(this.getClass().getName() + " - LOGS - " + a.size() + " - " + a.get(0));
+			//System.out.println(this.getClass().getName() + " - LOGS - " + a.size() + " - " + a.get(0));
 			return (float)a.size();
 		}
 			catch (Exception e) 
@@ -301,7 +301,7 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 	public static  final class SYSCity extends TableServiceEntity
 	{
 		private String ts,source,longitude,latitude,temperature,humidity,light,dust,airquality_raw,location,type;
-		
+		private String msgId;
 		public String getTs() {
 			return ts;
 		}
@@ -368,13 +368,21 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 		private void setType(String type) {
 			this.type = type;
 		}
+		private void setMsgId(String msgId) {
+			this.msgId = msgId;
+		}
+		private String getMsgId() {
+			return this.msgId;
+		}
+		
 		
 		public static  SYSCity parseString(String s)
 		{
 			SYSCity obj = new SYSCity();
 			String fields[] = s.split(",");
 			Random r = new Random(); 
-			obj.rowKey = fields[0]+"-" +fields[1];
+			obj.rowKey = fields[11];
+			//obj.rowKey = fields[0]+"-" +fields[1];
 			obj.partitionKey = "partition";
 			obj.setTs(fields[0]);
 			obj.setSource(fields[1]);
@@ -386,12 +394,12 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 			obj.setDust(fields[7]);
 			obj.setAirquality_raw(fields[8]);
 			obj.setLocation(fields[9]);
-			obj.setType(fields[10]);			
+			obj.setType(fields[10]);	
+			obj.setMsgId(fields[11]);
 			return obj;
 		}
-
 	}
-
+	
 	public static final class FITdata extends TableServiceEntity
 	{
 		private String subjectId,acc_chest_x,acc_chest_y,acc_chest_z,

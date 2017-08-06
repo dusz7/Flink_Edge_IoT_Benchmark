@@ -97,8 +97,8 @@ public class AzureTableRangeQueryTaskSYS extends AbstractTask {
 				l.info("2-row key accesed - " + rowKeyEnd);
 		}
 		Iterable<SYS_City> result = getAzTableRangeByKeySYS(cloudTbl, partitionKey, rowKeyStart, rowKeyEnd, l);
-		System.out.println("Row key = " + rowKeyEnd);
-		System.out.println("Result = " + result);
+		//System.out.println("Row key = " + rowKeyEnd);
+		//System.out.println("Result = " + result);
 
 		super.setLastResult(result);
 

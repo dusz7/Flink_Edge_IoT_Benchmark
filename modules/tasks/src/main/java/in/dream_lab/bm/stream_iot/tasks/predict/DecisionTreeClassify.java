@@ -113,14 +113,12 @@ public class DecisionTreeClassify extends AbstractTask {
 			}
 			testInstance = WekaUtil.prepareInstance(instanceHeader, testTuple, l);
 			int classification = (int)j48tree.classifyInstance(testInstance);
-			System.out.println("DT result from task  " +classification);
 			String result = instanceHeader.attribute(resultAttrNdx-1).value(classification);
-			System.out.println("DT result from task  " +result);
-			if(l.isInfoEnabled()) {
+			/*if(l.isInfoEnabled()) {
 				l.info(" ----------------------------------------- ");
 				l.info("Test data               : {}", testInstance);
 				l.info("Test data classification result {}, {}", result , classification);
-			}
+			}*/
 			return Float.valueOf(classification);
 		} catch (Exception e) {
 			l.warn("error with clasification of testInstance: " + testInstance, e);

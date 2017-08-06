@@ -63,9 +63,9 @@ public class DecisionTreeClassifyBolt extends BaseRichBolt {
 		String obsVal = "22.7,49.3,0,1955.22,27"; // dummy
 		String msgId = "0";
 
-		System.out.println(this.getClass().getName() + " - RECEIVED - msgType: " + msgtype + " - analyticsType: "
+/*		System.out.println(this.getClass().getName() + " - RECEIVED - msgType: " + msgtype + " - analyticsType: "
 				+ analyticsType + " - sensorMeta: " + sensorMeta);
-
+*/
 		/*
 		 * We are getting an model update message so we will update the model
 		 * only
@@ -88,8 +88,8 @@ public class DecisionTreeClassifyBolt extends BaseRichBolt {
 			// not
 			try {
 				DecisionTreeClassify.j48tree = (J48) weka.core.SerializationHelper.read(bytesInputStream);
-				if (l.isInfoEnabled())
-					l.info("Model is {}", DecisionTreeClassify.j48tree);
+				/*if (l.isInfoEnabled())
+					l.info("Model is {}", DecisionTreeClassify.j48tree);*/
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -113,7 +113,7 @@ public class DecisionTreeClassifyBolt extends BaseRichBolt {
 		 * predict
 		 */
 		if (!msgtype.equals("modelupdate")) {
-			System.out.println("TestS : In DT bolt ");
+			//System.out.println("TestS : In DT bolt ");
 			obsVal = input.getStringByField("OBSVAL");
 			msgId = input.getStringByField("MSGID");
 		}
@@ -121,7 +121,7 @@ public class DecisionTreeClassifyBolt extends BaseRichBolt {
 		HashMap<String, String> map = new HashMap();
 		map.put(AbstractTask.DEFAULT_KEY, obsVal);
 
-		System.out.println(this.getClass().getName() + " - obsVal:" + obsVal);
+		//System.out.println(this.getClass().getName() + " - obsVal:" + obsVal);
 
 		Float res = decisionTreeClassify.doTask(map); // index of
 														// result-class/enum as
@@ -129,12 +129,12 @@ public class DecisionTreeClassifyBolt extends BaseRichBolt {
 
 		// System.out.println("TestS: DT res " +res);
 
-		System.out.println(this.getClass().getName() + " - CLASSIFICATION RESULT: " + res);
+		//System.out.println(this.getClass().getName() + " - CLASSIFICATION RESULT: " + res);
 
 		if (res != null) {
 			if (res != Float.MIN_VALUE) {
 				Values values = new Values(sensorMeta, obsVal, msgId, res.toString(), "DTC");
-				System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+				//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
 				collector.emit(values);
 			} else {
 				if (l.isWarnEnabled())

@@ -115,7 +115,7 @@ public class SenMLParseBoltPREDSYS extends BaseRichBolt {
 
 			Values values = new Values(msgId, resultMap.get(idField), meta.toString(), "dummyobsType",
 					obsVal.toString(), "MSGTYPE", "DumbType");
-			System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+			//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
 			collector.emit(values);
 
 		} catch (Exception e) {

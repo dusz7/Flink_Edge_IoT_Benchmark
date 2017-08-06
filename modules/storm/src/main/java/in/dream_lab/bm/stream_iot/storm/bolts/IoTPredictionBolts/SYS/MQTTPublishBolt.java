@@ -66,15 +66,15 @@ public class MQTTPublishBolt extends BaseRichBolt {
 					.append(obsVal).append(",ERROR:").append(res);
 		}
 
-		if (l.isInfoEnabled())
-			l.info("MQTT result:{}", temp);
+/*		if (l.isInfoEnabled())
+			l.info("MQTT result:{}", temp);*/
 
 		HashMap<String, String> map = new HashMap();
 		map.put(AbstractTask.DEFAULT_KEY, String.valueOf(temp));
 		mqttPublishTask.doTask(map);
 		
-		Values values = new Values(msgId, meta, obsVal);
-		System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+		Values values = new Values(msgId, meta,analyticsType, obsVal);
+		//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
 		collector.emit(values);
 		
 	}
@@ -86,7 +86,7 @@ public class MQTTPublishBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("MSGID", "META", "OBSVAL"));
+		outputFieldsDeclarer.declare(new Fields("MSGID", "META", "ANALYTICTYPE" ,"OBSVAL"));
 	}
 
 }

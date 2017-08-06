@@ -60,24 +60,24 @@ public class ErrorEstimationBolt extends BaseRichBolt {
 		if (analyticsType.equals("AVG")) {
 			avgRes = input.getStringByField("AVGRES");
 
-			if (l.isInfoEnabled())
-				l.info("avgRes:" + avgRes);
+/*			if (l.isInfoEnabled())
+				l.info("avgRes:" + avgRes);*/
 		}
 
 		// float air_quality= Float.parseFloat(obsVal.split(",")[4]);
 
-		if (l.isInfoEnabled())
+/*		if (l.isInfoEnabled())
 			l.info("analyticsType:{},Res:{},avgRes:{}", analyticsType, Res, avgRes);
-
+*/
 		if (analyticsType.equals("MLR")) {
 			float errval = (air_quality - Float.parseFloat(Res)) / Float.parseFloat(avgRes);
-			System.out.println(this.getClass().getName() + " - AQ: " + air_quality + " - Res: " + Res +" - Average: " + avgRes);
+			//System.out.println(this.getClass().getName() + " - AQ: " + air_quality + " - Res: " + Res +" - Average: " + avgRes);
 			
-			if (l.isInfoEnabled())
+/*			if (l.isInfoEnabled())
 				l.info(("errval - " + errval));
-			
+*/			
 			Values values = new Values(sensorMeta, errval, msgId, analyticsType, obsVal);
-            System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+            //System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
 			collector.emit(values);
 
 		}

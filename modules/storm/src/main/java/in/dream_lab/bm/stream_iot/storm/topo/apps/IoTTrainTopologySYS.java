@@ -79,7 +79,7 @@ public class IoTTrainTopologySYS {
 		TopologyBuilder builder = new TopologyBuilder();
 
 
-		String spout1InputFilePath = resourceDir + "inputFileForTimerSpout-CITY.csv";
+		String spout1InputFilePath = resourceDir + "/inputFileForTimerSpout-CITY.csv";
 
 		builder.setSpout("TimeSpout",
 				new SampleSpoutTimerForTrain(spout1InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),

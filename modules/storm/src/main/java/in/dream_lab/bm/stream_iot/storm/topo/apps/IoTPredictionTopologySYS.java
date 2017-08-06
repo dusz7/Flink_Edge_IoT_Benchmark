@@ -9,6 +9,7 @@ import in.dream_lab.bm.stream_iot.storm.bolts.ETL.TAXI.SenMLParseBolt;
 import in.dream_lab.bm.stream_iot.storm.bolts.IoTPredictionBolts.SYS.*;
 import in.dream_lab.bm.stream_iot.storm.genevents.factory.ArgumentClass;
 import in.dream_lab.bm.stream_iot.storm.genevents.factory.ArgumentParser;
+import in.dream_lab.bm.stream_iot.storm.sinks.IoTPredictionTopologySinkBolt;
 import in.dream_lab.bm.stream_iot.storm.sinks.Sink;
 import in.dream_lab.bm.stream_iot.storm.spouts.MQTTSubscribeSpout;
 import in.dream_lab.bm.stream_iot.storm.spouts.SampleSenMLSpout;
@@ -60,7 +61,12 @@ public class IoTPredictionTopologySYS {
 		conf.put(Config.TOPOLOGY_BACKPRESSURE_ENABLE, true);
 		conf.setDebug(false);
 		conf.setNumAckers(0);
-
+		conf.put("policy", "signal");
+		conf.put("consume", "half");
+		
+		
+		System.out.println("policy" + "signal");
+		System.out.println("consume" + "HALF");
 
         Properties p_=new Properties();
         InputStream input = new FileInputStream(taskPropFilename);
@@ -90,23 +96,23 @@ public class IoTPredictionTopologySYS {
                 .shuffleGrouping("spout1");
 
 
-        builder.setSpout("mqttSubscribeTaskBolt",
+/*        builder.setSpout("mqttSubscribeTaskBolt",
                 new MQTTSubscribeSpout(p_,"dummyLog-SYS"), 1); // "RowString" should have path of blob
 
         builder.setBolt("AzureBlobDownloadTaskBolt",
                 new AzureBlobDownloadTaskBolt(p_), 1)
-                .shuffleGrouping("mqttSubscribeTaskBolt");
+                .shuffleGrouping("mqttSubscribeTaskBolt");*/
 
         builder.setBolt("DecisionTreeClassifyBolt",
                 new DecisionTreeClassifyBolt(p_), 1)
-                .shuffleGrouping("SenMLParseBoltPREDSYS")
-                .fieldsGrouping("AzureBlobDownloadTaskBolt",new Fields("ANALAYTICTYPE"));
+                .shuffleGrouping("SenMLParseBoltPREDSYS");
+//                .fieldsGrouping("AzureBlobDownloadTaskBolt",new Fields("ANALAYTICTYPE"));
 //
 //
         builder.setBolt("LinearRegressionPredictorBolt",
                 new LinearRegressionPredictorBolt(p_), 1)
-                .shuffleGrouping("SenMLParseBoltPREDSYS")
-                .fieldsGrouping("AzureBlobDownloadTaskBolt",new Fields("ANALAYTICTYPE"));
+                .shuffleGrouping("SenMLParseBoltPREDSYS");
+//                .fieldsGrouping("AzureBlobDownloadTaskBolt",new Fields("ANALAYTICTYPE"));
 
 
         builder.setBolt("BlockWindowAverageBolt",
@@ -125,8 +131,9 @@ public class IoTPredictionTopologySYS {
                 .fieldsGrouping("DecisionTreeClassifyBolt",new Fields("ANALAYTICTYPE")) ;
 
 
-        builder.setBolt("sink", new Sink(sinkLogFileName), 1).shuffleGrouping("MQTTPublishBolt");
-
+/*        builder.setBolt("sink", new Sink(sinkLogFileName), 1).shuffleGrouping("MQTTPublishBolt");
+*/
+        builder.setBolt("sink", new IoTPredictionTopologySinkBolt(sinkLogFileName), 1).shuffleGrouping("MQTTPublishBolt");
 
 
         StormTopology stormTopology = builder.createTopology();

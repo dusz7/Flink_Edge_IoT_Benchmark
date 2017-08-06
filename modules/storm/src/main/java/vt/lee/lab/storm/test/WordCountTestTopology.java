@@ -42,7 +42,15 @@ public class WordCountTestTopology {
 		config.setNumAckers(0);
 		config.put(Config.TOPOLOGY_BACKPRESSURE_ENABLE, true);
 		config.setDebug(false);
+		config.put("policy", "signal");
+		config.put("consume", "constant");
+		config.put("constant", 100);
 
+		System.out.println("Policy: Signal");
+		System.out.println("Consume: constant");
+		System.out.println("constant: 100");
+		
+		
 		builder.setSpout("random_sentence_spout",
 				new RandomSentenceSpout(spoutLogFileName, inputRate, experimentDuration, numEvents));
 		builder.setBolt("word_count_bolt_1", new CountBolt(20), 1).shuffleGrouping("random_sentence_spout");

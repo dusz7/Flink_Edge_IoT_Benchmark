@@ -60,6 +60,16 @@ public class StatsWithVisualizationTopology
 		conf.put(Config.TOPOLOGY_BACKPRESSURE_ENABLE, true);
 		conf.setDebug(false);
 		conf.setNumAckers(0);
+/*		conf.put("policy", "signal");
+		conf.put("consume", "all");
+		
+		System.out.println("\n\n LIST CONSUME ALL \n\n");*/
+		
+		conf.put("policy", "signal");
+		conf.put("consume", "constant");
+		conf.put("constant", 100);
+		
+		System.out.println("\n\n LIST CONSUME CONSTANT 100 \n\n");
         
         
         Properties p_=new Properties();

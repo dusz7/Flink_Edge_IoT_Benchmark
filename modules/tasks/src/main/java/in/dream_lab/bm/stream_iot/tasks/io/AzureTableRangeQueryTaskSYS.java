@@ -75,7 +75,7 @@ public class AzureTableRangeQueryTaskSYS extends AbstractTask {
 	protected Float doTaskLogic(Map map) {
 		String rowKeyStart, rowKeyEnd;
 		CloudTable cloudTbl = connectToAzTable(storageConnStr, tableName, l);
-		l.warn("Table name is - " + cloudTbl.getName());
+		//l.warn("Table name is - " + cloudTbl.getName());
 		// FIXME: How do you advance the rowkey. Have a start and end for row
 		// key as input property?
 		// String rowKeyStart,rowKeyEnd;
@@ -84,25 +84,23 @@ public class AzureTableRangeQueryTaskSYS extends AbstractTask {
 			rowKeyStart = (String) map.get("ROWKEYSTART");
 			rowKeyEnd = (String) map.get("ROWKEYEND");
 
-			System.out.println("rowkeystart: " + rowKeyStart + " rowKeyEnd: " + rowKeyEnd);
-
 			assert Long.parseLong(rowKeyStart) >= startRowKey;
 			assert Long.parseLong(rowKeyEnd) <= endRowKey;
-			if (l.isInfoEnabled())
-				l.info("1-row key accesed till - " + rowKeyEnd);
+/*			if (l.isInfoEnabled())
+				l.info("1-row key accesed till - " + rowKeyEnd);*/
 		} else {
 			rowKeyStart = String.valueOf(rn.nextLong());
 			rowKeyEnd = String.valueOf(rn.nextLong());
-			if (l.isInfoEnabled())
+/*			if (l.isInfoEnabled())
 				l.info("2-row key accesed - " + rowKeyEnd);
-		}
+*/		}
 		Iterable<SYS_City> result = getAzTableRangeByKeySYS(cloudTbl, partitionKey, rowKeyStart, rowKeyEnd, l);
 		//System.out.println("Row key = " + rowKeyEnd);
 		//System.out.println("Result = " + result);
 
 		super.setLastResult(result);
 
-		System.out.println("Lists.newArrayList(result).size() = " + Lists.newArrayList(result).size());
+		//System.out.println("Lists.newArrayList(result).size() = " + Lists.newArrayList(result).size());
 
 		// return Float.valueOf(Lists.newArrayList(result).size()); // may need
 		// updation
@@ -146,9 +144,6 @@ public class AzureTableRangeQueryTaskSYS extends AbstractTask {
 
 		try {
 
-			// filters
-			System.out.println("getAzTableRowByKey-" + rowkeyStart + "," + rowkeyEnd);
-
 			// Create a filter condition where the partition key is "Smith".
 			String partitionFilter = TableQuery.generateFilterCondition("PartitionKey",
 					TableQuery.QueryComparisons.EQUAL, partitionKey);
@@ -169,12 +164,12 @@ public class AzureTableRangeQueryTaskSYS extends AbstractTask {
 
 			// Loop through the results, displaying information about the entity
 
-			System.out.println("getAzTableRangeByKeySYS : queryRes");
+			//System.out.println("getAzTableRangeByKeySYS : queryRes");
 
-			for (SYS_City entity : queryRes) {
+/*			for (SYS_City entity : queryRes) {
 				System.out.println(
 						entity.getPartitionKey() + " " + entity.getRangeKey() + "\t" + entity.getAirquality_raw());
-			}
+			}*/
 
 			return queryRes;
 		} catch (Exception e) {

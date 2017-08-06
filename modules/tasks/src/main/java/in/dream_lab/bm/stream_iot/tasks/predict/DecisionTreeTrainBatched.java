@@ -79,8 +79,8 @@ public class DecisionTreeTrainBatched extends AbstractTask {
 		String m = (String)map.get(AbstractTask.DEFAULT_KEY);
 		String filename = (String)map.get("FILENAME");
 		ByteArrayOutputStream model=new ByteArrayOutputStream();
-		if(l.isInfoEnabled())
-			l.info("Range query res:{}",m);
+/*		if(l.isInfoEnabled())
+			l.info("Range query res:{}",m);*/
 
 		String fullFilePath=modelFilePath+filename;  //  model file updated with MLR-endRowkey.model
 		int result = 0;
@@ -88,13 +88,13 @@ public class DecisionTreeTrainBatched extends AbstractTask {
 
 			instancesBuf.append("\n").append(m).append("\n");
 				// train and save model
-				l.info("instancesBuf-"+instancesBuf.toString());
+				//l.info("instancesBuf-"+instancesBuf.toString());
 				StringReader stringReader = new StringReader(instancesBuf.toString());
 				result = decisionTreeTrainAndSaveModel(stringReader, fullFilePath,model, l);
 
-				if(l.isInfoEnabled()) {
+/*				if(l.isInfoEnabled()) {
 					l.info("Trained Model L.R.-{}", weka.core.SerializationHelper.read(fullFilePath).toString());
-				}
+				}*/
 
 				super.setLastResult(model);
 				instancesBuf = new StringBuffer(instanceHeader);
@@ -124,7 +124,7 @@ public class DecisionTreeTrainBatched extends AbstractTask {
 			// train the model
 			J48 j48tree = new J48();
 			j48tree.buildClassifier(trainingData);
-			if(l.isInfoEnabled()) l.info("Model is - "+j48tree.toString());
+			//if(l.isInfoEnabled()) l.info("Model is - "+j48tree.toString());
 
 //			System.out.println(("Model is - "+j48tree.toString()));
 
@@ -136,10 +136,10 @@ public class DecisionTreeTrainBatched extends AbstractTask {
 			return -2;
 		}
 
-		if(l.isInfoEnabled()) {
+/*		if(l.isInfoEnabled()) {
 			l.info("Decision tree Model trained and saved at {} ", modelFilePath);
 			l.info("number of training instances {} ", trainingData.numInstances());
-		}
+		}*/
 
 		return trainingData.numInstances(); // return number of instances trained on
 	}

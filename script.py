@@ -163,7 +163,7 @@ def get_stats_topo_throughput(sink_file, timestampIndex):
         num_msgs=1
         for line in f:
             num_msgs+=1
-        print num_msgs
+#        print num_msgs
         last = line.split(",")
         startTime = long(first[timestampIndex])
         endTime = long(last[timestampIndex])
@@ -188,3 +188,8 @@ elif topology_name == "stats_with_vis":
     print "Input Rate (msgs/sec): " + str(getInputRate(spoutFile))
     print "Throughput (msgs/sec): " + str(get_stats_topo_throughput(sinkFile,3))
     print "Average Latency (ms): " + str(getLatency(spoutFile, sinkFile, 3, 5, 3 ,4))
+elif topology_name == "train":
+    print "Input Rate (msgs/sec): " + str(getInputRate(spoutFile))
+    get_etl_topo_throughput(sinkFile, 3, 4, "DTC", "MLR")
+    get_etl_topo_latency(spoutFile, sinkFile, 3, 5, 3 ,4, "DTC", "MLR")
+

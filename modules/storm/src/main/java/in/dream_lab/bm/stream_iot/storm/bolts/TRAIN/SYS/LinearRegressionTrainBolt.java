@@ -105,7 +105,7 @@ public class LinearRegressionTrainBolt extends BaseRichBolt {
 //        obsVal="22.7,49.3,0,1955.22,27"; //dummy
         map.put(AbstractTask.DEFAULT_KEY, trainData);
         
-        String filename=datasetName+"-MLR-"+rowkeyend+".model";
+        String filename=datasetName+"-MLR-"+rowkeyend + msgId + ".model";
         map.put("FILENAME", filename);
 
         Float res = linearRegressionTrainBatched.doTask(map);

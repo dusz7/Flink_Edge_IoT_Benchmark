@@ -43,7 +43,7 @@ public class EventGen {
 	public void launch(String csvFileName, String outCSVFileName) {
 		System.out.println(csvFileName);
 		System.out.println(outCSVFileName);
-		launch(csvFileName, outCSVFileName, 60000L);
+		launch(csvFileName, outCSVFileName, 600000L);
 	}
 
 	// Launches all the threads

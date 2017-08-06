@@ -44,7 +44,7 @@ public class AnnotateDTClass extends AbstractTask<String,String>
 		String result=map.get(AbstractTask.DEFAULT_KEY);
 //		 Loop through the results, displaying information about the entity
 		for (String entity : result.split("\n")) {
-			System.out.println(this.getClass().getName() + " - GOT - " + entity);
+			//System.out.println(this.getClass().getName() + " - GOT - " + entity);
 //			if(l.isInfoEnabled())
 //				l.info("val at annotate {}",entity);
 			doubleValues.add(Double.valueOf(entity.split(",")[useMsgField]));// 4 for sys	(air_quality)
@@ -58,8 +58,8 @@ public class AnnotateDTClass extends AbstractTask<String,String>
 
 //		System.out.println("percentile results:"+percentile.evaluate(100));
 
-		if(l.isInfoEnabled())
-			l.info("percentile results: {}",percentile.evaluate(100));
+/*		if(l.isInfoEnabled())
+			l.info("percentile results: {}",percentile.evaluate(100));*/
 
 		annotationMap = new TreeMap<Double, String>();
 		annotationMap.put(Double.valueOf(percentile.evaluate(25)), "BAD");
@@ -67,12 +67,12 @@ public class AnnotateDTClass extends AbstractTask<String,String>
 		annotationMap.put(Double.valueOf(percentile.evaluate(75)), "VERYGOOD");
 		annotationMap.put(Double.valueOf(percentile.evaluate(100)), "EXCELLENT");
 
-		if(l.isInfoEnabled()){
+/*		if(l.isInfoEnabled()){
 			for(Map.Entry<Double, String> tm : annotationMap.entrySet())
 			{   //print keys and values
 				System.out.println(tm.getKey() + " : " +tm.getValue());
 			}
-		}
+		}*/
 
 
 		StringBuffer annotatedData=new StringBuffer();
@@ -95,8 +95,8 @@ public class AnnotateDTClass extends AbstractTask<String,String>
 			annotatedData.append(entity).append(",").append(annotation).append("\n");
 		}
 
-		if(l.isInfoEnabled())
-			l.info("annotated data is {}",annotatedData);
+/*		if(l.isInfoEnabled())
+			l.info("annotated data is {}",annotatedData);*/
 
 		super.setLastResult(annotatedData.toString());
 

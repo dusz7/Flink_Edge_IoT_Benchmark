@@ -87,8 +87,6 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 			values.add(Long.toString(msgId));
 			values.add(newRow);
 
-			//System.out.println(this.getClass().getName() + " - LOGS - " + values.toString());
-
 			this._collector.emit(values);
 			try {
 				ba.batchLogwriter(System.currentTimeMillis(), "MSGID," + msgId);
@@ -111,10 +109,7 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 		}
 		_collector = collector;
 		this.eventGen = new EventGen(this, this.scalingFactor,
-				this.inputRate); /*
-									 * added rate=100 here for now, make it a CLI
-									 * arg
-									 */
+				this.inputRate); 
 		this.eventQueue = new LinkedBlockingQueue<List<String>>();
 		String uLogfilename = this.outSpoutCSVLogFileName;
 		this.eventGen.launch(this.csvFileName, uLogfilename, -1, true); // Launch

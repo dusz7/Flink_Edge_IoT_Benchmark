@@ -81,28 +81,21 @@ public class AzureTableRangeQueryBolt extends BaseRichBolt {
 
 		if (l.isInfoEnabled()) {
 			stopwatch.stop(); // optional
-			l.info("Time elapsed for azureTableRangeQueryTask() is {}", stopwatch.elapsed(MILLISECONDS)); //
+			//l.info("Time elapsed for azureTableRangeQueryTask() is {}", stopwatch.elapsed(MILLISECONDS)); //
 		}
 
 		StringBuffer bf = new StringBuffer();
 		// Loop through the results, displaying information about the entity
-		System.out.println("Loop through the results, displaying information about the entity: ");
 		for (AzureTableRangeQueryTaskSYS.SYS_City entity : result) {
-			// System.out.println(entity.getPartitionKey() + " " +
-			// entity.getRangeKey() + "\t" + entity.getAirquality_raw() );
 			bf.append(entity.getTemperature()).append(",").append(entity.getHumidity()).append(",")
 					.append(entity.getLight()).append(",").append(entity.getDust()).append(",")
 					.append(entity.getAirquality_raw()).append("\n");
 
-			System.out.println("AzureTableRangeQueryBolt: " + bf.toString());
 		}
-
-		if (l.isInfoEnabled())
-			l.info(bf.toString());
 
 		// FIXME: read and emit model for DTC
 		Values values = new Values(bf.toString(), msgId, ROWKEYEND);
-		System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+		//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
 		collector.emit(values);
 
 	}

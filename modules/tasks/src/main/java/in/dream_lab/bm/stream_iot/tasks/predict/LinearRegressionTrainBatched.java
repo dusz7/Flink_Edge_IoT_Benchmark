@@ -94,14 +94,14 @@ public class LinearRegressionTrainBatched extends AbstractTask {
 		try {
 			instancesBuf.append("\n").append(m).append("\n");
 			// train and save model
-			if (l.isInfoEnabled())
-				l.info("instancesBuf-" + instancesBuf.toString());
+/*			if (l.isInfoEnabled())
+				l.info("instancesBuf-" + instancesBuf.toString());*/
 			StringReader stringReader = new StringReader(instancesBuf.toString());
 			result = linearRegressionTrainAndSaveModel(stringReader, fullFilePath, model, l);
 
 			if (l.isInfoEnabled()) {
 				LinearRegression readModel = (LinearRegression) weka.core.SerializationHelper.read(fullFilePath);
-				l.info("Trained Model L.R.-{}", readModel.toString());
+				//l.info("Trained Model L.R.-{}", readModel.toString());
 			}
 
 			super.setLastResult(model);
@@ -146,9 +146,9 @@ public class LinearRegressionTrainBatched extends AbstractTask {
 			l.warn("error training linear regression", e);
 			return -2;
 		}
-		if (l.isInfoEnabled())
+/*		if (l.isInfoEnabled())
 			l.info("linear regression Model trained over full ARFF file and saved at {} ", modelFilePath);
-		return 0;
+*/		return 0;
 	}
 
 }

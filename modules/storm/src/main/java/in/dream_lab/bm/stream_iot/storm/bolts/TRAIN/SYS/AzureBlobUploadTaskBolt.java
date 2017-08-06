@@ -66,26 +66,27 @@ public class AzureBlobUploadTaskBolt extends BaseRichBolt {
 	public void execute(Tuple input) {
 		String res = "0";
 		String msgId = input.getStringByField("MSGID");
-		// String analaytictype = input.getStringByField("ANALAYTICTYPE");
+		String analaytictype = input.getStringByField("ANALAYTICTYPE");
 		// String rowkeyend = input.getStringByField("ROWKEYEND");
 
 		fileName = input.getStringByField("FILENAME");
 		String filepath = baseDirname + fileName;
-
+		
+		/*
 		if (l.isInfoEnabled())
-			l.info("filapth in upload bolt{} and name is {}", filepath, fileName);
+			l.info("filapth in upload bolt{} and name is {}", filepath, fileName);*/
 
 		HashMap<String, String> map = new HashMap();
 		map.put(AbstractTask.DEFAULT_KEY, filepath);
 
 		Float blobRes = azureBlobUploadTask.doTask(map);
 
-		System.out.println(this.getClass().getName() + " - Upload Result - " + blobRes);
+		//System.out.println(this.getClass().getName() + " - Upload Result - " + blobRes);
 
 		if (res != null) {
 			if (blobRes != Float.MIN_VALUE) {
-				Values values = new Values(msgId, fileName);
-				System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+				Values values = new Values(msgId, fileName, analaytictype);
+				//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
 				collector.emit(values);
 			} else {
 				if (l.isWarnEnabled())
@@ -102,7 +103,7 @@ public class AzureBlobUploadTaskBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("MSGID", "FILENAME"));
+		outputFieldsDeclarer.declare(new Fields("MSGID", "FILENAME", "ANALYTICTYPE"));
 	}
 
 }

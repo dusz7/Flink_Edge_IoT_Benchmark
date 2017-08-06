@@ -74,7 +74,7 @@ public class AnnotateDTClassBolt extends BaseRichBolt {
 		String annotData = annotateDTClass.getLastResult();
 
 		Values values = new Values(msgId, annotData, rowkeyend);
-		System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+		//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
 		collector.emit(values);
 	}
 

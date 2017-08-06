@@ -7,6 +7,7 @@ package in.dream_lab.bm.stream_iot.storm.topo.apps;
 import in.dream_lab.bm.stream_iot.storm.bolts.TRAIN.SYS.*;
 import in.dream_lab.bm.stream_iot.storm.genevents.factory.ArgumentClass;
 import in.dream_lab.bm.stream_iot.storm.genevents.factory.ArgumentParser;
+import in.dream_lab.bm.stream_iot.storm.sinks.IoTTrainTopologySinkBolt;
 import in.dream_lab.bm.stream_iot.storm.sinks.Sink;
 import in.dream_lab.bm.stream_iot.storm.spouts.SampleSenMLSpout;
 import in.dream_lab.bm.stream_iot.storm.spouts.SampleSpoutTimerForTrain;
@@ -78,11 +79,10 @@ public class IoTTrainTopologySYS {
 
 		TopologyBuilder builder = new TopologyBuilder();
 
-
 		String spout1InputFilePath = resourceDir + "/inputFileForTimerSpout-CITY.csv";
 
 		builder.setSpout("TimeSpout",
-				new SampleSpoutTimerForTrain(spout1InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
+				new SampleSpoutTimerForTrain(spout1InputFilePath, spoutLogFileName, argumentClass.getScalingFactor(), inputRate, numEvents),
 				1);
 
 		builder.setBolt("AzureTableRangeQueryBolt", new AzureTableRangeQueryBolt(p_), 1)
@@ -104,7 +104,7 @@ public class IoTTrainTopologySYS {
 		builder.setBolt("DecisionTreeTrainBolt", new DecisionTreeTrainBolt(p_), 1)
 				.shuffleGrouping("AnnotateDTClassBolt");
 
-		builder.setBolt("sink", new Sink(sinkLogFileName), 1).shuffleGrouping("AzureBlobUploadTaskBolt");
+		builder.setBolt("sink", new IoTTrainTopologySinkBolt(sinkLogFileName), 1).shuffleGrouping("AzureBlobUploadTaskBolt");
 
 		StormTopology stormTopology = builder.createTopology();
 
@@ -115,7 +115,7 @@ public class IoTTrainTopologySYS {
 		} else {
 			LocalCluster cluster = new LocalCluster();
 			cluster.submitTopology(argumentClass.getTopoName(), conf, stormTopology);
-			Utils.sleep(1000000000);
+			Utils.sleep(600000);
 			cluster.killTopology(argumentClass.getTopoName());
 			cluster.shutdown();
 			System.out.println("Input Rate: " + metric_utils.Utils.getInputRate(spoutLogFileName));

@@ -67,7 +67,7 @@ public class DecisionTreeTrainBolt extends BaseRichBolt {
 		HashMap<String, String> map = new HashMap();
 		map.put(AbstractTask.DEFAULT_KEY, annotData);
 
-		String filename = datasetName + "-DTC-" + rowkeyend + ".model";
+		String filename = datasetName + "-DTC-" + rowkeyend + msgid + ".model";
 		map.put("FILENAME", filename);
 
 		Float res = decisionTreeTrainBatched.doTask(map); // index of
@@ -75,13 +75,13 @@ public class DecisionTreeTrainBolt extends BaseRichBolt {
 															// as return
 		ByteArrayOutputStream model = (ByteArrayOutputStream) decisionTreeTrainBatched.getLastResult();
 
-		if (l.isInfoEnabled())
-			l.info("result from res:{}", res);
+/*		if (l.isInfoEnabled())
+			l.info("result from res:{}", res);*/
 
 		if (res != null) {
 			if (res != Float.MIN_VALUE) {
 				Values values = new Values(model, msgid, rowkeyend, "DTC", filename);
-				System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+				//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
 				collector.emit(values);
 			} else {
 				if (l.isWarnEnabled())

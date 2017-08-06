@@ -301,7 +301,7 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 	public static  final class SYSCity extends TableServiceEntity
 	{
 		private String ts,source,longitude,latitude,temperature,humidity,light,dust,airquality_raw,location,type;
-		private String msgId;
+		//private String msgId;
 		public String getTs() {
 			return ts;
 		}
@@ -368,12 +368,12 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 		private void setType(String type) {
 			this.type = type;
 		}
-		private void setMsgId(String msgId) {
+/*		private void setMsgId(String msgId) {
 			this.msgId = msgId;
 		}
 		private String getMsgId() {
 			return this.msgId;
-		}
+		}*/
 		
 		
 		public static  SYSCity parseString(String s)
@@ -381,8 +381,8 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 			SYSCity obj = new SYSCity();
 			String fields[] = s.split(",");
 			Random r = new Random(); 
-			obj.rowKey = fields[11];
-			//obj.rowKey = fields[0]+"-" +fields[1];
+			//obj.rowKey = fields[11];
+			obj.rowKey = fields[0]+"-" +fields[1];
 			obj.partitionKey = "partition";
 			obj.setTs(fields[0]);
 			obj.setSource(fields[1]);
@@ -395,7 +395,7 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 			obj.setAirquality_raw(fields[8]);
 			obj.setLocation(fields[9]);
 			obj.setType(fields[10]);	
-			obj.setMsgId(fields[11]);
+			//obj.setMsgId(fields[11]);
 			return obj;
 		}
 	}

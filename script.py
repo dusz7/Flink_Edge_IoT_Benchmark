@@ -157,6 +157,20 @@ def getLatency(in_file, out_file, in_ts_index, in_msg_index, out_ts_index, out_m
         total_latency = total_latency + latency_map[key]
     return total_latency / len(latency_map)
 
+def get_stats_topo_throughput(sink_file, timestampIndex):
+    with open(sink_file, "r") as f:
+        first = f.readline().split(",")
+        num_msgs=1
+        for line in f:
+            num_msgs+=1
+        print num_msgs
+        last = line.split(",")
+        startTime = long(first[timestampIndex])
+        endTime = long(last[timestampIndex])
+        rate = float(num_msgs) / ((endTime-startTime)/1000)
+    return rate
+
+
 
 if topology_name == "ETLTopology":
     print "Input Rate (msgs/sec): " + str(getInputRate(spoutFile))
@@ -172,5 +186,5 @@ elif topology_name == "iot_prediction_topology":
     get_etl_topo_latency(spoutFile, sinkFile, 3, 5, 3 ,4, "DTC", "MLR")
 elif topology_name == "stats_with_vis":
     print "Input Rate (msgs/sec): " + str(getInputRate(spoutFile))
-    print "Throughput (msgs/sec): " + str(getThroughput(sinkFile))
+    print "Throughput (msgs/sec): " + str(get_stats_topo_throughput(sinkFile,3))
     print "Average Latency (ms): " + str(getLatency(spoutFile, sinkFile, 3, 5, 3 ,4))

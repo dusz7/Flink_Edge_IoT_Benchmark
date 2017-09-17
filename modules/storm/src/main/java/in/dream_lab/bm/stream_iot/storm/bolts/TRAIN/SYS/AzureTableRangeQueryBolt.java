@@ -60,7 +60,7 @@ public class AzureTableRangeQueryBolt extends BaseRichBolt {
 		// path for both model files
 		// String BlobModelPath = input.getStringByField("BlobModelPath");
 		// String analyticsType = input.getStringByField("analyticsType");
-
+		System.out.println("AzureTableRangeQueryBolt : " + Thread.currentThread().getId());
 		String msgId = input.getStringByField("MSGID");
 		ROWKEYSTART = (input.getStringByField("ROWKEYSTART"));
 		ROWKEYEND = (input.getStringByField("ROWKEYEND"));

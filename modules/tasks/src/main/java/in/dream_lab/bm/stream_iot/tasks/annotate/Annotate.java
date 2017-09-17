@@ -70,13 +70,11 @@ public class Annotate extends AbstractTask<String,String>
 	{
 		// reading the meta and obsvalue from string
 		
-		
-		
 		String in ; 
 		String annotateKey;
 		in = (String) map.get(AbstractTask.DEFAULT_KEY);
 		annotateKey = in.split(",")[useMsgField];	/*TG: getting sensor Id from here*/
-		
+		//System.out.println("AnnotationTask: (sensor id)" + annotateKey);
 		// Fetch annotated values from hashmap corresponding to this key 
 		String annotation = annotationMap.get(annotateKey);		/*TG: looking annotation for that sesnor Id*/
 		

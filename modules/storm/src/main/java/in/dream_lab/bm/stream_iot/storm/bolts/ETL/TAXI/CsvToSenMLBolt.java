@@ -20,55 +20,62 @@ import org.slf4j.LoggerFactory;
 
 public class CsvToSenMLBolt extends BaseRichBolt {
 
-    private Properties p;
+	private Properties p;
 
-    public CsvToSenMLBolt(Properties p_)
-    {
-         p=p_;
+	public CsvToSenMLBolt(Properties p_) {
+		p = p_;
 
-    }
-    OutputCollector collector;
-    private static Logger l; 
-    public static void initLogger(Logger l_) {     l = l_; }
-    CsvToSenMLParse csvToSenMlparseTask;
-    @Override
-    public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
+	}
 
-        this.collector=outputCollector;
-        initLogger(LoggerFactory.getLogger("APP"));
+	OutputCollector collector;
+	private static Logger l;
 
-        csvToSenMlparseTask= new CsvToSenMLParse();
+	public static void initLogger(Logger l_) {
+		l = l_;
+	}
 
-        csvToSenMlparseTask.setup(l,p);
-    }
+	CsvToSenMLParse csvToSenMlparseTask;
 
-    @Override
-    public void execute(Tuple input) 
-    {
-    	String msgId = (String)input.getValueByField("MSGID");
-    	String meta = (String)input.getValueByField("META");
-    	String obsType = (String)input.getValueByField("OBSTYPE");
-    	
-    	
-    	HashMap<String, String> map = new HashMap();
-        map.put(AbstractTask.DEFAULT_KEY, (String)input.getValueByField("OBSVAL"));
-        
-    	Float res = csvToSenMlparseTask.doTask(map);  
-    	String updatedValue = (String) csvToSenMlparseTask.getLastResult();
-    	
-    	Values values = new Values(msgId,meta,"senml" ,updatedValue);
-    	//System.out.println(this.getClass().getName() + " - LOG - " + values.toString());
-    	collector.emit(values);
-    }
+	@Override
+	public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
 
-    @Override
-    public void cleanup() {
-    	csvToSenMlparseTask.tearDown();
-    }
+		this.collector = outputCollector;
+		initLogger(LoggerFactory.getLogger("APP"));
 
-    @Override
-    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("MSGID", "META", "OBSTYPE", "OBSVAL"));
-    }
+		csvToSenMlparseTask = new CsvToSenMLParse();
+
+		csvToSenMlparseTask.setup(l, p);
+	}
+
+	@Override
+	public void execute(Tuple input) {
+		String msgId = (String) input.getValueByField("MSGID");
+		String meta = (String) input.getValueByField("META");
+		String obsType = (String) input.getValueByField("OBSTYPE");
+		String obsVal = (String) input.getValueByField("OBSVAL");
+
+		//System.out.println(this.getClass().getName() + " - RECEIVED - " + obsType + " - " + obsVal);
+
+		HashMap<String, String> map = new HashMap();
+		map.put(AbstractTask.DEFAULT_KEY, obsVal);
+
+		Float res = csvToSenMlparseTask.doTask(map);
+		String updatedValue = (String) csvToSenMlparseTask.getLastResult();
+
+		Values values = new Values(msgId, meta, "senml", updatedValue);
+		// System.out.println(this.getClass().getName() + " - LOG - " +
+		// values.toString());
+		collector.emit(values);
+	}
+
+	@Override
+	public void cleanup() {
+		csvToSenMlparseTask.tearDown();
+	}
+
+	@Override
+	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
+		outputFieldsDeclarer.declare(new Fields("MSGID", "META", "OBSTYPE", "OBSVAL"));
+	}
 
 }

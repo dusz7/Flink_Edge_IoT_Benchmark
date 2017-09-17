@@ -48,6 +48,8 @@ public class RangeFilterBolt extends BaseRichBolt {
     @Override
     public void execute(Tuple input) 
     {
+		//System.out.println("RangeFilterBolt : " + Thread.currentThread().getId());
+
     	String msgId = (String)input.getValueByField("MSGID");
     	String meta = (String)input.getValueByField("META");
     	String obsType = (String)input.getValueByField("OBSTYPE");

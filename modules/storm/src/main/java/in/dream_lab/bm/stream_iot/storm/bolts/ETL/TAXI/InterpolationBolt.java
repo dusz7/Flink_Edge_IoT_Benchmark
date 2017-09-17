@@ -51,6 +51,8 @@ public class InterpolationBolt extends BaseRichBolt {
 
 	@Override
 	public void execute(Tuple input) {
+		//System.out.println("InterpolationBolt : " + Thread.currentThread().getId());
+
 		String msgId = (String) input.getValueByField("MSGID");
 		String sensorId = (String) input.getValueByField("SENSORID");
 		String meta = (String) input.getValueByField("META");
@@ -64,13 +66,13 @@ public class InterpolationBolt extends BaseRichBolt {
 
 		if (res == null) {
 			Values values = new Values(msgId, sensorId, meta, obsType, obsVal); 
-			//System.out.println(this.getClass().getName() + " - LOGS - " + values.toString());
+			//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
 			collector.emit(values);
 		}
-		if (res != null) {
+		else {
 			if (res != Float.MIN_VALUE) {
 				Values values = new Values(msgId, sensorId, meta, obsType, res.toString()); 
-				//System.out.println(this.getClass().getName() + " - LOGS - " + values.toString());
+				//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
 				collector.emit(values);
 
 			} else {

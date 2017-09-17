@@ -88,6 +88,7 @@ public class SenMLParseBolt extends BaseRichBolt {
 
 	@Override
 	public void execute(Tuple tuple) {
+		//System.out.println("SenMLParseBolt : " + Thread.currentThread().getId());
 		try {
 			String msg = tuple.getStringByField("PAYLOAD");
 			String msgId = tuple.getStringByField("MSGID");

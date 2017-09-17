@@ -60,6 +60,19 @@ public class IoTTrainTopologySYS {
 		conf.put(Config.TOPOLOGY_BACKPRESSURE_ENABLE, true);
 		conf.setDebug(false);
 		conf.setNumAckers(0);
+		
+		conf.put("policy", "signal");
+		conf.put("consume", "all");
+		
+		System.out.println("\n\n CONSUME ALL \n\n");
+		
+		
+		/*conf.put("policy", "signal");
+		conf.put("consume", "constant");
+		conf.put("constant", 100);
+
+		System.out.println("\n\n CONSUME CONSTANT 100 \n\n");*/
+		
 		// conf.setNumWorkers(12);
 
 		Properties p_ = new Properties();

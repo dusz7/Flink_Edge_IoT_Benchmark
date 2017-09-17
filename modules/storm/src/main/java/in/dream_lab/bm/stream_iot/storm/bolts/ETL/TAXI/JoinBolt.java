@@ -113,8 +113,9 @@ public class JoinBolt extends BaseRichBolt {
 				}
 				joinedValues = joinedValues.deleteCharAt(joinedValues.length() - 1);
 				msgIdCountMap.remove(msgIdLong);
-				//System.out.println(this.getClass().getName() + msgIdLong + " found in the map msgIdCountMap. EMITTING");
-				collector.emit(new Values(msgId, meta, "joinedValue", joinedValues.toString()));
+				Values values = new Values(msgId, meta, "joinedValue", joinedValues.toString());
+				//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+				collector.emit(values);
 			}
 		}
 		/* else add the msgId and create an hashmap for the incoming msg id */
@@ -157,7 +158,10 @@ public class JoinBolt extends BaseRichBolt {
 				msgIdCountMap.remove(msgIdLong);
 /*				System.out.println(
 						this.getClass().getName() + msgIdLong + " NOT FOUND in the map msgIdCountMap. EMITTING");
-*/				collector.emit(new Values(msgId, meta, "joinedValue", joinedValues.toString()));
+						
+*/				Values values = new Values(msgId, meta, "joinedValue", joinedValues.toString());
+				//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+				collector.emit(values);
 			}
 		}
 	}

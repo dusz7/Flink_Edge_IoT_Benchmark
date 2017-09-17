@@ -63,14 +63,14 @@ public class ETLTopology {
 		conf.setDebug(false);
 		conf.setNumAckers(0);
 		
-		conf.put("policy", "signal");
+/*		conf.put("policy", "signal");
 		conf.put("consume", "constant");
-		conf.put("constant", 100);
+		conf.put("constant", 50);
 
 
 		System.out.println("Policy: Signal");
 		System.out.println("Consume: CONSTANT-100");
-			
+*/			
 
 		Properties p_ = new Properties();
 		InputStream input = new FileInputStream(taskPropFilename);
@@ -99,26 +99,26 @@ public class ETLTopology {
 		builder.setSpout("spout1", new SampleSenMLSpout(spout1InputFilePath, spoutLogFileName,
 				argumentClass.getScalingFactor(), inputRate, numEvents), 1);
 
-		builder.setBolt("SenMlParseBolt", new SenMLParseBolt(p_), 1).shuffleGrouping("spout1");
+		builder.setBolt("SenMlParseBolt", new SenMLParseBolt(p_), 2).shuffleGrouping("spout1");
 
-		builder.setBolt("RangeFilterBolt", new RangeFilterBolt(p_), 1).fieldsGrouping("SenMlParseBolt",
+		builder.setBolt("RangeFilterBolt", new RangeFilterBolt(p_), 2).fieldsGrouping("SenMlParseBolt",
 				new Fields("OBSTYPE"));
 
-		builder.setBolt("BloomFilterBolt", new BloomFilterCheckBolt(p_), 1).fieldsGrouping("RangeFilterBolt",
+		builder.setBolt("BloomFilterBolt", new BloomFilterCheckBolt(p_), 2).fieldsGrouping("RangeFilterBolt",
 				new Fields("OBSTYPE"));
 
-		builder.setBolt("InterpolationBolt", new InterpolationBolt(p_), 1).fieldsGrouping("BloomFilterBolt",
+		builder.setBolt("InterpolationBolt", new InterpolationBolt(p_), 2).fieldsGrouping("BloomFilterBolt",
 				new Fields("OBSTYPE"));
 
-		builder.setBolt("JoinBolt", new JoinBolt(p_), 1).fieldsGrouping("InterpolationBolt", new Fields("MSGID"));
+		builder.setBolt("JoinBolt", new JoinBolt(p_), 2).fieldsGrouping("InterpolationBolt", new Fields("MSGID"));
 
-		builder.setBolt("AnnotationBolt", new AnnotationBolt(p_), 1).shuffleGrouping("JoinBolt");
+		builder.setBolt("AnnotationBolt", new AnnotationBolt(p_), 2).shuffleGrouping("JoinBolt");
 
-		builder.setBolt("AzureInsert", new AzureTableInsertBolt(p_), 1).shuffleGrouping("AnnotationBolt");
+		builder.setBolt("AzureInsert", new AzureTableInsertBolt(p_), 4).shuffleGrouping("AnnotationBolt");
 
-		builder.setBolt("CsvToSenMLBolt", new CsvToSenMLBolt(p_), 1).shuffleGrouping("AnnotationBolt");
+		builder.setBolt("CsvToSenMLBolt", new CsvToSenMLBolt(p_), 2).shuffleGrouping("AnnotationBolt");
 
-		builder.setBolt("PublishBolt", new MQTTPublishBolt(p_), 1).shuffleGrouping("CsvToSenMLBolt");
+		builder.setBolt("PublishBolt", new MQTTPublishBolt(p_), 2).shuffleGrouping("CsvToSenMLBolt");
 
 /*		builder.setBolt("sink", new Sink(sinkLogFileName), 1).shuffleGrouping("PublishBolt")
 				.shuffleGrouping("AzureInsert");*/
@@ -135,7 +135,7 @@ public class ETLTopology {
 		} else {
 			LocalCluster cluster = new LocalCluster();
 			cluster.submitTopology(argumentClass.getTopoName(), conf, stormTopology);
-			Utils.sleep(600000);
+			Utils.sleep(1800000);
 			cluster.killTopology(argumentClass.getTopoName());
 			cluster.shutdown();
 			System.out.println("Input Rate: " + metric_utils.Utils.getInputRate(spoutLogFileName));

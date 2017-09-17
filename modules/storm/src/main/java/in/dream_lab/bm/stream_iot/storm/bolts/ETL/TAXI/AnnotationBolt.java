@@ -55,11 +55,13 @@ public class AnnotationBolt extends BaseRichBolt {
         map.put(AbstractTask.DEFAULT_KEY, obsVal);
     	Float res = annotateTask.doTask(map);  
     	String updatedValue = (String) annotateTask.getLastResult();
-    	Values values  = new Values(msgId,meta,"annoatedValue" ,updatedValue);
-    	
-    	//System.out.println(this.getClass().getName() + " - LOGS - " + values.toString());
-    	
-    	collector.emit(values);
+    	if (updatedValue != null ){    		
+			Values values = new Values(msgId, meta, "annoatedValue", updatedValue);
+			//System.out.println(this.getClass().getName() + " - LOGS - " + values.toString());
+			collector.emit(values);
+    	} else {
+    		//System.out.println(this.getClass().getName() + " - UPDATED VALUE = NULL - " + obsVal);
+    	}
     }
 
     @Override

@@ -11,11 +11,12 @@ public class EtlTopologySinkBolt extends Sink {
 	@Override
 	public void execute(Tuple input) {
 		String msgId = input.getStringByField("MSGID");
+		long time = Long.parseLong(input.getStringByField("TIME"));
 		String source = input.getSourceComponent();
 		String identifier = msgId + "," + source;
 
 		try {
-			ba.batchLogwriter(System.currentTimeMillis(), identifier);
+			ba.batchLogwriter(time, identifier);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

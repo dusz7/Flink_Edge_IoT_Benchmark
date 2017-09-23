@@ -30,13 +30,15 @@ public class Annotate extends AbstractTask<String,String>
 	public void setup(Logger l_, Properties p_) 
 	{
 		super.setup(l_, p_);
-		annotationMap = new HashMap<String, String>();
+		
 		try
 		{
 			synchronized (SETUP_LOCK)
 			{
 				if(!doneSetup) 
 				{
+					annotationMap = new HashMap<String, String>();
+					
 					// Check usefield 
 					useMsgField = Integer.parseInt(p_.getProperty("ANNOTATE.ANNOTATE_MSG_USE_FIELD", "0"));
 					// read file path for anotations

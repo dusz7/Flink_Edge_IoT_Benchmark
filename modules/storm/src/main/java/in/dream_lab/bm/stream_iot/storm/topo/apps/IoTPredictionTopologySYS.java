@@ -92,7 +92,7 @@ public class IoTPredictionTopologySYS {
                 1);
 
         builder.setBolt("SenMLParseBoltPREDSYS",
-                new SenMLParseBoltPREDSYS(p_), 1)
+                new SenMLParseBoltPREDSYS(p_), 4)
                 .shuffleGrouping("spout1");
 
 
@@ -104,31 +104,31 @@ public class IoTPredictionTopologySYS {
                 .shuffleGrouping("mqttSubscribeTaskBolt");*/
 
         builder.setBolt("DecisionTreeClassifyBolt",
-                new DecisionTreeClassifyBolt(p_), 1)
+                new DecisionTreeClassifyBolt(p_), 2)
                 .shuffleGrouping("SenMLParseBoltPREDSYS");
 //                .fieldsGrouping("AzureBlobDownloadTaskBolt",new Fields("ANALAYTICTYPE"));
 //
 //
         builder.setBolt("LinearRegressionPredictorBolt",
-                new LinearRegressionPredictorBolt(p_), 1)
+                new LinearRegressionPredictorBolt(p_), 2)
                 .shuffleGrouping("SenMLParseBoltPREDSYS");
 //                .fieldsGrouping("AzureBlobDownloadTaskBolt",new Fields("ANALAYTICTYPE"));
 
 
         builder.setBolt("BlockWindowAverageBolt",
-                new BlockWindowAverageBolt(p_), 1)
+                new BlockWindowAverageBolt(p_), 2)
                 .shuffleGrouping("SenMLParseBoltPREDSYS");
 
 //
         builder.setBolt("ErrorEstimationBolt",
-                new ErrorEstimationBolt(p_), 1)
+                new ErrorEstimationBolt(p_), 2)
                 .shuffleGrouping("BlockWindowAverageBolt")
                 .shuffleGrouping("LinearRegressionPredictorBolt");
 
         builder.setBolt("MQTTPublishBolt",
-                new MQTTPublishBolt(p_), 1)
-                .fieldsGrouping("ErrorEstimationBolt",new Fields("ANALAYTICTYPE"))
-                .fieldsGrouping("DecisionTreeClassifyBolt",new Fields("ANALAYTICTYPE")) ;
+                new MQTTPublishBolt(p_), 4)
+                .shuffleGrouping("ErrorEstimationBolt")
+                .shuffleGrouping("DecisionTreeClassifyBolt") ;
 
 
 /*        builder.setBolt("sink", new Sink(sinkLogFileName), 1).shuffleGrouping("MQTTPublishBolt");

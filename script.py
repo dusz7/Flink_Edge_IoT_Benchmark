@@ -26,15 +26,17 @@ def getThroughput(outFile):
 def getRate(_file, timestampIndex, msgIdIndex):
     with open(_file, "r") as f:
         first = f.readline().split(",")
+	msgs = 0
         for line in f:
-            pass
+            msgs+=1
 
         last = line.split(",")
         startTime = long(first[timestampIndex])
         endTime = long(last[timestampIndex])
-        startMsg = long(first[msgIdIndex])
-        endMsg = long(last[msgIdIndex])
-        rate = float((endMsg - startMsg)) / ((endTime-startTime)/1000)
+        #startMsg = long(first[msgIdIndex])
+        #endMsg = long(last[msgIdIndex])
+	print msgs
+        rate = float((msgs)) / ((endTime-startTime)/1000)
     return rate
 
 def get_etl_topo_throughput(_file, timestampIndex, msgIdIndex, path1, path2):
@@ -43,7 +45,9 @@ def get_etl_topo_throughput(_file, timestampIndex, msgIdIndex, path1, path2):
         firstMq = ""
         lastAz = ""
         lastMq = ""
-        for line in f:
+        azMsgs = 0
+	mqMsgs = 0
+	for line in f:
             if path1 in line and firstAz == "":
                 firstAz = line
             if path2 in line and firstMq == "":
@@ -52,8 +56,10 @@ def get_etl_topo_throughput(_file, timestampIndex, msgIdIndex, path1, path2):
                 break
         for line in f:
             if path1 in line:
+		azMsgs+=1
                 lastAz = line
             elif path2 in line:
+		mqMsgs+=1
                 lastMq = line
     firstAz = firstAz.split(",")
     lastAz = lastAz.split(",")
@@ -61,8 +67,14 @@ def get_etl_topo_throughput(_file, timestampIndex, msgIdIndex, path1, path2):
     lastMq = lastMq.split(",")
     azTime = long(lastAz[timestampIndex]) - long(firstAz[timestampIndex])
     mqTime = long(lastMq[timestampIndex]) - long(firstMq[timestampIndex])
-    azMsgs = long(lastAz[msgIdIndex]) - long(firstAz[msgIdIndex])
-    mqMsgs = long(lastMq[msgIdIndex]) - long(firstMq[msgIdIndex])
+    #azMsgs = long(lastAz[msgIdIndex]) - long(firstAz[msgIdIndex])
+    #mqMsgs = long(lastMq[msgIdIndex]) - long(firstMq[msgIdIndex])
+    print lastMq[msgIdIndex]
+    print firstMq[msgIdIndex]
+    print azTime
+    print mqTime
+    print azMsgs
+    print mqMsgs
     azThroughput = float(azMsgs) / (azTime/1000)
     mqThroughput = float(mqMsgs) / (mqTime/1000)
     

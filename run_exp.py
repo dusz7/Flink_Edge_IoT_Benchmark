@@ -12,9 +12,9 @@ jar_name = sys.argv[1]
 in_topo_name = sys.argv[2]
 csv_file_name = sys.argv[3]
 
-num_experiments = 6
-input_rates = [60, 120, 240, 480, 960, 1920]
-num_events = [14400, 28800, 57600, 115200, 230400, 460800]
+num_experiments = 5
+input_rates = [120, 240, 480, 960, 1920]
+num_events = [28800, 57600, 115200, 230400, 460800]
 
 property_files = {
 		 "etl" : "etl_topology.properties",
@@ -80,8 +80,6 @@ for i in range(len(executed_topologies)):
 	sink_files.append(pi_outdir + "/" + "sink-" + executed_topologies[i] + "-1-1.0.log")
 
 
-#print spout_files
-#print sink_files
 
 # Experiments started....
 # Wait until they're done on the PIs (~ 12 minutes)
@@ -99,8 +97,6 @@ for i in range(len(spout_files)):
 	process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
 	output, error = process.communicate()
 	devices.append(output.split(":")[0])
-	#print "Printing output\n\n"
-	#print output	
 
 if not os.path.isdir(exp_result_dir):
 	os.mkdir(exp_result_dir)
@@ -108,7 +104,6 @@ if not os.path.isdir(exp_result_dir):
 
 # Copy result files from the R.PIs to this machine
 for i in range(len(devices)):
-	#cmd = "scp " + devices[i] + ":\\{" + spout_files[i] + "," + sink_files[i] + "\\} " + exp_result_dir+"/"
 	process = subprocess.Popen(["scp", devices[i] + ":" + spout_files[i], exp_result_dir+"/"], stdout=subprocess.PIPE)
 	output, error = process.communicate()
 	# check for errors/output
@@ -120,23 +115,32 @@ for i in range(len(devices)):
 # output files have been copied to this machine
 # run script on these files to generate results...
 
-#csv_file_name = "experiment-"+jar_name+"-"+in_topo_name+".csv"
 
-
+shutil.copy(csv_file_name, exp_result_dir)
 os.chdir(exp_result_dir)
 with open (csv_file_name, "a") as csv_file:
+	csv_file.write("\n\n")
 	csv_file.write("experiment-"+jar_name+"-"+in_topo_name + "-" + time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()))
+	csv_file.write("\n")
 	for i in range(num_experiments):
 		spout_file = spout_files[i].split("/")[-1]
 		sink_file = sink_files[i].split("/")[-1]
 		resultObject = script.get_results(executed_topologies[i], spout_file, sink_file)
 		results = resultObject.get_csv_rep(in_topo_name)
-		csv_file.write("\n\n")
-		csv_file.write(executed_topologies[i])
+		if i == 0:
+			csv_file.write("topology-in_rate," + results[0])
 		csv_file.write("\n")
-        	for line in results:
-			csv_file.write(line)
-			csv_file.write("\n")
+		#csv_file.write("\n\n")
+		#csv_file.write(executed_topologies[i])
+		#csv_file.write("\n")
+		csv_file.write(executed_topologies[i] + ",")
+        	csv_file.write(results[1])
+		#for line in results:
+		#	csv_file.write(line)
+		#	csv_file.write("\n")
+
+
+shutil.copy(csv_file_name, path) # move the modified result file back
 
 # get all the spout/sink logs and generated images and archive them.
 all_files = os.listdir(os.getcwd())

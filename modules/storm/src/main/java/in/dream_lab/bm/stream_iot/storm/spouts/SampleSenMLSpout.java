@@ -87,7 +87,8 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 		this._collector.emit(values);
 
 		/* skip logging first 1/3 of events to reach a stable condition */
-		if (this.msgId > (this.startingMsgId + this.numEvents / 3)) {
+		if (this.msgId > (this.startingMsgId + this.numEvents / 3) &&
+                (this.msgId < (this.startingMsgId + (this.numEvents*3)/4))) {
 			try {
 				ba.batchLogwriter(System.currentTimeMillis(), "MSGID," + msgId);
 			} catch (Exception e) {

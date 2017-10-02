@@ -364,7 +364,7 @@ def get_results(topology_name, spoutFile, sinkFile):
     if topology_name.startswith("etl"):
 	input_rate = get_rate(spoutFile, 3, 5)
         print "Input Rate (msgs/sec): " + str(input_rate)
-        (tp0, tp1) = get_topo_tp(sinkFile, 3, 4, "AzureInsert", "PublishBolt", "etl")
+        (tp0, tp1) = get_topo_tp(sinkFile, 3, 4, "AzureInsert", "PublishBolt", topology_name)
         (l0, l1) = get_etl_topo_latency(topology_name, spoutFile, sinkFile, 3, 5, 3 ,4, "AzureInsert", "PublishBolt")
 	throughputs.append(tp0)
 	throughputs.append(tp1)
@@ -387,7 +387,7 @@ def get_results(topology_name, spoutFile, sinkFile):
     elif topology_name.startswith("pred"):
 	input_rate = get_rate(spoutFile, 3, 5)
         print "Input Rate (msgs/sec): " + str(input_rate)
-        (tp0, tp1) = get_topo_tp(sinkFile, 3, 4, "DTC", "MLR", "pred")
+        (tp0, tp1) = get_topo_tp(sinkFile, 3, 4, "DTC", "MLR", topology_name)
         (l0, l1) = get_etl_topo_latency(topology_name, spoutFile, sinkFile, 3, 5, 3 ,4, "DTC", "MLR")
 	throughputs.append(tp0)
 	throughputs.append(tp1)

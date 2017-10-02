@@ -53,6 +53,7 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 		String tuple;
 		//System.out.println("Size of map in azure insert task " + map.size());
 		 // Define a batch operation.
+		System.out.println(this.getClass().getName() + " - " + Thread.currentThread().getId() + "-"+Thread.currentThread().getName());
 	    TableBatchOperation batchOperation = new TableBatchOperation();
 		try 
 		{

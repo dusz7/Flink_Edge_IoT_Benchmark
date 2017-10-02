@@ -11,7 +11,8 @@ public class EtlTopologySinkBolt extends Sink {
 	@Override
 	public void execute(Tuple input) {
 		String msgId = input.getStringByField("MSGID");
-		long time = Long.parseLong(input.getStringByField("TIME"));
+		//long time = Long.parseLong(input.getStringByField("TIME"));
+		long time = System.currentTimeMillis();
 		String source = input.getSourceComponent();
 		String identifier = msgId + "," + source;
 

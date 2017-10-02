@@ -99,26 +99,26 @@ public class ETLTopology {
 		builder.setSpout("spout1", new SampleSenMLSpout(spout1InputFilePath, spoutLogFileName,
 				argumentClass.getScalingFactor(), inputRate, numEvents), 1);
 
-		builder.setBolt("SenMlParseBolt", new SenMLParseBolt(p_), 4).shuffleGrouping("spout1");
+		builder.setBolt("SenMlParseBolt", new SenMLParseBolt(p_), 2).shuffleGrouping("spout1");
 
-		builder.setBolt("RangeFilterBolt", new RangeFilterBolt(p_), 4).fieldsGrouping("SenMlParseBolt",
+		builder.setBolt("RangeFilterBolt", new RangeFilterBolt(p_), 2).fieldsGrouping("SenMlParseBolt",
 				new Fields("OBSTYPE"));
 
-		builder.setBolt("BloomFilterBolt", new BloomFilterCheckBolt(p_), 4).fieldsGrouping("RangeFilterBolt",
+		builder.setBolt("BloomFilterBolt", new BloomFilterCheckBolt(p_), 2).fieldsGrouping("RangeFilterBolt",
 				new Fields("OBSTYPE"));
 
-		builder.setBolt("InterpolationBolt", new InterpolationBolt(p_), 4).fieldsGrouping("BloomFilterBolt",
+		builder.setBolt("InterpolationBolt", new InterpolationBolt(p_), 2).fieldsGrouping("BloomFilterBolt",
 				new Fields("OBSTYPE"));
 
-		builder.setBolt("JoinBolt", new JoinBolt(p_), 4).fieldsGrouping("InterpolationBolt", new Fields("MSGID"));
+		builder.setBolt("JoinBolt", new JoinBolt(p_), 2).fieldsGrouping("InterpolationBolt", new Fields("MSGID"));
 
-		builder.setBolt("AnnotationBolt", new AnnotationBolt(p_), 4).shuffleGrouping("JoinBolt");
+		builder.setBolt("AnnotationBolt", new AnnotationBolt(p_), 2).shuffleGrouping("JoinBolt");
 
-		builder.setBolt("AzureInsert", new AzureTableInsertBolt(p_), 4).shuffleGrouping("AnnotationBolt");
+		builder.setBolt("AzureInsert", new AzureTableInsertBolt(p_), 2).shuffleGrouping("AnnotationBolt");
 
-		builder.setBolt("CsvToSenMLBolt", new CsvToSenMLBolt(p_), 4).shuffleGrouping("AnnotationBolt");
+		builder.setBolt("CsvToSenMLBolt", new CsvToSenMLBolt(p_), 2).shuffleGrouping("AnnotationBolt");
 
-		builder.setBolt("PublishBolt", new MQTTPublishBolt(p_), 4).shuffleGrouping("CsvToSenMLBolt");
+		builder.setBolt("PublishBolt", new MQTTPublishBolt(p_), 2).shuffleGrouping("CsvToSenMLBolt");
 
 /*		builder.setBolt("sink", new Sink(sinkLogFileName), 1).shuffleGrouping("PublishBolt")
 				.shuffleGrouping("AzureInsert");*/

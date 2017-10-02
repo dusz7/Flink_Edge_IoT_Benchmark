@@ -96,27 +96,27 @@ public class StatsWithVisualizationTopology
                 1);
         
         builder.setBolt("ParseSenML",
-                new SenMLParseBolt(p_), 1)
+                new SenMLParseBolt(p_), 2)
                 	.shuffleGrouping("spout");
 
         builder.setBolt("BlockWindowAverageBolt",
-                new BlockWindowAverageBolt(p_),1)
+                new BlockWindowAverageBolt(p_),2)
                 .fieldsGrouping("ParseSenML",new Fields("SENSORID","OBSTYPE"));
         
         builder.setBolt("KalmanFilterBolt",
-                new KalmanFilterBolt(p_), 1)
+                new KalmanFilterBolt(p_), 2)
                 .fieldsGrouping("ParseSenML",new Fields("SENSORID","OBSTYPE"));
 
         builder.setBolt("SimpleLinearRegressionPredictorBolt",
-                new SimpleLinearRegressionPredictorBolt(p_), 1)
+                new SimpleLinearRegressionPredictorBolt(p_), 2)
                 .fieldsGrouping("KalmanFilterBolt",new Fields("SENSORID","OBSTYPE"));
 
         builder.setBolt("DistinctApproxCountBolt",
-                new DistinctApproxCountBolt(p_), 1)
+                new DistinctApproxCountBolt(p_), 2)
                 .fieldsGrouping("ParseSenML",new Fields("OBSTYPE")); // another change done already
 
         builder.setBolt("Visualization",
-        		new MultiLinePlotBolt(p_), 1)
+        		new MultiLinePlotBolt(p_), 2)
 		        .fieldsGrouping("BlockWindowAverageBolt",new Fields("SENSORID","OBSTYPE") )
 		        .fieldsGrouping("SimpleLinearRegressionPredictorBolt", new Fields("SENSORID","OBSTYPE"))
 		        .fieldsGrouping("DistinctApproxCountBolt" , new Fields("OBSTYPE"));

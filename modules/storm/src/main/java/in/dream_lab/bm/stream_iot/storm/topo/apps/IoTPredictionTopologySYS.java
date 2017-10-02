@@ -92,7 +92,7 @@ public class IoTPredictionTopologySYS {
                 1);
 
         builder.setBolt("SenMLParseBoltPREDSYS",
-                new SenMLParseBoltPREDSYS(p_), 4)
+                new SenMLParseBoltPREDSYS(p_), 10)
                 .shuffleGrouping("spout1");
 
 
@@ -104,29 +104,29 @@ public class IoTPredictionTopologySYS {
                 .shuffleGrouping("mqttSubscribeTaskBolt");*/
 
         builder.setBolt("DecisionTreeClassifyBolt",
-                new DecisionTreeClassifyBolt(p_), 2)
+                new DecisionTreeClassifyBolt(p_), 10)
                 .shuffleGrouping("SenMLParseBoltPREDSYS");
 //                .fieldsGrouping("AzureBlobDownloadTaskBolt",new Fields("ANALAYTICTYPE"));
 //
 //
         builder.setBolt("LinearRegressionPredictorBolt",
-                new LinearRegressionPredictorBolt(p_), 2)
+                new LinearRegressionPredictorBolt(p_), 1)
                 .shuffleGrouping("SenMLParseBoltPREDSYS");
 //                .fieldsGrouping("AzureBlobDownloadTaskBolt",new Fields("ANALAYTICTYPE"));
 
 
         builder.setBolt("BlockWindowAverageBolt",
-                new BlockWindowAverageBolt(p_), 2)
+                new BlockWindowAverageBolt(p_), 10)
                 .shuffleGrouping("SenMLParseBoltPREDSYS");
 
 //
         builder.setBolt("ErrorEstimationBolt",
-                new ErrorEstimationBolt(p_), 2)
+                new ErrorEstimationBolt(p_), 10)
                 .shuffleGrouping("BlockWindowAverageBolt")
                 .shuffleGrouping("LinearRegressionPredictorBolt");
 
         builder.setBolt("MQTTPublishBolt",
-                new MQTTPublishBolt(p_), 4)
+                new MQTTPublishBolt(p_), 10)
                 .shuffleGrouping("ErrorEstimationBolt")
                 .shuffleGrouping("DecisionTreeClassifyBolt") ;
 

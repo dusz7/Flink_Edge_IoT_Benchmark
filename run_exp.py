@@ -7,14 +7,52 @@ import tarfile
 import shutil
 import csv
 
+valid_topos = ["etl", "pred", "stat"]
+
 storm_exe = os.environ['STORM']
 jar_name = sys.argv[1]
 in_topo_name = sys.argv[2]
 csv_file_name = sys.argv[3]
+duration = float(sys.argv[4])
 
-num_experiments = 5
-input_rates = [120, 240, 480, 960, 1920]
-num_events = [28800, 57600, 115200, 230400, 460800]
+
+def kill_topologies(path):
+	cmd = path+"/kill_topos.sh"
+	#cmd = storm_exe + " kill "
+	process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
+	output, error = process.communicate()
+
+
+if in_topo_name not in valid_topos:
+	print "not a valid topology name."
+	print "can only execute " + str (valid_topos)
+	exit(-1)
+
+num_experiments = 6
+etl_input_rates = [ 60, 120, 240, 480, 960, 1920]
+etl_num_events = [14400,  28800, 57600, 115200, 230400, 460800]
+
+pred_input_rates = [160, 240, 320, 480, 640, 1280, 2560 ]
+pred_num_events = [38400 , 57600, 76800, 115200, 153600, 307200, 614400]
+
+stat_input_rates = [8, 16, 20, 30, 40]
+stat_num_events = [ 1920, 3840, 4800, 9600, 7200]
+
+etl_test_input_rates = [20, 40, 60, 80, 100, 120, 240]
+etl_test_num_events = [4800 , 9600, 14400, 19200, 24000, 28800, 57600]
+
+test_rate = [20, 40, 60, 80, 100, 120, 240]
+test_num_events = [4800, 9600, 14400,19200, 24000, 28800, 57600]
+
+
+
+
+input_rates_dict = {"etl" : etl_input_rates, "pred" : pred_input_rates, "stat": stat_input_rates}
+num_events_dict = {"etl" : etl_num_events, "pred":pred_num_events, "stat": stat_num_events}
+
+input_rates = input_rates_dict[in_topo_name]
+num_events = num_events_dict[in_topo_name]
+
 
 property_files = {
 		 "etl" : "etl_topology.properties",
@@ -45,6 +83,10 @@ pi_outdir = "/home/pi/topo_run_outdir/reg-SYS"
 os.chdir(path)
 prop_file = property_files[in_topo_name]
 exp_result_dir = "/home/fuxinwei/iot/experiment_results"
+
+
+# kill any topologies if running already
+kill_topologies(path)
 
 # Clean output directories on PIs
 cmd = "dsh -aM -c rm " + pi_outdir + "/*"
@@ -85,7 +127,7 @@ for i in range(len(executed_topologies)):
 # Wait until they're done on the PIs (~ 12 minutes)
 
 start = time.time()
-time.sleep(13 * 60) 
+time.sleep(duration * 60) 
 end = time.time()
 print "waited for: " + str(end-start) + " secs"
 
@@ -115,7 +157,7 @@ for i in range(len(devices)):
 # output files have been copied to this machine
 # run script on these files to generate results...
 
-
+csv_file_name=path+"/"+csv_file_name
 shutil.copy(csv_file_name, exp_result_dir)
 os.chdir(exp_result_dir)
 with open (csv_file_name, "a") as csv_file:
@@ -130,15 +172,8 @@ with open (csv_file_name, "a") as csv_file:
 		if i == 0:
 			csv_file.write("topology-in_rate," + results[0])
 		csv_file.write("\n")
-		#csv_file.write("\n\n")
-		#csv_file.write(executed_topologies[i])
-		#csv_file.write("\n")
 		csv_file.write(executed_topologies[i] + ",")
         	csv_file.write(results[1])
-		#for line in results:
-		#	csv_file.write(line)
-		#	csv_file.write("\n")
-
 
 shutil.copy(csv_file_name, path) # move the modified result file back
 
@@ -160,12 +195,18 @@ if not os.path.isdir(storm_exp_archive_dir):
 	
 shutil.copy(tarfile_name, storm_exp_archive_dir)
 
-# kill all the topologies on PIs
-cmd = storm_exe + " kill "
-for exec_topo_name in executed_topologies:
-	cmd_to_exec = cmd + exec_topo_name
-	process = subprocess.Popen(cmd_to_exec.split(), stdout=subprocess.PIPE)
-	output, error = process.communicate() 
+# kill all the running topologies on PIs
+
+kill_topologies(path)
+#cmd = path+"/kill_topos.sh"
+#cmd = storm_exe + " kill "
+#process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
+#output, error = process.communicate()
+
+#for exec_topo_name in executed_topologies:
+#	cmd_to_exec = cmd + exec_topo_name
+#	process = subprocess.Popen(cmd_to_exec.split(), stdout=subprocess.PIPE)
+#	output, error = process.communicate() 
 
 
 # change directory back...

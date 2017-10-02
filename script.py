@@ -11,9 +11,67 @@ from datetime import datetime
 import time
 import matplotlib
 matplotlib.use('Agg')
-
+import csv
+import collections
 import matplotlib.mlab as mlab
 import matplotlib.pyplot as plt
+
+
+def get_rates(_map, interval=500, path=None, topo_name=None):
+    """
+    @param _map: Ordered dictionary that maps  msg_id to observed timestamp
+    @param interval interval for which instantaneous throughput needs to be calculated
+    @param path Topo path for which TP is being calculated.
+    @param topo_name Name of the topology
+    Calculates the input rate/ throughput given the map for spout/sink file.
+    """
+    items=list(_map.items())
+    if len(items)==0:
+        return -1
+    prev_mid=items[0][0]
+    prev_ts=items[0][1]
+    inst_tp=[]
+    count=1
+    for k in _map:
+        if count % interval == 0:
+            cur_mid=k
+            cur_ts=_map[k]
+            msgs=long(cur_mid)-long(prev_mid)
+            ts=float(long(cur_ts)-long(prev_ts))
+            inst_tp.append(float(interval)/(ts/1000))
+            prev_mid=cur_mid
+            prev_ts=cur_ts
+        count+=1
+
+    img_name="inst_rate"
+    if topo_name is not None:
+        img_name=img_name+"-"+str(topo_name)
+    if path is not None:
+        img_name=img_name+"-"+str(path)
+    
+    axes=plt.gca()
+    axes.set_xlabel('time/events')
+    y_label=""
+    if topo_name is not None:
+        y_label=y_label+topo_name
+    if path is not None:
+        y_label=y_label+path
+
+    axes.set_ylabel(y_label+' rate (events/sec)')
+    plt.plot(inst_tp)
+    plt.savefig(img_name)
+    plt.close()
+    
+    first_mid=items[0][0]
+    first_ts=items[0][1]
+    last_mid=items[-1][0]
+    last_ts=items[-1][1]
+    rate = float(long(last_mid)-long(first_mid)) / ((long(last_ts)-long(first_ts))/1000)
+    inst_tp=numpy.asarray(inst_tp)
+    #print(">10000: " + str(len(inst_tp[inst_tp>10000])))
+    #print ("Overal Rate: "+ str(rate))
+    return rate
+
 
 
 def getInputRate(inFile):
@@ -22,7 +80,20 @@ def getInputRate(inFile):
 def getThroughput(outFile):
     return getRate(outFile, 3, 4)
 
+def get_rate(_file, ts_index, mid_index, path=None, topo_name=None):
+    """
+    Calculates the input rate or throughput for a topology with
+    only one path
+    """
+    _map= collections.OrderedDict()
+    with open(_file, 'rb') as f:
+        reader = csv.reader(f, delimiter=',')
+        for row in reader:
+            _map[row[mid_index]] = row[ts_index]
+    return get_rates(_map, 500)
 
+
+# Don't use this...
 def getRate(_file, timestampIndex, msgIdIndex):
     with open(_file, "r") as f:
         first = f.readline().split(",")
@@ -35,10 +106,30 @@ def getRate(_file, timestampIndex, msgIdIndex):
         endTime = long(last[timestampIndex])
         #startMsg = long(first[msgIdIndex])
         #endMsg = long(last[msgIdIndex])
-	print msgs
+	#print msgs
         rate = float((msgs)) / ((endTime-startTime)/1000)
     return rate
 
+
+def get_topo_tp(_file, ts_index, m_index, p1, p2, topo_name=None):
+    """
+    Calculate throughput for topology with multiple (2 for now) paths
+    """
+    p1_map=collections.OrderedDict()
+    p2_map=collections.OrderedDict()
+    with open(_file, 'rb') as f:
+        reader = csv.reader(f, delimiter=',')
+        for row in reader:
+            if p1 in row:
+                p1_map[row[m_index]] = row[ts_index]
+            else:
+                p2_map[row[m_index]] = row[ts_index]
+    p1_tp = get_rates(p1_map, 500, p1, topo_name)
+    p2_tp = get_rates(p2_map, 500, p2, topo_name)
+    return (p1_tp, p2_tp)
+    
+
+# Don't use this...
 def get_etl_topo_throughput(_file, timestampIndex, msgIdIndex, path1, path2):
     with open(_file, "r") as f:
         firstAz = ""
@@ -69,12 +160,12 @@ def get_etl_topo_throughput(_file, timestampIndex, msgIdIndex, path1, path2):
     mqTime = long(lastMq[timestampIndex]) - long(firstMq[timestampIndex])
     #azMsgs = long(lastAz[msgIdIndex]) - long(firstAz[msgIdIndex])
     #mqMsgs = long(lastMq[msgIdIndex]) - long(firstMq[msgIdIndex])
-    print lastMq[msgIdIndex]
-    print firstMq[msgIdIndex]
-    print azTime
-    print mqTime
-    print azMsgs
-    print mqMsgs
+    #print lastMq[msgIdIndex]
+    #print firstMq[msgIdIndex]
+    #print azTime
+    #print mqTime
+    #print azMsgs
+    #print mqMsgs
     azThroughput = float(azMsgs) / (azTime/1000)
     mqThroughput = float(mqMsgs) / (mqTime/1000)
     
@@ -137,20 +228,37 @@ def get_etl_topo_latency(topology_name, in_file, out_file, in_ts_index, in_msg_i
     az_av_latency = az_total_latency / az_count
     #print len(mq_out_map)
     #print len(az_out_map)
+    
+    print(len(az_latencies))
 
     az_latencies = numpy.asarray(az_latencies)
     mq_latencies = numpy.asarray(mq_latencies)
     
-    n, bins, patches = plt.hist(az_latencies, 50, facecolor='green')
-    plt.savefig(topology_name + "-" + path1 + "-" + time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime()))
+    print(len(az_latencies[az_latencies > 30000]))
     
-    n, bins, patches = plt.hist(mq_latencies, 50, facecolor='green')    
-    plt.savefig(topology_name + "-" + path2 + "-" + time.strftime("%Y-%m-%d-%H:%M:%S", time.localtime()))
+    #num_bins = numpy.arange(az_latencies.min(),az_latencies.max(), len(az_latencies)/1000)
+    num_bins = 50
+    fig, ax = plt.subplots()
+    #print ("num_bins: " + str(num_bins)) 
+    n, bins, patches = ax.hist(az_latencies, num_bins, facecolor='green')
+    ax.set_xlabel('Average Latency')
+    ax.set_ylabel('Occurrence')
+    ax.set_title(path1+"-"+'Latency histogram')
+    plt.savefig(topology_name + "-latency-" + path1)
+    
+    #num_bins = numpy.arange(mq_latencies.min(),mq_latencies.max(), len(mq_latencies)/1000)
+
+    n, bins, patches = ax.hist(mq_latencies, num_bins, facecolor='green')    
+    ax.set_xlabel('Average Latency')
+    ax.set_ylabel('Occurrence')
+    ax.set_title(path2+"-"+'Latency histogram')
+
+    plt.savefig(topology_name + "-latency-" + path2)
 
     return (az_av_latency, mq_av_latency)
     
 
-def getLatency(in_file, out_file, in_ts_index, in_msg_index, out_ts_index, out_msg_index):
+def getLatency(in_file, out_file, in_ts_index, in_msg_index, out_ts_index, out_msg_index, topo_name=None):
     in_map = {}
     out_map = {}
     latency_map = {}
@@ -168,19 +276,34 @@ def getLatency(in_file, out_file, in_ts_index, in_msg_index, out_ts_index, out_m
             msg_id = line_arr[out_msg_index]
             out_map[msg_id] = ts
     
+
+    latencies=[]
+    total_latency=0
+    count=0
     for key in in_map:
-        try:
+        try: 
             start_time = long(in_map[key])
             end_time = long(out_map[key])
             if (end_time):
-                latency_map[key] = (end_time - start_time)
+                latency = (end_time - start_time)
+                total_latency += latency
+                latencies.append(latency)
+                count+=1
         except:
             pass
-    
-    total_latency = 0
-    for key in latency_map:
-        total_latency = total_latency + latency_map[key]
-    return total_latency / len(latency_map)
+   
+    latencies = numpy.asarray(latencies)
+
+    num_bins = 50
+    fig, ax = plt.subplots()
+    #print ("num_bins: " + str(num_bins)) 
+    n, bins, patches = ax.hist(latencies, num_bins, facecolor='green')
+    ax.set_xlabel('Average Latency')
+    ax.set_ylabel('Occurrence')
+    ax.set_title('Latency histogram')
+    plt.savefig(topo_name + "-latency") 
+    return total_latency / count
+
 
 def get_stats_topo_throughput(sink_file, timestampIndex):
     with open(sink_file, "r") as f:
@@ -239,9 +362,9 @@ def get_results(topology_name, spoutFile, sinkFile):
     throughputs = []
     latencies = []
     if topology_name.startswith("etl"):
-	input_rate = getInputRate(spoutFile)
+	input_rate = get_rate(spoutFile, 3, 5)
         print "Input Rate (msgs/sec): " + str(input_rate)
-        (tp0, tp1) = get_etl_topo_throughput(sinkFile, 3, 4, "AzureInsert", "PublishBolt")
+        (tp0, tp1) = get_topo_tp(sinkFile, 3, 4, "AzureInsert", "PublishBolt", "etl")
         (l0, l1) = get_etl_topo_latency(topology_name, spoutFile, sinkFile, 3, 5, 3 ,4, "AzureInsert", "PublishBolt")
 	throughputs.append(tp0)
 	throughputs.append(tp1)
@@ -253,8 +376,8 @@ def get_results(topology_name, spoutFile, sinkFile):
         print topology_name + ": PublishBolt path Latency (msec): " + str(latencies[1])
 
     elif  topology_name.startswith("wordcount"):
-	input_rate = getInputRate(spoutFile)
-	tp0 = getThroughput(sinkFile)
+	input_rate = get_rate(spoutFile, 3, 5)
+	tp0 = get_rate(sinkFile, 3, 4, topo_name="wordcount")
 	l0 = getLatency(spoutFile, sinkFile, 3, 5, 3 ,4)
 	throughputs.append(tp0)
 	latencies.append(l0)
@@ -262,18 +385,18 @@ def get_results(topology_name, spoutFile, sinkFile):
         print "Throughput (msgs/sec): " + str(throughputs[0])
         print "Average Latency (ms): " + str(latencies[0])
     elif topology_name.startswith("pred"):
-	input_rate = getInputRate(spoutFile)
+	input_rate = get_rate(spoutFile, 3, 5)
         print "Input Rate (msgs/sec): " + str(input_rate)
-        (tp0, tp1) = get_etl_topo_throughput(sinkFile, 3, 4, "DTC", "MLR")
+        (tp0, tp1) = get_topo_tp(sinkFile, 3, 4, "DTC", "MLR", "pred")
         (l0, l1) = get_etl_topo_latency(topology_name, spoutFile, sinkFile, 3, 5, 3 ,4, "DTC", "MLR")
 	throughputs.append(tp0)
 	throughputs.append(tp1)
 	latencies.append(l0)
 	latencies.append(l1)
     elif topology_name.startswith("stat"):
-	input_rate = getInputRate(spoutFile)
-	tp0 = get_stats_topo_throughput(sinkFile,3)
-	l0 = getLatency(spoutFile, sinkFile, 3, 5, 3 ,4)
+	input_rate = get_rate(spoutFile, 3, 5)
+	tp0 = get_rate(sinkFile, 3, 4, topo_name=topology_name)
+	l0 = getLatency(spoutFile, sinkFile, 3, 5, 3 ,4, topology_name)
 	throughputs.append(tp0)
 	latencies.append(l0)
         print "Input Rate (msgs/sec): " + str(input_rate)

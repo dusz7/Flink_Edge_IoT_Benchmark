@@ -53,7 +53,7 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 		String tuple;
 		//System.out.println("Size of map in azure insert task " + map.size());
 		 // Define a batch operation.
-		System.out.println(this.getClass().getName() + " - " + Thread.currentThread().getId() + "-"+Thread.currentThread().getName());
+		//System.out.println(this.getClass().getName() + " - " + Thread.currentThread().getId() + "-"+Thread.currentThread().getName());
 	    TableBatchOperation batchOperation = new TableBatchOperation();
 		try 
 		{
@@ -66,9 +66,10 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 			
 			//System.out.println("AzureTableBatchInsert - Insert: " + table);			
 			
-			ArrayList a = table.execute(batchOperation);
-			//System.out.println(this.getClass().getName() + " - LOGS - " + a.size() + " - " + a.get(0));
-			return (float)a.size();
+			//ArrayList a = table.execute(batchOperation);
+			
+			System.out.println(this.getClass().getName() + " Cannot connect - LOGGING - ");// + a.size() + " - " + a.get(0));
+			return (float)map.size();
 		}
 			catch (Exception e) 
 			{

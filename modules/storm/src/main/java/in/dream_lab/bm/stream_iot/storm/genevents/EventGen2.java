@@ -115,7 +115,7 @@ public class EventGen2 {
 		}
 	}
 
-	public List<TableClass> launch(String csvFileName, String outCSVFileName, long experimentDurationMillis,
+	public TableClass launch(String csvFileName, String outCSVFileName, long experimentDurationMillis,
 			boolean isJson) {
 		// 1. Load CSV to in-memory data structure
 		// 2. Assign a thread with (new SubEventGen(myISEG, eventList))
@@ -167,7 +167,7 @@ public class EventGen2 {
 		 * catch (InterruptedException e) { // TODO Auto-generated catch block
 		 * e.printStackTrace(); }
 		 */
-		return nestedList;
+		return nestedList.get(0);
 	}
 }
 

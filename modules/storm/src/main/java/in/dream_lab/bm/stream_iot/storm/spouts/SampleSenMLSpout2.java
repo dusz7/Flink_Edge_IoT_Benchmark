@@ -33,7 +33,9 @@ public class SampleSenMLSpout2 extends BaseRichSpout implements ISyntheticEventG
 	int inputRate;
 	long numEvents;
 	long startingMsgId;
-	List<TableClass> eventList;
+	TableClass eventList;
+	List<List<String>> rows;
+	int index=0;
 
 	public SampleSenMLSpout2() {
 		// this.csvFileName = "/home/ubuntu/sample100_sense.csv";
@@ -69,12 +71,13 @@ public class SampleSenMLSpout2 extends BaseRichSpout implements ISyntheticEventG
 
 	@Override
 	public void nextTuple() {
-		List<String> entry = this.eventQueue.poll(); // nextTuple should not
-														// block!
+		//List<String> entry = this.eventQueue.poll(); 
 		/*
 		 * To get next event, instead of reading from eventqueue,
 		 * can use this.eventList.getRows().get(i)
 		 * */
+		List<String> entry = rows.get(index);
+		index++;
 		if (entry == null || (this.msgId > this.startingMsgId + this.numEvents))
 			return;
 
@@ -117,8 +120,8 @@ public class SampleSenMLSpout2 extends BaseRichSpout implements ISyntheticEventG
 		this.eventGen = new EventGen2(this, this.scalingFactor, this.inputRate);
 		this.eventQueue = new LinkedBlockingQueue<List<String>>();
 		String uLogfilename = this.outSpoutCSVLogFileName;
-		this.eventList = this.eventGen.launch(this.csvFileName, uLogfilename, -1, true); // Launch
-																		// threads
+		this.eventList = this.eventGen.launch(this.csvFileName, uLogfilename, -1, true); // No threads launched here. Just getting a TableClass containg rows of events
+		rows = this.eventList.getRows();
 
 		ba = new BatchedFileLogging(uLogfilename, context.getThisComponentId());
 	}

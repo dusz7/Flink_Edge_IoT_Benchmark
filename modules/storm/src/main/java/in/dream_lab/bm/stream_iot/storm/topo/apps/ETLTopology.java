@@ -67,7 +67,7 @@ public class ETLTopology {
 				System.exit(-1);
 			}
 		} else {
-			boltInstances = new ArrayList<Integer>(Arrays.asList(1,1,1,1,1,1,1,1));
+			boltInstances = new ArrayList<Integer>(Arrays.asList(1,1,1,1,1,1,1,1,1));
 		}
 		
 		List<String> resourceFileProps = RiotResourceFileProps.getRiotResourceFileProps();

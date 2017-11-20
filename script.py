@@ -97,7 +97,7 @@ def get_rate(_file, ts_index, mid_index, path=None, topo_name=None):
 def getRate(_file, timestampIndex, msgIdIndex):
     with open(_file, "r") as f:
         first = f.readline().split(",")
-	msgs = 0
+        msgs = 0
         for line in f:
             msgs+=1
 
@@ -106,7 +106,7 @@ def getRate(_file, timestampIndex, msgIdIndex):
         endTime = long(last[timestampIndex])
         #startMsg = long(first[msgIdIndex])
         #endMsg = long(last[msgIdIndex])
-	#print msgs
+        #print msgs
         rate = float((msgs)) / ((endTime-startTime)/1000)
     return rate
 
@@ -137,21 +137,23 @@ def get_etl_topo_throughput(_file, timestampIndex, msgIdIndex, path1, path2):
         lastAz = ""
         lastMq = ""
         azMsgs = 0
-	mqMsgs = 0
-	for line in f:
+        mqMsgs = 0
+        for line in f:
             if path1 in line and firstAz == "":
                 firstAz = line
             if path2 in line and firstMq == "":
                 firstMq = line
             if firstAz != "" and firstMq != "":
                 break
+
         for line in f:
             if path1 in line:
-		azMsgs+=1
+                azMsgs+=1
                 lastAz = line
             elif path2 in line:
-		mqMsgs+=1
+                mqMsgs+=1
                 lastMq = line
+    
     firstAz = firstAz.split(",")
     lastAz = lastAz.split(",")
     firstMq = firstMq.split(",")
@@ -320,97 +322,112 @@ def get_stats_topo_throughput(sink_file, timestampIndex):
 
 class Results(object):
     def __init__(self, topo_name, input_rate, throughput, latencies):
-	self.topo_naem = topo_name
-	self.input_rate = input_rate
-	self.throughput = throughput
-	self.latencies = latencies
+        self.topo_naem = topo_name
+        self.input_rate = input_rate
+        self.throughput = throughput
+        self.latencies = latencies
     
     def get_paths(self, topo_name):
-	if topo_name.startswith("etl"):
-	    return ("azure_insert_path", "publish_path")
-	elif topo_name.startswith("wordcount"):
-	    return ("wordcount")
-	elif topo_name.startswith(("pred", "train")):
-            return ("DTC_path", "MLR_path")
-	elif topo_name.startswith("stat"):
-            return ("stat")
-	else:
-	    return None
+        if topo_name.startswith("etl"):
+            return ["azure_insert_path", "publish_path"]
+        elif topo_name.startswith("wordcount"):
+            return ["wordcount"]
+        elif topo_name.startswith(("pred", "train")):
+                return ["DTC_path", "MLR_path"]
+        elif topo_name.startswith("stat"):
+                return ["stat"]
+        else:
+            return None
     
     def get_top_row(self, topo_name):
-	row = "input_rate,"
-	paths = self.get_paths(topo_name)
-	for path in paths:
-	    row = row + "throughput_" + path + ","
-	for path in paths:
-	    row = row + "latency_" + path + ","
-	return row[0:-1]
+        row = "input_rate,"
+        paths = self.get_paths(topo_name)
+        for path in paths:
+            row = row + "throughput_" + path + ","
+        for path in paths:
+            row = row + "latency_" + path + ","
+        return row[0:-1]
 
     def get_csv_data(self, topo_name):
-	data = str(self.input_rate) + ","
-	for tp in self.throughput:
-            data = data + str(tp) + ","
-	for lat in self.latencies:
-	    data = data + str(lat) + ","
-	return data[0:-1]
+        data = str(self.input_rate) + ","
+        for tp in self.throughput:
+                data = data + str(tp) + ","
+        for lat in self.latencies:
+            data = data + str(lat) + ","
+        return data[0:-1]
+
+    def get_data_dict(self, topo_name):
+        header=self.get_top_row(topo_name).split(',')
+        data=self.get_csv_data(topo_name).split(',')
+        _dict={}
+        for _index, _head in enumerate(header):
+            _dict[_head]=data[_index]
+        return _dict
+
 
     def get_csv_rep(self, topo_name):
-	return [self.get_top_row(topo_name), self.get_csv_data(topo_name)]
+        return [self.get_top_row(topo_name), self.get_csv_data(topo_name)]
+
+
 
 def get_results(topology_name, spoutFile, sinkFile):
     input_rate = 0
     throughputs = []
     latencies = []
+
     if topology_name.startswith("etl"):
-	input_rate = get_rate(spoutFile, 3, 5)
+        input_rate = get_rate(spoutFile, 3, 5)
         print "Input Rate (msgs/sec): " + str(input_rate)
         (tp0, tp1) = get_topo_tp(sinkFile, 3, 4, "AzureInsert", "PublishBolt", topology_name)
         (l0, l1) = get_etl_topo_latency(topology_name, spoutFile, sinkFile, 3, 5, 3 ,4, "AzureInsert", "PublishBolt")
-	throughputs.append(tp0)
-	throughputs.append(tp1)
-	latencies.append(l0)
-	latencies.append(l1)
-	print topology_name + ": AzureInsert path Throughput (msgs/sec): " + str(throughputs[0])
+        throughputs.append(tp0)
+        throughputs.append(tp1)
+        latencies.append(l0)
+        latencies.append(l1)
+        print topology_name + ": AzureInsert path Throughput (msgs/sec): " + str(throughputs[0])
         print topology_name + ": PublishBolt path Throughput (msgs/sec): " + str(throughputs[1])
         print topology_name + ": AzureInsert path Latency (msec): " + str(latencies[0])
         print topology_name + ": PublishBolt path Latency (msec): " + str(latencies[1])
 
     elif  topology_name.startswith("wordcount"):
-	input_rate = get_rate(spoutFile, 3, 5)
-	tp0 = get_rate(sinkFile, 3, 4, topo_name="wordcount")
-	l0 = getLatency(spoutFile, sinkFile, 3, 5, 3 ,4)
-	throughputs.append(tp0)
-	latencies.append(l0)
+        input_rate = get_rate(spoutFile, 3, 5)
+        tp0 = get_rate(sinkFile, 3, 4, topo_name="wordcount")
+        l0 = getLatency(spoutFile, sinkFile, 3, 5, 3 ,4, topo_name="wordcount")
+        throughputs.append(tp0)
+        latencies.append(l0)
         print "Input Rate (msgs/sec): " + str(input_rate)
         print "Throughput (msgs/sec): " + str(throughputs[0])
         print "Average Latency (ms): " + str(latencies[0])
+
     elif topology_name.startswith("pred"):
-	input_rate = get_rate(spoutFile, 3, 5)
+        input_rate = get_rate(spoutFile, 3, 5)
         print "Input Rate (msgs/sec): " + str(input_rate)
         (tp0, tp1) = get_topo_tp(sinkFile, 3, 4, "DTC", "MLR", topology_name)
         (l0, l1) = get_etl_topo_latency(topology_name, spoutFile, sinkFile, 3, 5, 3 ,4, "DTC", "MLR")
-	throughputs.append(tp0)
-	throughputs.append(tp1)
-	latencies.append(l0)
-	latencies.append(l1)
+        throughputs.append(tp0)
+        throughputs.append(tp1)
+        latencies.append(l0)
+        latencies.append(l1)
+
     elif topology_name.startswith("stat"):
-	input_rate = get_rate(spoutFile, 3, 5)
-	tp0 = get_rate(sinkFile, 3, 4, topo_name=topology_name)
-	l0 = getLatency(spoutFile, sinkFile, 3, 5, 3 ,4, topology_name)
-	throughputs.append(tp0)
-	latencies.append(l0)
+        input_rate = get_rate(spoutFile, 3, 5)
+        tp0 = get_rate(sinkFile, 3, 4, topo_name=topology_name)
+        l0 = getLatency(spoutFile, sinkFile, 3, 5, 3 ,4, topology_name)
+        throughputs.append(tp0)
+        latencies.append(l0)
         print "Input Rate (msgs/sec): " + str(input_rate)
         print "Throughput (msgs/sec): " + str(throughputs[0])
         print "Average Latency (ms): " + str(latencies[0])
+
     elif topology_name.startswith("train"):
-	input_rate = getInputRate(spoutFile)
+        input_rate = getInputRate(spoutFile)
         print "Input Rate (msgs/sec): " + str(input_rate)
         (tp0, tp1) = get_etl_topo_throughput(sinkFile, 3, 4, "DTC", "MLR")
         (l0, l1) = get_etl_topo_latency(topology_name, spoutFile, sinkFile, 3, 5, 3 ,4, "DTC", "MLR")
-	throughputs.append(tp0)
-	throughputs.append(tp1)
-	latencies.append(l0)
-	latencies.append(l1)
+        throughputs.append(tp0)
+        throughputs.append(tp1)
+        latencies.append(l0)
+        latencies.append(l1)
 
     return Results(topology_name, input_rate, throughputs, latencies)
     #return (input_rate, throughputs, latencies)
@@ -431,5 +448,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-

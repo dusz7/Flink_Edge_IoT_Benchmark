@@ -3,6 +3,7 @@ package in.dream_lab.bm.stream_iot.storm.topo.apps;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -16,7 +17,6 @@ import org.apache.storm.generated.StormTopology;
 import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.utils.Utils;
-
 
 import com.github.staslev.storm.metrics.MetricReporter;
 import com.github.staslev.storm.metrics.MetricReporterConfig;
@@ -49,7 +49,7 @@ public class ETLTopology2 {
 		String inputPath = System.getenv("RIOT_INPUT_PROP_PATH");
 
 		System.out.println("RESOURCE DIR: " + resourceDir);
-		
+
 		String logFilePrefix = argumentClass.getTopoName() + "-" + argumentClass.getExperiRunId() + "-"
 				+ argumentClass.getScalingFactor() + ".log";
 		String sinkLogFileName = argumentClass.getOutputDirName() + "/sink-" + logFilePrefix;
@@ -57,34 +57,39 @@ public class ETLTopology2 {
 		String taskPropFilename = inputPath + "/" + argumentClass.getTasksPropertiesFilename();
 		int inputRate = argumentClass.getInputRate();
 		long numEvents = argumentClass.getNumEvents();
+		int numWorkers = argumentClass.getNumWorkers();
+		
 		List<Integer> boltInstances = argumentClass.getBoltInstances();
-		if ((boltInstances.size() != 9)) {
-			System.out.println("Invalid Number of bolt instances provided. Exiting");
-			System.exit(-1);
+		if (boltInstances != null) {
+			if ((boltInstances.size() != 9)) {
+				System.out.println("Invalid Number of bolt instances provided. Exiting");
+				System.exit(-1);
+			}
+		} else {
+			boltInstances = new ArrayList<Integer>(Arrays.asList(1,1,1,1,1,1,1,1));
 		}
 
 		List<String> resourceFileProps = RiotResourceFileProps.getRiotResourceFileProps();
 
-		
 		Config conf = new Config();
 		conf.put(Config.TOPOLOGY_BACKPRESSURE_ENABLE, true);
 		conf.setDebug(false);
 		conf.setNumAckers(0);
+		conf.setNumWorkers(numWorkers);
 		
-		//SimpleStormMetricProcessor processor;
-		
-		//Map config = new HashMap();
-		//config.put(Config.TOPOLOGY_NAME, "ETLTopology");
-		//processor = new SimpleStormMetricProcessor(config);
-		
-		/*only get capacity metrics*/
-        MetricReporterConfig metricReporterConfig = new MetricReporterConfig(".*execute-capacity.*",
-				SimpleStormMetricProcessor.class.getCanonicalName(), Long.toString(inputRate), Long.toString(numEvents*2));
-		
-		
+		// SimpleStormMetricProcessor processor;
+
+		// Map config = new HashMap();
+		// config.put(Config.TOPOLOGY_NAME, "ETLTopology");
+		// processor = new SimpleStormMetricProcessor(config);
+
+		/* only get capacity metrics */
+		MetricReporterConfig metricReporterConfig = new MetricReporterConfig(".*",
+				SimpleStormMetricProcessor.class.getCanonicalName(), Long.toString(inputRate),
+				Long.toString(numEvents * 2));
+
 		conf.registerMetricsConsumer(MetricReporter.class, metricReporterConfig, 1);
-		
-		
+
 		/*
 		 * conf.put("policy", "signal"); conf.put("consume", "constant");
 		 * conf.put("constant", 50);
@@ -120,22 +125,25 @@ public class ETLTopology2 {
 
 		builder.setBolt("SenMlParseBolt", new SenMLParseBolt(p_), boltInstances.get(0)).shuffleGrouping("spout1");
 
-		builder.setBolt("RangeFilterBolt", new RangeFilterBolt(p_), boltInstances.get(1)).fieldsGrouping("SenMlParseBolt",
-				new Fields("OBSTYPE"));
+		builder.setBolt("RangeFilterBolt", new RangeFilterBolt(p_), boltInstances.get(1))
+				.fieldsGrouping("SenMlParseBolt", new Fields("OBSTYPE"));
 
-		builder.setBolt("BloomFilterBolt", new BloomFilterCheckBolt(p_), boltInstances.get(2)).fieldsGrouping("RangeFilterBolt",
-				new Fields("OBSTYPE"));
+		builder.setBolt("BloomFilterBolt", new BloomFilterCheckBolt(p_), boltInstances.get(2))
+				.fieldsGrouping("RangeFilterBolt", new Fields("OBSTYPE"));
 
-		builder.setBolt("InterpolationBolt", new InterpolationBolt(p_), boltInstances.get(3)).fieldsGrouping("BloomFilterBolt",
-				new Fields("OBSTYPE"));
+		builder.setBolt("InterpolationBolt", new InterpolationBolt(p_), boltInstances.get(3))
+				.fieldsGrouping("BloomFilterBolt", new Fields("OBSTYPE"));
 
-		builder.setBolt("JoinBolt", new JoinBolt(p_), boltInstances.get(4)).fieldsGrouping("InterpolationBolt", new Fields("MSGID"));
+		builder.setBolt("JoinBolt", new JoinBolt(p_), boltInstances.get(4)).fieldsGrouping("InterpolationBolt",
+				new Fields("MSGID"));
 
 		builder.setBolt("AnnotationBolt", new AnnotationBolt(p_), boltInstances.get(5)).shuffleGrouping("JoinBolt");
 
-		builder.setBolt("AzureInsert", new AzureTableInsertBolt(p_), boltInstances.get(6)).shuffleGrouping("AnnotationBolt");
+		builder.setBolt("AzureInsert", new AzureTableInsertBolt(p_), boltInstances.get(6))
+				.shuffleGrouping("AnnotationBolt");
 
-		builder.setBolt("CsvToSenMLBolt", new CsvToSenMLBolt(p_), boltInstances.get(7)).shuffleGrouping("AnnotationBolt");
+		builder.setBolt("CsvToSenMLBolt", new CsvToSenMLBolt(p_), boltInstances.get(7))
+				.shuffleGrouping("AnnotationBolt");
 
 		builder.setBolt("PublishBolt", new MQTTPublishBolt(p_), boltInstances.get(8)).shuffleGrouping("CsvToSenMLBolt");
 

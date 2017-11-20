@@ -1,5 +1,5 @@
-valid_topos = ["etl", "pred", "stat"]
-num_experiments = 5
+valid_topos = ["etl", "pred", "stat", "wordcount"]
+num_experiments = 1
 
 # input rates for etl topology
 #etl_input_rates = [ 60, 120, 240, 480, 960] # , 1920
@@ -25,6 +25,17 @@ test_rate = [20, 40, 60, 80, 100, 120, 240]
 test_num_events = [4800, 9600, 14400,19200, 24000, 28800, 57600]
 
 
+wordcount_input_rates = [100, 500, 1000, 1500, 2000, 3000]
+wordcount_num_events = [6000, 30000, 60000, 75000, 120000, 180000]
+
+etl_input_rates = [960] # , 1920
+etl_num_events = [5760] # , 460800
+
+
+wordcount_input_rates = [ 3000]
+wordcount_num_events = [ 18000]
+
+
 property_files = {
 		 "etl" : "etl_topology.properties",
 		 "pred" : "tasks_CITY.properties",
@@ -33,11 +44,11 @@ property_files = {
 		 }
 
 topo_qualified_path = {
-			"etl" : "in.dream_lab.bm.stream_iot.storm.topo.apps.ETLTopology2",
+			"etl" : "in.dream_lab.bm.stream_iot.storm.topo.apps.ETLTopology",
 			"pred" : "in.dream_lab.bm.stream_iot.storm.topo.apps.IoTPredictionTopologySYS",
 			"stat" : "in.dream_lab.bm.stream_iot.storm.topo.apps.StatsWithVisualizationTopology",
 			"train" : "in.dream_lab.bm.stream_iot.storm.topo.apps.IoTTrainTopologySYS",
-			"wordcount" : "in.dream_lab.bm.stream_iot.storm.topo.apps.ETLTopology"
+			"wordcount" : "vt.lee.lab.storm.test.inbalance.InbalanceWordCountTopology"
 			}
 
 data_files = {
@@ -50,12 +61,16 @@ data_files = {
 
 etl_bolt_ind = {'SenMlParseBolt' : 0, 'RangeFilterBolt' : 1, 'BloomFilterBolt' : 2, 'InterpolationBolt' : 3, 'JoinBolt' : 4, 'AnnotationBolt' : 5,
 						 'AzureInsert' : 6, 'CsvToSenMLBolt' : 7, 'PublishBolt' : 8}
+wordcount_bolt_index = {'word_count_bolt_1' : 0, 'word_count_bolt_2' : 1, 'word_count_bolt_3' : 2, 'word_count_bolt_4' : 3, 
+                                'word_count_bolt_5' : 4, 'word_count_bolt_6' : 5, 'word_count_bolt_7' : 6, 'word_count_bolt_8' : 7}
 
-topology_bolts = {'etl' : etl_bolt_ind}
+
+topology_bolts = {'etl' : etl_bolt_ind, 
+                  'wordcount' : wordcount_bolt_index}
 
 
-input_rates_dict = {"etl" : etl_input_rates, "pred" : pred_input_rates, "stat": stat_input_rates}
-num_events_dict = {"etl" : etl_num_events, "pred":pred_num_events, "stat": stat_num_events}
+input_rates_dict = {"etl" : etl_input_rates, "pred" : pred_input_rates, "stat": stat_input_rates, "wordcount" : wordcount_input_rates}
+num_events_dict = {"etl" : etl_num_events, "pred":pred_num_events, "stat": stat_num_events, "wordcount" : wordcount_num_events}
 
 paths={'toybox':'/home/fuxinwei/iot'}
 results_dir={'toybox':'/home/fuxinwei/iot/experiment_results'}

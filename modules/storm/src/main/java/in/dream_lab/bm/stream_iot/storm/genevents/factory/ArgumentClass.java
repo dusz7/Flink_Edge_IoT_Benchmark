@@ -1,5 +1,8 @@
 package in.dream_lab.bm.stream_iot.storm.genevents.factory;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by tarun on 28/5/15.
  */
@@ -14,6 +17,8 @@ public class ArgumentClass{
     String tasksName;
     int inputRate;
     long numEvents;
+    List<Integer> boltInstances;
+    int numWorkers;
 
     public String getTasksName() {
 		return tasksName;
@@ -95,7 +100,25 @@ public class ArgumentClass{
     public void setTasksPropertiesFilename(String tasksPropertiesFilename) {
         this.tasksPropertiesFilename = tasksPropertiesFilename;
     }
+    
+	public int getNumWorkers() {
+		return numWorkers;
+	}
+
+	public void setNumWorkers(int numWorkers) {
+		this.numWorkers = numWorkers;
+	}
 
 
+    public void setBoltInstances(String boltInstanceList) {
+    	String[] list = boltInstanceList.split(",");
+    	boltInstances = new ArrayList<Integer>();
+    	for (String bolt : list) {
+    		boltInstances.add(Integer.parseInt(bolt));
+    	}
+    }
 
+    public List<Integer> getBoltInstances() {
+    	return boltInstances;
+    }
 }

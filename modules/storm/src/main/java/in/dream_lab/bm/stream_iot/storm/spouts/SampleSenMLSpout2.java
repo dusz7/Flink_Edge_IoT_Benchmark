@@ -1,5 +1,8 @@
 package in.dream_lab.bm.stream_iot.storm.spouts;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -36,6 +39,9 @@ public class SampleSenMLSpout2 extends BaseRichSpout implements ISyntheticEventG
 	TableClass eventList;
 	List<List<String>> rows;
 	int index=0;
+	boolean bpMonitor = false;
+	long bpStartTime = 0;
+	long bpTotalTime = 0;
 
 	public SampleSenMLSpout2() {
 		// this.csvFileName = "/home/ubuntu/sample100_sense.csv";
@@ -93,6 +99,17 @@ public class SampleSenMLSpout2 extends BaseRichSpout implements ISyntheticEventG
 		values.add(newRow);
 
 		this._collector.emit(values);
+		
+		if ((this.msgId > (this.startingMsgId + this.numEvents / 3) && !bpMonitor)) bpMonitor = true; // start monitoring backpressure
+//		if ((this.msgId < (this.startingMsgId + (this.numEvents * 3) / 4) && bpMonitor)) bpMonitor = false; // stop monitoring backpressure
+
+		if (this.msgId == this.startingMsgId + this.numEvents - 1) {
+			String dir = outSpoutCSVLogFileName.substring(0, outSpoutCSVLogFileName.lastIndexOf("/")+1);
+			String filename = outSpoutCSVLogFileName.substring(outSpoutCSVLogFileName.lastIndexOf("/")+1);
+			filename = dir + "back_pressure-" + filename;
+			writeBPTime(filename);
+		}
+
 
 		/* skip logging first 1/3 of events to reach a stable condition */
 		if (this.msgId > (this.startingMsgId + this.numEvents / 3) &&
@@ -128,12 +145,18 @@ public class SampleSenMLSpout2 extends BaseRichSpout implements ISyntheticEventG
 
 	@Override
 	public void ack(Object msgId) {
-		System.out.println("Acker called");
+//		System.out.println("Backpressure Observed");
+		if (bpMonitor) {
+//			System.out.println("BPMONITOR: Backpressure Observed");
+			bpStartTime = System.currentTimeMillis();
+		}
 	}
 
 	@Override
 	public void fail(Object msgId) {
-		System.out.println("Failure called");
+		if (bpMonitor) {
+			bpTotalTime = bpTotalTime + (System.currentTimeMillis() - bpStartTime);
+		}
 	}
 
 	@Override
@@ -149,4 +172,24 @@ public class SampleSenMLSpout2 extends BaseRichSpout implements ISyntheticEventG
 			e.printStackTrace();
 		}
 	}
+	
+	public void writeBPTime(String fileName) {
+		BufferedWriter writer;
+		long bpTime = 0;
+		try {
+			writer = new BufferedWriter(new FileWriter(fileName));
+			if (bpTotalTime == 0) {
+				if (bpStartTime != 0)
+					bpTime = System.currentTimeMillis() - bpStartTime;
+			} else
+				bpTime = bpTotalTime;
+
+			writer.write(Long.toString(bpTime));
+			writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
 }

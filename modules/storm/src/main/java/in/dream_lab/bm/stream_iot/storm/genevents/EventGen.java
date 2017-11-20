@@ -206,58 +206,34 @@ class SubEventGen implements Runnable {
 		boolean runOnce = (experiDuration < 0);
 		System.out.println(this.getClass().getName() + " - runOnce: " + runOnce);
 		long currentRuntime = 0;
-
-
+		long emitCount = 0;
+		Long initTime = System.currentTimeMillis();
+		Long _1000_event_emit_time;
+		
 		do {
+			//initTime = System.currentTimeMillis();
 			for (int i = 0; i < rowLen && (runOnce || (currentRuntime < experiDuration)); i++) {
 				// Long deltaTs = timestamps.get(i);
 				List<String> event = rows.get(i);
 				Long currentTs = System.currentTimeMillis();
-				// long delay = deltaTs - (currentTs - experiRestartTime); //
-				// how long until this event should be sent?
 
-				/*
-				 * Delaying sending the event if we're working with old csv
-				 * files does not make sense. Is data preparation required
-				 * beforehand?
-				 */
-
-				// System.out.println(this.getClass().getName() + " - delay: " +
-				// delay + " deltaTs " + deltaTs);
-
-				/*
-				 * Why sleep here ???? It seems delay ~= deltaTs, which we
-				 * actually get from the csv file. It's a large value and hence
-				 * the thread sleeps here !!! Commenting this sleep for now.
-				 */
-
-				/*
-				 * if (delay > 10) { // sleep only if it is non-trivial time. We
-				 * will catch up on sleep later.
-				 * 
-				 * }
-				 */
 				long start = System.nanoTime();
 				while (start + delay >= System.nanoTime())
 					;
-
+				
 				this.iseg.receive(event);
-
-				/*
-				 * Since not sleeping anymore, should not factor in the value of
-				 * delay in currentRuntime calculation
-				 */
-				// ORIG: currentRuntime = (currentTs - experiStartTime) + delay;
-				// // appox time since the experiment started
+				emitCount++;
+//				if (emitCount%1000 == 0) {
+//					_1000_event_emit_time = System.currentTimeMillis();
+//					System.out.println("1000 EVENTS EMITTED IN: " + (_1000_event_emit_time - initTime));
+//					initTime = System.currentTimeMillis();
+//				}
 
 				currentRuntime = (long) ((currentTs - experiStartTime) + (delay / 1000000));
-				// System.out.println(this.getClass().getName() + " - updated
-				// current time: " + currentRuntime +
-				// " Calculation: currentTs: " + Long.toString(currentTs) +
-				// "expStartTime: " + Long.toString(experiStartTime));
-			}
 
+			}
 			experiRestartTime = System.currentTimeMillis();
+			
 		} while (!runOnce && (currentRuntime < experiDuration));
 
 	}

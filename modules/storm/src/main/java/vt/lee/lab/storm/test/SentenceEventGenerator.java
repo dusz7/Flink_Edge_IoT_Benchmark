@@ -9,10 +9,17 @@ public class SentenceEventGenerator {
 	private ISyntheticSentenceGenerator issg;
 	ExecutorService executorService;
 	private int rate = 0;
+	private long numEvents = 0;
 
 	public SentenceEventGenerator(ISyntheticSentenceGenerator issg, int rate) {
 		this.issg = issg;
 		this.rate = rate;
+	}
+	
+	public SentenceEventGenerator(ISyntheticSentenceGenerator issg, int rate, long numEvents) {
+		this.issg = issg;
+		this.rate = rate;
+		this.numEvents = numEvents;
 	}
 
 	public void launch(String[] sentences, long experimentDuration) {
@@ -20,7 +27,7 @@ public class SentenceEventGenerator {
 		this.executorService = Executors.newFixedThreadPool(numThreads);
 
 		SentenceGenerator sentenceGenerator = new SentenceGenerator(this.issg, sentences, this.rate,
-				experimentDuration);
+				experimentDuration, numEvents);
 		this.executorService.execute(sentenceGenerator);
 	}
 
@@ -34,6 +41,7 @@ class SentenceGenerator implements Runnable {
 	double delay = 0;
 	long experimentDuration;
 	long experiStartTime;
+	long numEvents = 0;
 
 	public SentenceGenerator(ISyntheticSentenceGenerator issg, String[] events, int rate, long experimentDuration) {
 		_rand = new Random();
@@ -46,10 +54,16 @@ class SentenceGenerator implements Runnable {
 			System.out.println(Thread.currentThread().getName() + "Delay: " + this.delay);
 		}
 	}
+	public SentenceGenerator(ISyntheticSentenceGenerator issg, String[] events, int rate, long experimentDuration, long numEvents) {
+		this(issg, events, rate, experimentDuration);
+		this.numEvents = numEvents;
+	}
+	
 
 	@Override
 	public void run() {
 		long currentRuntime = 0;
+		long emitted = 0;
 
 		do {
 			String event = this.events[_rand.nextInt(this.events.length)];
@@ -62,8 +76,9 @@ class SentenceGenerator implements Runnable {
 				;
 
 			currentRuntime = (long) ((currentTs - experiStartTime) + (delay / 1000000));
+			emitted++;
 
-		} while (currentRuntime < experimentDuration);
+		} while (currentRuntime < experimentDuration && emitted <= numEvents);
 
 	}
 

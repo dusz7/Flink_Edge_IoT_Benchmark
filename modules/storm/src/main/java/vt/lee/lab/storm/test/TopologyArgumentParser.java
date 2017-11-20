@@ -17,11 +17,12 @@ public class TopologyArgumentParser {
 	 * 	WordCountTestTopology 
 	 * 	1 
 	 * 	<output directory> 
-	 * 	10000
+	 * 	10000 (input rate)	
+	 *  100000 (number of events)
 	 * */
 	
 	public static TopologyArgumentClass parserCLI(String[] args) {
-		if (args == null || args.length != 6) {
+		if (args == null || !(args.length == 7 || args.length == 8)) {
 			System.out.println("invalid number of arguments");
 			return null;
 		} else {
@@ -32,6 +33,9 @@ public class TopologyArgumentParser {
 			argumentClass.setOutputDirName(args[3]);
 			argumentClass.setInputRate(Integer.parseInt(args[4]));
 			argumentClass.setNumEvents(Integer.parseInt(args[5]));
+			argumentClass.setNumWorkers(Integer.parseInt(args[6]));
+			if (args.length == 8)
+            	argumentClass.setBoltInstances(args[7]);
 			return argumentClass;
 		}
 	}

@@ -3,10 +3,12 @@ package in.dream_lab.bm.stream_iot.storm.topo.apps;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
-import java.util.Random;
 
 import org.apache.storm.Config;
 import org.apache.storm.LocalCluster;
@@ -15,6 +17,11 @@ import org.apache.storm.generated.StormTopology;
 import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.utils.Utils;
+
+
+import com.github.staslev.storm.metrics.MetricReporter;
+import com.github.staslev.storm.metrics.MetricReporterConfig;
+import com.github.staslev.storm.metrics.yammer.SimpleStormMetricProcessor;
 
 import in.dream_lab.bm.stream_iot.storm.bolts.ETL.TAXI.AnnotationBolt;
 import in.dream_lab.bm.stream_iot.storm.bolts.ETL.TAXI.AzureTableInsertBolt;
@@ -25,14 +32,11 @@ import in.dream_lab.bm.stream_iot.storm.bolts.ETL.TAXI.JoinBolt;
 import in.dream_lab.bm.stream_iot.storm.bolts.ETL.TAXI.MQTTPublishBolt;
 import in.dream_lab.bm.stream_iot.storm.bolts.ETL.TAXI.RangeFilterBolt;
 import in.dream_lab.bm.stream_iot.storm.bolts.ETL.TAXI.SenMLParseBolt;
-import in.dream_lab.bm.stream_iot.storm.bolts.IoTPredictionBolts.SYS.LinearRegressionPredictorBolt;
 import in.dream_lab.bm.stream_iot.storm.genevents.factory.ArgumentClass;
 import in.dream_lab.bm.stream_iot.storm.genevents.factory.ArgumentParser;
 import in.dream_lab.bm.stream_iot.storm.sinks.EtlTopologySinkBolt;
-import in.dream_lab.bm.stream_iot.storm.sinks.Sink;
 import in.dream_lab.bm.stream_iot.storm.spouts.SampleSenMLSpout;
 import vt.lee.lab.storm.riot_resources.RiotResourceFileProps;
-import in.dream_lab.bm.stream_iot.storm.spouts.SampleSenMLSpout;
 
 public class ETLTopology {
 	public static void main(String[] args) throws Exception {
@@ -46,7 +50,7 @@ public class ETLTopology {
 		String inputPath = System.getenv("RIOT_INPUT_PROP_PATH");
 
 		System.out.println("RESOURCE DIR: " + resourceDir);
-
+		
 		String logFilePrefix = argumentClass.getTopoName() + "-" + argumentClass.getExperiRunId() + "-"
 				+ argumentClass.getScalingFactor() + ".log";
 		String sinkLogFileName = argumentClass.getOutputDirName() + "/sink-" + logFilePrefix;
@@ -54,23 +58,49 @@ public class ETLTopology {
 		String taskPropFilename = inputPath + "/" + argumentClass.getTasksPropertiesFilename();
 		int inputRate = argumentClass.getInputRate();
 		long numEvents = argumentClass.getNumEvents();
-		
+		int numWorkers = argumentClass.getNumWorkers();
+
+		List<Integer> boltInstances = argumentClass.getBoltInstances();
+		if (boltInstances != null) {
+			if ((boltInstances.size() != 9)) {
+				System.out.println("Invalid Number of bolt instances provided. Exiting");
+				System.exit(-1);
+			}
+		} else {
+			boltInstances = new ArrayList<Integer>(Arrays.asList(1,1,1,1,1,1,1,1));
+		}
 		
 		List<String> resourceFileProps = RiotResourceFileProps.getRiotResourceFileProps();
 
+		
 		Config conf = new Config();
 		conf.put(Config.TOPOLOGY_BACKPRESSURE_ENABLE, true);
 		conf.setDebug(false);
 		conf.setNumAckers(0);
+		conf.setNumWorkers(numWorkers);
 		
-/*		conf.put("policy", "signal");
-		conf.put("consume", "constant");
-		conf.put("constant", 50);
-
-
-		System.out.println("Policy: Signal");
-		System.out.println("Consume: CONSTANT-100");
-*/			
+		//SimpleStormMetricProcessor processor;
+		
+		//Map config = new HashMap();
+		//config.put(Config.TOPOLOGY_NAME, "ETLTopology");
+		//processor = new SimpleStormMetricProcessor(config);
+		
+		/*only get capacity metrics*/
+        MetricReporterConfig metricReporterConfig = new MetricReporterConfig(".*execute-capacity.*",
+				SimpleStormMetricProcessor.class.getCanonicalName(), Long.toString(inputRate), Long.toString(numEvents*2));
+		
+		
+		conf.registerMetricsConsumer(MetricReporter.class, metricReporterConfig, 1);
+		
+		
+		/*
+		 * conf.put("policy", "signal"); conf.put("consume", "constant");
+		 * conf.put("constant", 50);
+		 * 
+		 * 
+		 * System.out.println("Policy: Signal");
+		 * System.out.println("Consume: CONSTANT-100");
+		 */
 
 		Properties p_ = new Properties();
 		InputStream input = new FileInputStream(taskPropFilename);
@@ -92,40 +122,39 @@ public class ETLTopology {
 		String spout1InputFilePath = resourceDir + "/SYS_sample_data_senml.csv";
 
 		System.out.println(spout1InputFilePath);
-		
-		// String spout1InputFilePath =
-		// "/home/talha/iot/storm/benchmarks/riot/riot-bench/modules/tasks/src/main/resources/SYS_sample_data_senml.csv";
 
 		builder.setSpout("spout1", new SampleSenMLSpout(spout1InputFilePath, spoutLogFileName,
 				argumentClass.getScalingFactor(), inputRate, numEvents), 1);
 
-		builder.setBolt("SenMlParseBolt", new SenMLParseBolt(p_), 2).shuffleGrouping("spout1");
+		builder.setBolt("SenMlParseBolt", new SenMLParseBolt(p_), boltInstances.get(0)).shuffleGrouping("spout1");
 
-		builder.setBolt("RangeFilterBolt", new RangeFilterBolt(p_), 2).fieldsGrouping("SenMlParseBolt",
+		builder.setBolt("RangeFilterBolt", new RangeFilterBolt(p_), boltInstances.get(1)).fieldsGrouping("SenMlParseBolt",
 				new Fields("OBSTYPE"));
 
-		builder.setBolt("BloomFilterBolt", new BloomFilterCheckBolt(p_), 2).fieldsGrouping("RangeFilterBolt",
+		builder.setBolt("BloomFilterBolt", new BloomFilterCheckBolt(p_), boltInstances.get(2)).fieldsGrouping("RangeFilterBolt",
 				new Fields("OBSTYPE"));
 
-		builder.setBolt("InterpolationBolt", new InterpolationBolt(p_), 2).fieldsGrouping("BloomFilterBolt",
+		builder.setBolt("InterpolationBolt", new InterpolationBolt(p_), boltInstances.get(3)).fieldsGrouping("BloomFilterBolt",
 				new Fields("OBSTYPE"));
 
-		builder.setBolt("JoinBolt", new JoinBolt(p_), 2).fieldsGrouping("InterpolationBolt", new Fields("MSGID"));
+		builder.setBolt("JoinBolt", new JoinBolt(p_), boltInstances.get(4)).fieldsGrouping("InterpolationBolt", new Fields("MSGID"));
 
-		builder.setBolt("AnnotationBolt", new AnnotationBolt(p_), 2).shuffleGrouping("JoinBolt");
+		builder.setBolt("AnnotationBolt", new AnnotationBolt(p_), boltInstances.get(5)).shuffleGrouping("JoinBolt");
 
-		builder.setBolt("AzureInsert", new AzureTableInsertBolt(p_), 2).shuffleGrouping("AnnotationBolt");
+		builder.setBolt("AzureInsert", new AzureTableInsertBolt(p_), boltInstances.get(6)).shuffleGrouping("AnnotationBolt");
 
-		builder.setBolt("CsvToSenMLBolt", new CsvToSenMLBolt(p_), 2).shuffleGrouping("AnnotationBolt");
+		builder.setBolt("CsvToSenMLBolt", new CsvToSenMLBolt(p_), boltInstances.get(7)).shuffleGrouping("AnnotationBolt");
 
-		builder.setBolt("PublishBolt", new MQTTPublishBolt(p_), 2).shuffleGrouping("CsvToSenMLBolt");
+		builder.setBolt("PublishBolt", new MQTTPublishBolt(p_), boltInstances.get(8)).shuffleGrouping("CsvToSenMLBolt");
 
-/*		builder.setBolt("sink", new Sink(sinkLogFileName), 1).shuffleGrouping("PublishBolt")
-				.shuffleGrouping("AzureInsert");*/
+		/*
+		 * builder.setBolt("sink", new Sink(sinkLogFileName),
+		 * 1).shuffleGrouping("PublishBolt") .shuffleGrouping("AzureInsert");
+		 */
 
 		builder.setBolt("sink", new EtlTopologySinkBolt(sinkLogFileName), 1).shuffleGrouping("PublishBolt")
-		.shuffleGrouping("AzureInsert");
-		
+				.shuffleGrouping("AzureInsert");
+
 		StormTopology stormTopology = builder.createTopology();
 
 		if (argumentClass.getDeploymentMode().equals("C")) {

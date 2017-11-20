@@ -1,3 +1,7 @@
+#################################################################################
+#   Document here...
+#################################################################################
+
 import os
 import sys
 import subprocess
@@ -7,397 +11,696 @@ import tarfile
 import shutil
 import csv
 import socket
-
+import pandas as pd
+import argparse
+import numpy as np
 
 from exp_setup import *
 
 storm_exe = os.environ['STORM']
 hostname = os.environ['HOSTNAME']
+bpMonitor = False
+
 
 def kill_topologies(path):
-	cmd = path+"/kill_topos.sh"
-	#cmd = storm_exe + " kill "
-	process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
-	output, error = process.communicate()
+    cmd = path+"/kill_topos.sh"
+    #cmd = storm_exe + " kill "
+    process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
 
 
 #TODO: should not take pi_outdir as parameter
 def clean_dirs_on_pis(pi_outdir):
-	cmd = "dsh -aM -c rm " + pi_outdir + "/*"
-	process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
-	output, error = process.communicate()
+    cmd = "dsh -aM -c rm " + pi_outdir + "/*"
+    process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
 
-	if error is None:
-		print "Delected output directories on PIs"
-
+    if error is None:
+        print "Delected output directories on PIs"
 
 def conv_cap_to_dict(str):
-	dict_ = {}
-	str_ = str[1:-1]
-	str_=str_.split(",")
-	for s in str_:
-		_ = s.split("=")
-		dict_[_[0].strip()]=_[1].strip()
-	return dict_
+    dict_ = {}
+    str_ = str[1:-1]
+    str_=str_.split(",")
+    for s in str_:
+        _ = s.split("=")
+        if len(_) == 2:
+            dict_[_[0].strip()] = float(_[1].strip("{} "))
+    return dict_
+
+def conv_to_dict(str):
+    dict_ = {}
+    str_ = str[1:-1]
+    str_=str_.split(",")
+    for s in str_:
+        _ = s.split("=")
+        if len(_) == 2:
+            dict_[_[0].strip()] = _[1].strip("{} ")
+    return dict_
 
 def get_topo_capacity_at_completion(in_topo_name, num_experiments, port=38999):
-	host=''
-	# create a socket 
-	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # AF_INET-> IPv4, SOCK_STREAM-> TCP
+    """
+    Returns topo_capacity_map and topo_exec_lat_map
+    topo_capacity_map is a mapping from topo+inputrate to a dictionary for bolts->capacities
+    """
+    host=''
+    # create a socket 
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # AF_INET-> IPv4, SOCK_STREAM-> TCP
 
-	s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-	# Bind socket to local host and port
-	try:
-		s.bind((host, port))
-	except socket.error as msg:
-		print 'Bind failed. Error Code : ' + str(msg[0]) + ' Message ' + msg[1]
-		sys.exit()
-	#Start listening on socket
-	s.listen(10)
-	print 'Listening for topology completion'
-	
-	completed=0
-	topo_capacity_map={}
-	while completed < num_experiments:
-		#wait to accept a connection - blocking call
-		conn, addr = s.accept()  # addr[0] -> IP, addr[1] -> PORT
-		# Only reaceive the data once
-		data=conn.recv(1024)
-		comp=data.split("-")
-		in_r=comp[0]
-		cap_=conv_cap_to_dict(comp[1])
-		topo_capacity_map[in_topo_name+'_'+str(in_r)] = cap_
-		completed = completed+1
-	s.close()
-	return topo_capacity_map
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    # Bind socket to local host and port
+    try:
+        s.bind((host, port))
+    except socket.error as msg:
+        print 'Bind failed. Error Code : ' + str(msg[0]) + ' Message ' + msg[1]
+        sys.exit()
+    #Start listening on socket
+    s.listen(10)
+    print 'Listening for topology completion'
+    
+    completed=0
+    topo_capacity_map={}
+    topo_exec_lat_map={}
+    component_to_worker_map={}
+    while completed < num_experiments:
+        #wait to accept a connection - blocking call
+        conn, addr = s.accept()  # addr[0] -> IP, addr[1] -> PORT
+        # Only reaceive the data once
+        data=conn.recv(4096)
+        comp=data.split("&")
+        in_r=comp[0]
+        print(comp[3])
 
+        cap_=conv_cap_to_dict(comp[1])  #Get dictionaty for capacity values
+        lat_=conv_cap_to_dict(comp[2])  #Get dictionary for latency values
+        c2w_=conv_to_dict(comp[3])  #Get dictionary for component/bolt to worker mapping
+        print ("c2w_")
+        print (c2w_)
+
+        topo_capacity_map[in_topo_name+'_'+str(in_r)] = cap_
+        topo_exec_lat_map[in_topo_name+'_'+str(in_r)] = lat_
+        component_to_worker_map[in_topo_name+"_"+str(in_r)] = c2w_
+
+        completed = completed+1
+    s.close()
+    return (topo_capacity_map, topo_exec_lat_map, component_to_worker_map)
 
 def is_valid_topology(in_topo_name):
-	"""
-	returns True if the topology is a valid topology
-	"""
-	return in_topo_name in valid_topos
+    """
+    returns True if the topology is a valid topology
+    """
+    return in_topo_name in valid_topos
+
+def print_dict_of_dicts(_dict):
+    """
+    Formats a dict of dict as:
+    key1
+    key1_1,value1
+    key1_2,value2
+    #############
+    key2
+    key2_1,value1
+    key2_2,value2
+    """
+    res=""
+    for key in _dict:
+        res+=key+"\n"
+        new_dict = _dict[key]
+        for _key in new_dict:
+            res+=_key+","+new_dict[_key]+"\n"
+        res+="\n-----------------------------n"
+
+    return res
+
+def format_dict(_dict, indicator):
+    """
+    Formats a dictionary as:-
+        key1:value1
+        key2:value2
+        key3:value3
+            OR
+        key1
+        value1
+        key2
+        value2
+    based on the value of the indicator
+    """
+    res="\n\n"
+    for key in _dict:
+        if indicator:
+            res+=str(key)+":"
+        else:
+            res+=str(key)+"\n"
+        val = _dict[key]
+        res+=str(val) + "\n"
+    return res
+
+def write_to_csv_file(path, _file_name, _str):
+    """
+    Writes the string _str to the file 
+    "_file_name" in directory "path"
+    """
+    file_name = path+"/"+_file_name
+    with open(file_name, 'a') as f:
+        f.write(_str)
+
+def run_tuning_experiment(jar_name, in_topo_name, csv_file_name, riot, singleStep, numIterations, numWorkers):
+    # Runs the same topology with different input rates...
+    # 1. Launch the topology
+    # 2. Get capacity values for the topology
+    # 3. Change the topology
+    # 4. Repeat until max(capacities) >= 0.2
+
+    
+    num_exp = num_experiments
+
+    exp_result_file_name = "tuning_exp_result.csv"
+
+    input_rates = list(input_rates_dict[in_topo_name])
+    num_events = list(num_events_dict[in_topo_name])
+
+    if riot:
+        data_file = data_files[in_topo_name]
+        prop_file = property_files[in_topo_name]
+    else:
+        data_file = None
+        prop_file = None
+
+    topo = topo_qualified_path[in_topo_name]
+
+    exp_result_dir = results_dir[hostname]
+    path = paths[hostname]
+    os.chdir(path)
+
+    # kill any topologies if running already
+    kill_topologies(path)
+
+    # Clean output directories on PIs
+    clean_dirs_on_pis(pi_outdir)
+
+    bolt_indices = topology_bolts[in_topo_name]
+    total_bolts = len(bolt_indices)
+
+    # Initial Bolt instances - all set to 1
+    initial_bolt_instances=[1 for _ in range(total_bolts)]
+    initial_bolt_instances=[list(initial_bolt_instances) for v in range(num_exp)]
+    ir2bi = dict(zip(input_rates, initial_bolt_instances))
+    print (ir2bi)
 
 
-def run_tuning_experiment(jar_name, in_topo_name, csv_file_name):
-	# 1. Launch the topology
-	# 2. Get capacity values for the topology
-	# 3. Change the topology
-	# 4. Repeat until max(capacities) >= 0.2
-	from exp_setup import *
-	# Some setup...
-	if in_topo_name not in valid_topos:
-		print "not a valid topology name."
-		print "can only execute " + str (valid_topos)
-		exit(-1)
+    ir2bis = {}
+    for k in ir2bi.keys():
+        ir2bis[k]=[[]]
 
-	input_rates = input_rates_dict[in_topo_name]
-	num_events = num_events_dict[in_topo_name]
+    capacities_dfs = []
+    latencies_dfs = []
+    bolt_instances_dfs = []
+    results_dfs = []
+    
+    # Explore upto 10 topologies
+    for i in range(numIterations):
+        if len(input_rates) == 0:
+            # no more experiments to run
+            break
 
-	data_file = data_files[in_topo_name]
-	topo = topo_qualified_path[in_topo_name]
-	prop_file = property_files[in_topo_name]
+        write_to_csv_file(path, exp_result_file_name, "\n\n################################### Iteration = " + str(i) + " #######################################\n")
 
-	exp_result_dir = results_dir[hostname]
-	path = paths[hostname]
-	os.chdir(path)
+        num_exp=len(input_rates)
+        print ("Running experiments for input rates = " + str(input_rates))
+        commands, executed_topologies = launch_tuning_experiment(input_rates, in_topo_name, jar_name, topo, data_file, pi_outdir, prop_file, num_events, ir2bi, riot, numWorkers)
 
-	# kill any topologies if running already
-	kill_topologies(path)
+        # get spout and sink files
+        spout_files, sink_files, bp_files = get_spout_sink_files(pi_outdir, executed_topologies, riot)
+        
+        # Wait until the experiments are done on the PIs
+        # get capacities for all the launched experiments
+        (topo_cap_map, topo_lat_map, component_to_worker_map) = get_topo_capacity_at_completion(port=PORT, in_topo_name=in_topo_name, num_experiments=len(input_rates))
+        print ("component_to_worker_map")
+        print (component_to_worker_map)
 
-	# Clean output directories on PIs
-	clean_dirs_on_pis(pi_outdir)
+        #write_to_csv_file (path, "bolt_capacities.csv", print_dict_of_dicts(topo_cap_map)) # Log per-bolt capacities for all the experiments
+        _file = path+"/"+exp_result_file_name
+        write_to_csv_file(path, exp_result_file_name, "\nCapacities:\n")
+        cap_df = pd.DataFrame(topo_cap_map)
+        cap_df = cap_df.round(4)
+        cap_df_var = cap_df.apply(lambda x: np.sum(np.square(x - np.mean(x))) / len(x), axis=0)
+        cap_df_min= cap_df.apply(lambda x: min(x), axis=0)
+        cap_df.loc['variance'] = cap_df_var
+        cap_df.loc['minimum'] = cap_df_min
+        capacities_dfs.append(cap_df)
+        cap_df.to_csv(_file, mode='a', sep='\t', encoding='utf-8')
 
-	bolt_indices = topology_bolts[in_topo_name]
-	total_bolts = len(bolt_indices)
+        #write_to_csv_file (path, "bolt_capacities.csv", print_dict_of_dicts(topo_lat_map)) # Log per-bolt avg. execution latency for all the experiments
+        lat_df = pd.DataFrame(topo_lat_map)
+        lat_df = lat_df.round(4)
+        write_to_csv_file(path, exp_result_file_name, "\nLatencies:\n")
+        latencies_dfs.append(lat_df)
+        lat_df.to_csv(_file, mode='a', sep='\t', encoding='utf-8')
 
-	#initial_bolt_instances = ("1,"*total_bolts)[:-1]
-	initial_bolt_instances=[1 for _ in range(total_bolts)]
-	initial_bolt_instances=[list(initial_bolt_instances) for _ in range(num_experiments)]
-	ir2bi = dict(zip(input_rates, initial_bolt_instances))
-	print (ir2bi)
+        #print(lat_df)
 
-	
-	# Explore upto 10 topologies
-	for i in range(4):
-		if len(input_rates) == 0:
-			# no more experiments to run
-			break
+        # Update the capacities for each topology that was launched.
+        for key in topo_cap_map:
+            #print("input_rate : " + key)
+            topo_cap_map[key].pop('sink', None) # Delete sink bolt's capacity from the dict. What if sink bolt has max capacity, Don't want to increase its bolts...
+            bolt_with_max_cap = max(topo_cap_map[key], key=topo_cap_map[key].get) # get name of the bolt that has maximum capacity
+            max_capacity = topo_cap_map[key][bolt_with_max_cap]
+            #print("bolt with max cap = " + bolt_with_max_cap)
+            ir=int(key.split("_")[1]) # input rate,
 
-		num_experiments=len(input_rates)
-		print ("Running experiments for input rates = " + str(input_rates))
-		commands, executed_topologies = launch_tuning_experiment(input_rates, in_topo_name, jar_name, topo, data_file, pi_outdir, prop_file, num_events, ir2bi)
+            ir2bis[ir].append(list(ir2bi[ir]))
 
-		# get spout and sink files
-		spout_files, sink_files = get_spout_sink_files(pi_outdir, executed_topologies)
-		
-		# Wait until the experiments are done on the PIs
-		# get capacities for all the launched experiments
-		topo_cap_map = get_topo_capacity_at_completion(port=PORT, in_topo_name=in_topo_name, num_experiments=len(input_rates))
-		print (topo_cap_map)
+            print ("Comparing Values " + str(max_capacity) + " - 0.2 < 0 => " + str(float(max_capacity) - float(0.2) < 0))
 
-		# Update the capacities
-		for key in topo_cap_map:
-			#print("input_rate : " + key)
-			bolt_with_max_cap = max(topo_cap_map[key], key=topo_cap_map[key].get) # get name of the bolt that has maximum capacity
-			max_capacity = topo_cap_map[key][bolt_with_max_cap]
-			#print("bolt with max cap = " + bolt_with_max_cap)
-			ir=int(key.split("_")[1]) # input rate,
-			print ("Comparing Values " + str(max_capacity) + " - 0.2 < 0 => " + str(float(max_capacity) - float(0.2) < 0))
-			if float(max_capacity) - float(0.2) < 0:
-				#remove this input rate from consideration
-				print("Removing " + str(ir) + " from input_rates" )
-				ind=input_rates.index(ir)
-				input_rates.remove(ir)
-				num_events.pop(ind)
-			#print(ir2bi[ir])
-			bolt_index_with_max_capacity = bolt_indices[bolt_with_max_cap]
-			#print("index of bolt wiht max capacity = " + str(bolt_index_with_max_capacity))
-			ir2bi[ir][bolt_index_with_max_capacity] = ir2bi[ir][bolt_index_with_max_capacity] + 1	
-			#print(ir2bi[ir])
-
-		print (ir2bi)
-
-		# Check which experiment was run on which PI device...
-		devices = get_devices_for_experiments(spout_files)
-
-		# directory to get resullts of the experiments
-		if not os.path.isdir(exp_result_dir):
-			os.mkdir(exp_result_dir)
-
-		# Copy result files from the R.PIs to this machine
-		get_log_files_from_supervisors(devices, spout_files, sink_files, exp_result_dir)
-
-		# output files have been copied to this machine
-		# run script on these files to generate results...
-		# After this, the results have been logged to the csv file
-		get_results(path, csv_file_name, exp_result_dir, jar_name, in_topo_name, num_experiments, spout_files, sink_files, executed_topologies)
-
-		# get all the spout/sink logs and generated images and archive them.
-		archive_results(path, jar_name, in_topo_name)
-
-		# kill all the running topologies on PIs
-		kill_topologies(path)
-
-		# change directory back...
-		os.chdir(path)
-		shutil.rmtree(exp_result_dir)
+            # If the capacity falls below a certain threshold, stop considering this input rate..
+            if float(max_capacity) - float(0.2) < 0:
+                #remove this input rate from consideration
+                print("Removing " + str(ir) + " from input_rates" )
+                ind=input_rates.index(ir)
+                input_rates.remove(ir)
+                num_events.pop(ind)
+            
+            # Bolt instance update policy
+            if singleStep:
+                min_cap_bolt = min(topo_cap_map[key], key=topo_cap_map[key].get) # get name of bolt with min capacity
+                min_cap = topo_cap_map[key][min_cap_bolt]
+                bolt_cap_dict=topo_cap_map[key]
+                d = {}
+                for k, v in bolt_cap_dict.items():
+                    d[k] = int(float(v)//min_cap)
+                for k,v in d.items():
+                    if k in bolt_indices.keys():
+                        ir2bi[ir][bolt_indices[k]] = v    
+            else:
+                bolt_index_with_max_capacity = bolt_indices[bolt_with_max_cap]
+                ir2bi[ir][bolt_index_with_max_capacity] = ir2bi[ir][bolt_index_with_max_capacity] + 1
 
 
+        print("ir2bis")
+        print(ir2bis)
+
+        write_to_csv_file(path, exp_result_file_name, "\n# Bolt Instances:\n")
+        ir2bi_df = pd.DataFrame(ir2bi)
+        bolt_instances_dfs.append(ir2bi_df)
+        ir2bi_df.to_csv(_file, mode='a', sep='\t', encoding='utf-8')
+        
+        # Log the increment to the bolt instances as a result of observed capacities.
+        #write_to_csv_file(path, exp_result_file_name, "\n" + format_dict(ir2bi, True) + "\n")  
+
+        # Check which experiment was run on which PI device...
+        # devices = get_devices_for_experiments(spout_files)
+        spout_devices, sink_devices = get_spout_sink_devices(in_topo_name, input_rates, component_to_worker_map)
+
+        # directory to get resullts of the experiments
+        if not os.path.isdir(exp_result_dir):
+            os.mkdir(exp_result_dir)
+
+        # Copy result files from the R.PIs to this machine
+        # get_log_files_from_supervisors(devices, spout_files, sink_files, exp_result_dir)
+        get_spout_sink_log_files(spout_devices, sink_devices, spout_files, sink_files, bp_files, exp_result_dir)
+
+        # output files have been copied to this machine
+        # run script on these files to generate results...
+        # After this, the results have been logged to the csv file
+        _results = get_results(path, csv_file_name, exp_result_dir, jar_name, in_topo_name, num_exp, spout_files, sink_files, bp_files, executed_topologies)
+        write_to_csv_file(path, exp_result_file_name, "\nMeasured Throughput and Latency:\n")
+        results_df = pd.DataFrame(_results)
+        for col in results_df.columns:
+            results_df[col] = pd.to_numeric(results_df[col])
+        results_df = results_df.round(2)
+        results_dfs.append(results_df)
+        results_df.to_csv(_file, mode='a', sep='\t', encoding='utf-8')
+        
+        # get all the spout/sink logs and generated images and archive them.
+        archive_results(path, jar_name, in_topo_name)
+
+        # kill all the running topologies on PIs
+        kill_topologies(path)
+
+        # change directory back...
+        os.chdir(path)
+        shutil.rmtree(exp_result_dir)
+    return ir2bis
+
+def launch_tuning_experiment(input_rates, in_topo_name, jar_name, topo, data_file, pi_outdir, prop_file, num_events, bolt_instances, riot, num_workers):
+    """
+    bolt_instances : a dictionary that maps from input rate to a list of bolt instances where each list is specifies the number of instances for a particular topology
+    """
+    executed_topologies = []
+    commands = []
+    print(bolt_instances)
+    for i in range(len(input_rates)):
+        # get bolt_instances for topo with this input_rate
+        bolt_instances_for_ir = bolt_instances[input_rates[i]]
+        # convert bolt_instances to str 
+        bolt_instances_for_ir = str(bolt_instances_for_ir)[1:-1].replace(" ", "")
+
+        jar_path  = os.getcwd() + "/" + jar_name
+        topo_unique_name = in_topo_name + "_" + str(input_rates[i])
+
+        executed_topologies.append(topo_unique_name)
+                
+        if riot:
+            command_pre = storm_exe + " jar " + jar_path + " " + topo + " C " +  topo_unique_name  + " " + data_file + " 1 1 " + pi_outdir + " " + prop_file + " " + topo_unique_name
+        else:
+            command_pre = storm_exe + " jar " + jar_path + " " + topo + " C " +  topo_unique_name  + " 1 " + pi_outdir
+                    
+        commands.append(command_pre + " " + str(input_rates[i]) + " " + str(num_events[i]) + " " + str(num_workers) + " " + bolt_instances_for_ir)
+        
+        print "Running experiment:"
+        print commands[i] + "\n"
+        process = subprocess.Popen(commands[i].split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
+        #print output
+
+    return (commands, executed_topologies)
+
+def launch_experiments(input_rates, in_topo_name, jar_name, topo, data_file, pi_outdir, prop_file, num_events, riot, num_workers):
+    executed_topologies = []
+    commands = []
+
+    for i in range(len(input_rates)):
+        jar_path  = os.getcwd() + "/" + jar_name
+        topo_unique_name = in_topo_name + "_" + str(input_rates[i])
+
+        executed_topologies.append(topo_unique_name)
+                
+        if riot:
+            command_pre = storm_exe + " jar " + jar_path + " " + topo + " C " +  topo_unique_name  + " " + data_file + " 1 1 " + pi_outdir + " " + prop_file + " " + topo_unique_name
+        else:
+            command_pre = storm_exe + " jar " + jar_path + " " + topo + " C " +  topo_unique_name + " 1 " + pi_outdir
+        
+        commands.append(command_pre + " " + str(input_rates[i]) + " " + str(num_events[i]) + " " + str(num_workers))
+        
+        print "Running experiment:"
+        print commands[i] + "\n"
+        process = subprocess.Popen(commands[i].split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
+        #print output
+
+    return (commands, executed_topologies)
+
+def get_spout_sink_files(pi_outdir, executed_topologies, riot):
+    spout_files = []
+    sink_files = []
+    bp_files = []
+
+    print ("Executed Topologies: ")
+    print (executed_topologies)
+    for i in range(len(executed_topologies)):
+        if riot:
+            spout_files.append(pi_outdir + "/" + "spout-" + executed_topologies[i] + "-1-1.0.log")
+            sink_files.append(pi_outdir + "/" + "sink-" + executed_topologies[i] + "-1-1.0.log")
+        else:
+            spout_files.append(pi_outdir + "/" + "spout-" + executed_topologies[i] + "-1-.log")
+            sink_files.append(pi_outdir + "/" + "sink-" + executed_topologies[i] + "-1-.log")
+        
+        if bpMonitor:
+            bp_files.append(pi_outdir + "/" + "back_pressure-" + "spout-" + executed_topologies[i] + "-1-1.0.log")
+
+    print ("Spout, sink and backpressure files on devices: ")
+    print (spout_files)
+    print (sink_files)
+    print (bp_files)
+
+    return  (spout_files, sink_files, bp_files)
 
 
-def launch_tuning_experiment(input_rates, in_topo_name, jar_name, topo, data_file, pi_outdir, prop_file, num_events, bolt_instances):
-	"""
-	bolt_instances : a dictionary that maps from input rate to a list of bolt instances where each list is specifies the number of instances for a particular topology
-	"""
-	executed_topologies = []
-	commands = []
+def get_spout_sink_devices(in_topo_name, input_rates, c2wm):
+    """
+    Return the device/host the spout and sink bolts are running
+    """
+    spout_devices = []
+    sink_devices = []
+    dev_user = "pi@"
+    for i,v in enumerate(input_rates):
+        c2wm_ = c2wm[in_topo_name+"_"+str(v)]
+        sp_dev = ""
+        sink_dev = ""
+        # print(c2wm_)
+        for k,v in c2wm_.items():
+            if 'spout' in k:
+                sp_dev = dev_user+v
+            if 'sink' in k:
+                sink_dev = dev_user+v
+        spout_devices.append(sp_dev)
+        sink_devices.append(sink_dev)
 
-	for i in range(len(input_rates)):
-		# get bolt_instances for topo with this input_rate
-		bolt_instances_for_ir = bolt_instances[input_rates[i]]
-		# convert bolt_instances to str 
-		bolt_instances_for_ir = str(bolt_instances_for_ir)[1:-1].replace(" ", "")
+    print ("spout files available on devices: ")
+    print (spout_devices)
+    print ("sink files available on devices: ")
+    print (sink_devices)
 
-		jar_path  = os.getcwd() + "/" + jar_name
-		topo_unique_name = in_topo_name + "_" + str(input_rates[i])
+    return (spout_devices, sink_devices)
 
-		executed_topologies.append(topo_unique_name)
+def get_spout_sink_log_files(spout_devices, sink_devices, spout_files, sink_files, bp_files, exp_result_dir):
+    for i,dev in enumerate(spout_devices):
+        process = subprocess.Popen(["scp", dev + ":" + spout_files[i], exp_result_dir+"/"], stdout=subprocess.PIPE)
+        output, error = process.communicate()
 
-		command_pre = storm_exe + " jar " + jar_path + " " + topo + " C " +  topo_unique_name  + " " + data_file + " 1 1 " + pi_outdir + " " + prop_file + " " + topo_unique_name
-		commands.append(command_pre + " " + str(input_rates[i]) + " " + str(num_events[i]) + " " + bolt_instances_for_ir)
-		
-		print "Running experiment:"
-		print commands[i] + "\n"
-		process = subprocess.Popen(commands[i].split(), stdout=subprocess.PIPE)
-		output, error = process.communicate()
-		#print output
+    for i,dev in enumerate(sink_devices):
+        process = subprocess.Popen(["scp", dev + ":" + sink_files[i], exp_result_dir+"/"], stdout=subprocess.PIPE)
+        output, error = process.communicate()
 
-	return (commands, executed_topologies)
-
-
-def launch_experiments(input_rates, in_topo_name, jar_name, topo, data_file, pi_outdir, prop_file, num_events):
-	executed_topologies = []
-	commands = []
-
-	for i in range(len(input_rates)):
-		jar_path  = os.getcwd() + "/" + jar_name
-		topo_unique_name = in_topo_name + "_" + str(input_rates[i])
-
-		executed_topologies.append(topo_unique_name)
-
-		command_pre = storm_exe + " jar " + jar_path + " " + topo + " C " +  topo_unique_name  + " " + data_file + " 1 1 " + pi_outdir + " " + prop_file + " " + topo_unique_name
-		commands.append(command_pre + " " + str(input_rates[i]) + " " + str(num_events[i]))
-		
-		print "Running experiment:"
-		print commands[i] + "\n"
-		process = subprocess.Popen(commands[i].split(), stdout=subprocess.PIPE)
-		output, error = process.communicate()
-		#print output
-
-	return (commands, executed_topologies)
+    if bpMonitor:
+        for i,dev in enumerate(spout_devices):
+            process = subprocess.Popen(["scp", dev + ":" + bp_files[i], exp_result_dir+"/"], stdout=subprocess.PIPE)
+            output, error = process.communicate()
 
 
-def get_spout_sink_files(pi_outdir, executed_topologies):
-	spout_files = []
-	sink_files = []
-
-	for i in range(len(executed_topologies)):
-		spout_files.append(pi_outdir + "/" + "spout-" + executed_topologies[i] + "-1-1.0.log")
-		sink_files.append(pi_outdir + "/" + "sink-" + executed_topologies[i] + "-1-1.0.log")
-
-	return  (spout_files, sink_files)
+def read_back_pressure(bp_file):
+    bp_in_ms = 0
+    with open(bp_file, 'r') as f:
+        bp_in_ms = int(f.readline())
+    return bp_in_ms
 
 def get_devices_for_experiments(spout_files):
-	"""
-	Checks where the Nimbus actually launched the experiments
-	and returns the device for each experiment
-	"""
-	devices = []
-	for i in range(len(spout_files)):
-		cmd = "dsh -aM -c ls " + spout_files[i]
-		#print cmd + "\n"
-		process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
-		output, error = process.communicate()
-		devices.append(output.split(":")[0])
-	return devices
+    """
+    Checks where the Nimbus actually launched the experiments
+    and returns the device for each experiment
+    """
+    devices = []
+    for i in range(len(spout_files)):
+        cmd = "dsh -aM -c ls " + spout_files[i]
+        #print cmd + "\n"
+        process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
+        devices.append(output.split(":")[0])
+    return devices
 
 def get_log_files_from_supervisors(devices, spout_files, sink_files, exp_result_dir):
-	for i in range(len(devices)):
-		process = subprocess.Popen(["scp", devices[i] + ":" + spout_files[i], exp_result_dir+"/"], stdout=subprocess.PIPE)
-		output, error = process.communicate()
-		# check for errors/output
-		process = subprocess.Popen(["scp", devices[i] + ":" + sink_files[i], exp_result_dir+"/"], stdout=subprocess.PIPE)
-		output, error = process.communicate()
+    for i in range(len(devices)):
+        process = subprocess.Popen(["scp", devices[i] + ":" + spout_files[i], exp_result_dir+"/"], stdout=subprocess.PIPE)
+        output, error = process.communicate()
+        # check for errors/output
+        process = subprocess.Popen(["scp", devices[i] + ":" + sink_files[i], exp_result_dir+"/"], stdout=subprocess.PIPE)
+        output, error = process.communicate()
 
-def get_results(path, csv_file_name, exp_result_dir, jar_name, in_topo_name, num_experiments, spout_files, sink_files, executed_topologies):
-	csv_file_name=path+"/"+csv_file_name
-	shutil.copy(csv_file_name, exp_result_dir)
-	os.chdir(exp_result_dir)
-	with open (csv_file_name, "a") as csv_file:
-		csv_file.write("\n\n")
-		csv_file.write("experiment-"+jar_name+"-"+in_topo_name + "-" + time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()))
-		csv_file.write("\n")
-		for i in range(num_experiments):
-			spout_file = spout_files[i].split("/")[-1]
-			sink_file = sink_files[i].split("/")[-1]
-			resultObject = script.get_results(executed_topologies[i], spout_file, sink_file)
-			results = resultObject.get_csv_rep(in_topo_name)
-			if i == 0:
-				csv_file.write("topology-in_rate," + results[0])
-			csv_file.write("\n")
-			csv_file.write(executed_topologies[i] + ",")
-	        	csv_file.write(results[1])
+def get_results(path, csv_file_name, exp_result_dir, jar_name, in_topo_name, num_experiments, spout_files, sink_files, bp_files, executed_topologies):
+    """
+    For each experiment, get the spout and sink log files and calculate throughput and latency
+    based on those logs. Writes the results to the provided csv file @ location path/csv_file_name
+    """
+    exp_results={} # topology to result mapping
+    csv_file_name=path+"/"+csv_file_name
+    shutil.copy(csv_file_name, exp_result_dir)
+    os.chdir(exp_result_dir)
 
-	shutil.copy(csv_file_name, path) # move the modified result file back
+    with open (csv_file_name, "a") as csv_file:
+        exp_id="experiment-"+jar_name+"-"+in_topo_name + "-" + time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
+        csv_file.write("\n\n")
+        csv_file.write(exp_id)
+        csv_file.write("\n")
+        for i in range(num_experiments):
+            spout_file = spout_files[i].split("/")[-1]
+            sink_file = sink_files[i].split("/")[-1]
+            if bpMonitor:
+                bp_file = bp_files[i].split("/")[-1]
+                bp = read_back_pressure(bp_file)
+            
+            resultObject = script.get_results(executed_topologies[i], spout_file, sink_file)
+            results = resultObject.get_csv_rep(in_topo_name)    #results[0] --> Header, results[1] --> value
+
+            res = resultObject.get_data_dict(in_topo_name)
+            if bpMonitor:
+                res['bp_in_ms'] = bp
+            exp_results[executed_topologies[i]] = res
+            if i == 0:
+                if bpMonitor:
+                    __str = "topology-in_rate," + results[0] + ", bp_in_ms"
+                else:
+                    __str = "topology-in_rate," + results[0]
+                csv_file.write(__str)
+
+            csv_file.write("\n")
+            csv_file.write(executed_topologies[i] + ",")
+            csv_file.write(results[1])
+            if bpMonitor:
+                csv_file.write("," + str(bp))
+
+    shutil.copy(csv_file_name, path) # move the modified result file back
+    return exp_results
 
 def archive_results(path, jar_name, in_topo_name):
-	all_files = os.listdir(os.getcwd())
-	tarfile_name = "experiment-"+jar_name+"-"+in_topo_name+ "-" + time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()) + ".tar"
-	out = tarfile.open(tarfile_name, mode='w')
+    all_files = os.listdir(os.getcwd())
+    tarfile_name = "experiment-"+jar_name+"-"+in_topo_name+ "-" + time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()) + ".tar"
+    out = tarfile.open(tarfile_name, mode='w')
 
-	try:
-		for _file in all_files:
-			out.add(_file)
-	finally:
-		out.close()
+    try:
+        for _file in all_files:
+            out.add(_file)
+    finally:
+        out.close()
 
-	storm_exp_archive_dir = path+"/exp_archive_dir"
+    storm_exp_archive_dir = path+"/exp_archive_dir"
 
-	if not os.path.isdir(storm_exp_archive_dir):
-	        os.mkdir(storm_exp_archive_dir)
-		
-	shutil.copy(tarfile_name, storm_exp_archive_dir)	
+    if not os.path.isdir(storm_exp_archive_dir):
+        os.mkdir(storm_exp_archive_dir)
+        
+    shutil.copy(tarfile_name, storm_exp_archive_dir)    
 
+def run_experiments(jar_name, in_topo_name, csv_file_name, riot, numWorkers, config=None):
 
-def run_experiments(jar_name, in_topo_name, csv_file_name):
+    input_rates = input_rates_dict[in_topo_name]
+    num_events = num_events_dict[in_topo_name]
 
-	if in_topo_name not in valid_topos:
-		print "not a valid topology name."
-		print "can only execute " + str (valid_topos)
-		exit(-1)
+    if riot:
+        data_file = data_files[in_topo_name]
+        prop_file = property_files[in_topo_name]
+    else:
+        data_file = None
+        prop_file = None
 
-	input_rates = input_rates_dict[in_topo_name]
-	num_events = num_events_dict[in_topo_name]
+    topo = topo_qualified_path[in_topo_name]
+    
+    exp_result_dir = results_dir[hostname]
+    path = paths[hostname]
 
-	data_file = data_files[in_topo_name]
-	topo = topo_qualified_path[in_topo_name]
-	prop_file = property_files[in_topo_name]
+    os.chdir(path)
 
-	exp_result_dir = results_dir[hostname]
-	path = paths[hostname]
+    # kill any topologies if running already
+    kill_topologies(path)
 
-	os.chdir(path)
+    # Clean output directories on PIs
+    clean_dirs_on_pis(pi_outdir)
 
-	# kill any topologies if running already
-	kill_topologies(path)
+    # Run the experiments now.
+    if not config:
+        commands, executed_topologies = launch_experiments(input_rates, in_topo_name, jar_name, topo, data_file, pi_outdir, prop_file, num_events, riot, numWorkers)
+    else:
+        bolt_instances=[list(config) for v in range(num_experiments)]
+        ir2bi = dict(zip(input_rates, bolt_instances))
+        write_to_csv_file(path, csv_file_name, "\n\n# Topology Configuration: " + str(config) + "\n")
+        commands, executed_topologies = launch_tuning_experiment(input_rates, in_topo_name, jar_name, topo, data_file, pi_outdir, prop_file, num_events, ir2bi, riot, numWorkers)
+    # Experiments have been started now
 
-	# Clean output directories on PIs
-	clean_dirs_on_pis(pi_outdir)
+    # get names for spout, sink and backpressure files
+    spout_files, sink_files, bp_files = get_spout_sink_files(pi_outdir, executed_topologies, riot)
+        
+    # Wait until the experiments are done on the PIs
+    # get capacities for all the launched experiments
+    topo_cap_map, topo_lat_map, component_to_worker_map = get_topo_capacity_at_completion(port=PORT, in_topo_name=in_topo_name, num_experiments=num_experiments)
+    print (topo_cap_map)
 
-	# Run the experiments now.
-	commands, executed_topologies = launch_experiments(input_rates, in_topo_name, jar_name, topo, data_file, pi_outdir, prop_file, num_events)
-	# Experiments have been started now
+    #start = time.time()
+    #time.sleep(duration * 60) 
+    #end = time.time()
+    #print "waited for: " + str(end-start) + " secs"
 
-	# get spout and sink files
-	spout_files, sink_files = get_spout_sink_files(pi_outdir, executed_topologies)
-		
-	# Wait until the experiments are done on the PIs
-	# get capacities for all the launched experiments
-	topo_cap_map = get_topo_capacity_at_completion(port=PORT, in_topo_name=in_topo_name, num_experiments=num_experiments)
-	print (topo_cap_map)
+    # Check which experiment was run on which PI device...
+    # devices = get_devices_for_experiments(spout_files)
+    spout_devices, sink_devices = get_spout_sink_devices(in_topo_name, input_rates, component_to_worker_map)
 
-	#start = time.time()
-	#time.sleep(duration * 60) 
-	#end = time.time()
-	#print "waited for: " + str(end-start) + " secs"
+    # directory to get resullts of the experiments
+    if not os.path.isdir(exp_result_dir):
+        os.mkdir(exp_result_dir)
 
-	# Check which experiment was run on which PI device...
-	devices = get_devices_for_experiments(spout_files)
+    # Copy result files from the R.PIs to this machine
+    # get_log_files_from_supervisors(devices, spout_files, sink_files, exp_result_dir)
+    get_spout_sink_log_files(spout_devices, sink_devices, spout_files, sink_files, bp_files, exp_result_dir)
 
-	# directory to get resullts of the experiments
-	if not os.path.isdir(exp_result_dir):
-		os.mkdir(exp_result_dir)
+    # output files have been copied to this machine
+    # run script on these files to generate results...
+    # After this, the results have been logged to the csv file
+    get_results(path, csv_file_name, exp_result_dir, jar_name, in_topo_name, num_experiments, spout_files, sink_files, bp_files, executed_topologies)
 
-	# Copy result files from the R.PIs to this machine
-	get_log_files_from_supervisors(devices, spout_files, sink_files, exp_result_dir)
+    # get all the spout/sink logs and generated images and archive them.
+    archive_results(path, jar_name, in_topo_name)
 
-	# output files have been copied to this machine
-	# run script on these files to generate results...
-	# After this, the results have been logged to the csv file
-	get_results(path, csv_file_name, exp_result_dir, jar_name, in_topo_name, num_experiments, spout_files, sink_files, executed_topologies)
+    # kill all the running topologies on PIs
+    kill_topologies(path)
 
-	# get all the spout/sink logs and generated images and archive them.
-	archive_results(path, jar_name, in_topo_name)
+    # change directory back...
+    os.chdir(path)
+    shutil.rmtree(exp_result_dir)
 
-	# kill all the running topologies on PIs
-	kill_topologies(path)
+def get_unique_configs(ir2bis):
+    topo_configs = []
+    for k in ir2bis:
+        topo_configs.append(ir2bis[k])
 
-	# change directory back...
-	os.chdir(path)
-	shutil.rmtree(exp_result_dir)
+    unique_topos=set()
+    for i in topo_configs:
+        for j in i:
+            unique_topos.add(tuple(j))
 
-
-
+    topos=[]
+    for t in unique_topos:
+        if t:
+            topos.append(list(t))
+    return topos
 
 
 def main():
     usage = "python <script_name.py> <jar_file> <topology_name> <csv_file_name> <topology_duration>"
+    
+    parser = argparse.ArgumentParser(description='run_exp script to run storm experiments')
 
-    if len(sys.argv) != 5:
-        print "Invalid number of arguments. See usage below."
-        print usage
+    parser.add_argument("jar_name")
+    parser.add_argument("in_topo_name")
+    parser.add_argument("csv_file_name")
+    parser.add_argument('--tuning', action="store_true", default=False, help="Running tuning experiment?")
+    parser.add_argument('--riot', action="store_true", default=False, help="Running RIOTBench application?")
+    parser.add_argument('--explore', action="store_true", default=False, help="Run experiments on tuned topologies with different input rates?")
+    parser.add_argument('--singleStep', action="store_true", default=False, help="Whether to take increase bolt instances only by 1 during topo tuning")
+    parser.add_argument('--numIterations', type=int, default=1, choices=xrange(1, 50), help="Nummber of iterations for which to run the experiment")
+    parser.add_argument('--numWorkers', type=int, default=1, choices=xrange(1, 10), help="Nummber of workers to launch for the topology")
+    parser.add_argument('--bpMonitor', action="store_true", default=False, help="Whether backpressure is being monitored")
+
+
+    args = parser.parse_args()
+
+    jar_name = args.jar_name
+    in_topo_name = args.in_topo_name
+    csv_file_name = args.csv_file_name
+    tuning = args.tuning
+    riot = args.riot
+    explore = args.explore
+    singleStep = args.singleStep
+    numIterations = args.numIterations
+    numWorkers = args.numWorkers
+    global bpMonitor
+    bpMonitor = args.bpMonitor
+
+
+    if in_topo_name not in valid_topos:
+        print "not a valid topology name."
+        print "can only execute " + str (valid_topos)
         exit(-1)
 
-    jar_name = sys.argv[1]
-    in_topo_name = sys.argv[2]
-    csv_file_name = sys.argv[3]
-    tuning = sys.argv[4]
-    if tuning == 'no':
-    	run_experiments(jar_name, in_topo_name, csv_file_name)
+    if not tuning:
+        run_experiments(jar_name, in_topo_name, csv_file_name, riot, numWorkers)
     else:
-    	run_tuning_experiment(jar_name, in_topo_name, csv_file_name)
-
+        ir2bis = run_tuning_experiment(jar_name, in_topo_name, csv_file_name, riot, singleStep, numIterations, numWorkers)
+        unique_topos = get_unique_configs(ir2bis)
+        print("\nRunning explored topologies with chosen input rates\n")
+        print(unique_topos)
+        if explore:
+            # Now need to launch experiments for all topology configurations obtained from running the 
+            # tuning experiment.
+            for t in unique_topos:
+                print ("Running Experiment with: " + str(t))
+                run_experiments(jar_name, in_topo_name, csv_file_name, riot, numWorkers, t)
 
 if __name__ == "__main__":
-	main()
+    main()

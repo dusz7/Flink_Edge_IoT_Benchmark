@@ -60,7 +60,7 @@ public class RandomSentenceSpout extends BaseRichSpout implements ISyntheticSent
 			e.printStackTrace();
 		}
 
-		this.sentenceEventGen = new SentenceEventGenerator(this, this.rate);
+		this.sentenceEventGen = new SentenceEventGenerator(this, this.rate, this.numEvents);
 		this.eventQueue = new LinkedBlockingQueue<String>();
 		this.sentenceEventGen.launch(RandomSentences.sentences, this.expDuration);
 

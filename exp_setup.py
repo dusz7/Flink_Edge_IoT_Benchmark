@@ -29,11 +29,14 @@ wordcount_input_rates = [100, 500, 1000, 1500, 2000, 3000]
 wordcount_num_events = [6000, 30000, 60000, 75000, 120000, 180000]
 
 etl_input_rates = [960] # , 1920
-etl_num_events = [5760] # , 460800
-
+etl_num_events = [57600] # , 460800
 
 wordcount_input_rates = [ 3000]
 wordcount_num_events = [ 18000]
+
+pred_input_rates = [ 640]
+pred_num_events = [ 38400]
+
 
 
 property_files = {

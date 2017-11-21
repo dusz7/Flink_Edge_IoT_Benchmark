@@ -14,6 +14,10 @@ import org.apache.storm.generated.StormTopology;
 import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.utils.Utils;
 
+import com.github.staslev.storm.metrics.MetricReporter;
+import com.github.staslev.storm.metrics.MetricReporterConfig;
+import com.github.staslev.storm.metrics.yammer.SimpleStormMetricProcessor;
+
 import in.dream_lab.bm.stream_iot.storm.bolts.IoTPredictionBolts.SYS.BlockWindowAverageBolt;
 import in.dream_lab.bm.stream_iot.storm.bolts.IoTPredictionBolts.SYS.DecisionTreeClassifyBolt;
 import in.dream_lab.bm.stream_iot.storm.bolts.IoTPredictionBolts.SYS.ErrorEstimationBolt;
@@ -49,6 +53,7 @@ public class IoTPredictionTopologySYS2 {
         System.out.println("taskPropFilename-"+taskPropFilename);
 		int inputRate = argumentClass.getInputRate();
 		long numEvents = argumentClass.getNumEvents();
+		int numWorkers = argumentClass.getNumWorkers();
 
 		List<String> resourceFileProps = RiotResourceFileProps.getPredSysResourceFileProps();
 
@@ -64,6 +69,14 @@ public class IoTPredictionTopologySYS2 {
 		System.out.println("policy" + "signal");
 		System.out.println("consume" + "HALF");
 
+		
+		MetricReporterConfig metricReporterConfig = new MetricReporterConfig(".*",
+				SimpleStormMetricProcessor.class.getCanonicalName(), Long.toString(inputRate),
+				Long.toString(numEvents * 2));
+
+		conf.registerMetricsConsumer(MetricReporter.class, metricReporterConfig, 1);
+		
+		
         Properties p_=new Properties();
         InputStream input = new FileInputStream(taskPropFilename);
         p_.load(input);

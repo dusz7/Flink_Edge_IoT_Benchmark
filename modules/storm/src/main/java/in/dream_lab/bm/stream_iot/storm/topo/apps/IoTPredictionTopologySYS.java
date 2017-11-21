@@ -24,6 +24,10 @@ import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.utils.Utils;
 
+import com.github.staslev.storm.metrics.MetricReporter;
+import com.github.staslev.storm.metrics.MetricReporterConfig;
+import com.github.staslev.storm.metrics.yammer.SimpleStormMetricProcessor;
+
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Enumeration;
@@ -53,6 +57,7 @@ public class IoTPredictionTopologySYS {
         System.out.println("taskPropFilename-"+taskPropFilename);
 		int inputRate = argumentClass.getInputRate();
 		long numEvents = argumentClass.getNumEvents();
+		int numWorkers = argumentClass.getNumWorkers();
 
 		List<String> resourceFileProps = RiotResourceFileProps.getPredSysResourceFileProps();
 
@@ -61,12 +66,19 @@ public class IoTPredictionTopologySYS {
 		conf.put(Config.TOPOLOGY_BACKPRESSURE_ENABLE, true);
 		conf.setDebug(false);
 		conf.setNumAckers(0);
-		conf.put("policy", "signal");
-		conf.put("consume", "half");
+//		conf.put("policy", "signal");
+//		conf.put("consume", "half");
+//		
+//		
+//		System.out.println("policy" + "signal");
+//		System.out.println("consume" + "HALF");
 		
+		MetricReporterConfig metricReporterConfig = new MetricReporterConfig(".*",
+				SimpleStormMetricProcessor.class.getCanonicalName(), Long.toString(inputRate),
+				Long.toString(numEvents * 2));
+
+		conf.registerMetricsConsumer(MetricReporter.class, metricReporterConfig, 1);
 		
-		System.out.println("policy" + "signal");
-		System.out.println("consume" + "HALF");
 
         Properties p_=new Properties();
         InputStream input = new FileInputStream(taskPropFilename);

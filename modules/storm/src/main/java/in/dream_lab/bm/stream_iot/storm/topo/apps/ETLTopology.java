@@ -86,7 +86,7 @@ public class ETLTopology {
 		//processor = new SimpleStormMetricProcessor(config);
 		
 		/*only get capacity metrics*/
-        MetricReporterConfig metricReporterConfig = new MetricReporterConfig(".*execute-capacity.*",
+        MetricReporterConfig metricReporterConfig = new MetricReporterConfig(".*",
 				SimpleStormMetricProcessor.class.getCanonicalName(), Long.toString(inputRate), Long.toString(numEvents*2));
 		
 		

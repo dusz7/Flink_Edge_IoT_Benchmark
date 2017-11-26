@@ -37,6 +37,7 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 	long numEvents;
 	long startingMsgId;
 	boolean bpMonitor = false;
+	boolean recordBp = false;
 	long bpStartTime = 0;
 	long bpTotalTime = 0;
 
@@ -94,7 +95,7 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 		this._collector.emit(values);
 
 		if ((this.msgId > (this.startingMsgId + this.numEvents / 3) && !bpMonitor)) bpMonitor = true; // start monitoring backpressure
-//		if ((this.msgId < (this.startingMsgId + (this.numEvents * 3) / 4) && bpMonitor)) bpMonitor = false; // stop monitoring backpressure
+		if ((this.msgId < (this.startingMsgId + (this.numEvents * 3) / 4) && bpMonitor)) bpMonitor = false; // stop monitoring backpressure
 
 		if (this.msgId == this.startingMsgId + this.numEvents - 1) {
 			String dir = outSpoutCSVLogFileName.substring(0, outSpoutCSVLogFileName.lastIndexOf("/")+1);
@@ -136,17 +137,17 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 
 	@Override
 	public void ack(Object msgId) {
-		System.out.println("Backpressure Observed");
 		if (bpMonitor) {
-			System.out.println("BPMONITOR: Backpressure Observed");
+			recordBp = true;
 			bpStartTime = System.currentTimeMillis();
 		}
 	}
 
 	@Override
 	public void fail(Object msgId) {
-		if (bpMonitor) {
+		if (recordBp) {
 			bpTotalTime = bpTotalTime + (System.currentTimeMillis() - bpStartTime);
+			recordBp = false;
 		}
 	}
 

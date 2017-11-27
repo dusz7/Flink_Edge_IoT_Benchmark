@@ -30,6 +30,8 @@ import com.github.staslev.storm.metrics.yammer.SimpleStormMetricProcessor;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
@@ -59,6 +61,20 @@ public class IoTPredictionTopologySYS {
 		long numEvents = argumentClass.getNumEvents();
 		int numWorkers = argumentClass.getNumWorkers();
 
+		List<Integer> boltInstances = argumentClass.getBoltInstances();
+		if (boltInstances != null) {
+			if ((boltInstances.size() != 5)) {
+				System.out.println("Invalid Number of bolt instances provided. Exiting");
+				System.exit(-1);
+			}
+		} else {
+			boltInstances = new ArrayList<Integer>(Arrays.asList(1,1,1,1,1));
+		}
+		
+		System.out.println("Bolt instances");
+		System.out.println(boltInstances);
+		
+		
 		List<String> resourceFileProps = RiotResourceFileProps.getPredSysResourceFileProps();
 
 
@@ -66,6 +82,7 @@ public class IoTPredictionTopologySYS {
 		conf.put(Config.TOPOLOGY_BACKPRESSURE_ENABLE, true);
 		conf.setDebug(false);
 		conf.setNumAckers(0);
+		
 //		conf.put("policy", "signal");
 //		conf.put("consume", "half");
 //		
@@ -104,7 +121,7 @@ public class IoTPredictionTopologySYS {
                 1);
 
         builder.setBolt("SenMLParseBoltPREDSYS",
-                new SenMLParseBoltPREDSYS(p_), 10)
+                new SenMLParseBoltPREDSYS(p_), boltInstances.get(0))
                 .shuffleGrouping("spout1");
 
 
@@ -116,7 +133,7 @@ public class IoTPredictionTopologySYS {
                 .shuffleGrouping("mqttSubscribeTaskBolt");*/
 
         builder.setBolt("DecisionTreeClassifyBolt",
-                new DecisionTreeClassifyBolt(p_), 10)
+                new DecisionTreeClassifyBolt(p_), boltInstances.get(1))
                 .shuffleGrouping("SenMLParseBoltPREDSYS");
 //                .fieldsGrouping("AzureBlobDownloadTaskBolt",new Fields("ANALAYTICTYPE"));
 //
@@ -128,17 +145,17 @@ public class IoTPredictionTopologySYS {
 
 
         builder.setBolt("BlockWindowAverageBolt",
-                new BlockWindowAverageBolt(p_), 10)
+                new BlockWindowAverageBolt(p_), boltInstances.get(2))
                 .shuffleGrouping("SenMLParseBoltPREDSYS");
 
 //
         builder.setBolt("ErrorEstimationBolt",
-                new ErrorEstimationBolt(p_), 10)
+                new ErrorEstimationBolt(p_), boltInstances.get(3))
                 .shuffleGrouping("BlockWindowAverageBolt")
                 .shuffleGrouping("LinearRegressionPredictorBolt");
 
         builder.setBolt("MQTTPublishBolt",
-                new MQTTPublishBolt(p_), 10)
+                new MQTTPublishBolt(p_), boltInstances.get(4))
                 .shuffleGrouping("ErrorEstimationBolt")
                 .shuffleGrouping("DecisionTreeClassifyBolt") ;
 

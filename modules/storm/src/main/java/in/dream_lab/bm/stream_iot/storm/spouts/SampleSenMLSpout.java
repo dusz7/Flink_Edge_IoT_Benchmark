@@ -20,6 +20,7 @@ import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Timer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -40,6 +41,8 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 	boolean recordBp = false;
 	long bpStartTime = 0;
 	long bpTotalTime = 0;
+	Timer timer;
+	BpTime bptime;
 
 	public SampleSenMLSpout() {
 		// this.csvFileName = "/home/ubuntu/sample100_sense.csv";
@@ -85,7 +88,7 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 		for (String s : entry) {
 			rowStringBuf.append(",").append(s);
 		}
-		
+
 		String rowString = rowStringBuf.toString().substring(1);
 		String newRow = rowString.substring(rowString.indexOf(",") + 1);
 		msgId++;
@@ -94,16 +97,28 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 
 		this._collector.emit(values);
 
-		if ((this.msgId > (this.startingMsgId + this.numEvents / 3) && !bpMonitor)) bpMonitor = true; // start monitoring backpressure
-		if ((this.msgId < (this.startingMsgId + (this.numEvents * 3) / 4) && bpMonitor)) bpMonitor = false; // stop monitoring backpressure
+		// start monitoring backpressure
+		if ((this.msgId == (this.startingMsgId + this.numEvents / 3) && !bpMonitor)) {
+			bpMonitor = true;
+			long window = 2000;
+			BpTimeIntervalMonitoringTask bpTask = new BpTimeIntervalMonitoringTask(bptime, window, 5.0);
+			timer = new Timer("BpIntervalTimer");
+			timer.scheduleAtFixedRate(bpTask, 10, window);
+		}
+
+		// stop monitoring backpressure
+		if ((this.msgId == (this.startingMsgId + (this.numEvents * 3) / 4) && bpMonitor))
+			bpMonitor = false;
 
 		if (this.msgId == this.startingMsgId + this.numEvents - 1) {
-			String dir = outSpoutCSVLogFileName.substring(0, outSpoutCSVLogFileName.lastIndexOf("/")+1);
-			String filename = outSpoutCSVLogFileName.substring(outSpoutCSVLogFileName.lastIndexOf("/")+1);
+			String dir = outSpoutCSVLogFileName.substring(0, outSpoutCSVLogFileName.lastIndexOf("/") + 1);
+			String filename = outSpoutCSVLogFileName.substring(outSpoutCSVLogFileName.lastIndexOf("/") + 1);
 			filename = dir + "back_pressure-" + filename;
 			writeBPTime(filename);
+
+			timer.cancel();
 		}
-		
+
 		/* skip logging first 1/3 of events to reach a stable condition */
 		if (this.msgId > (this.startingMsgId + this.numEvents / 3)
 				&& (this.msgId < (this.startingMsgId + (this.numEvents * 3) / 4))) {
@@ -131,7 +146,7 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 		String uLogfilename = this.outSpoutCSVLogFileName;
 		this.eventGen.launch(this.csvFileName, uLogfilename, -1, true); // Launch
 																		// threads
-
+		bptime = new BpTime();
 		ba = new BatchedFileLogging(uLogfilename, context.getThisComponentId());
 	}
 
@@ -139,14 +154,17 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 	public void ack(Object msgId) {
 		if (bpMonitor) {
 			recordBp = true;
-			bpStartTime = System.currentTimeMillis();
+			// bpStartTime = System.currentTimeMillis();
+			bptime.setBpStartTime(System.currentTimeMillis());
 		}
 	}
 
 	@Override
 	public void fail(Object msgId) {
 		if (recordBp) {
-			bpTotalTime = bpTotalTime + (System.currentTimeMillis() - bpStartTime);
+			// bpTotalTime = bpTotalTime + (System.currentTimeMillis() -
+			// bpStartTime);
+			bptime.updateBpCurrAccTime();
 			recordBp = false;
 		}
 	}
@@ -170,12 +188,8 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 		long bpTime = 0;
 		try {
 			writer = new BufferedWriter(new FileWriter(fileName));
-			if (bpTotalTime == 0) {
-				if (bpStartTime != 0)
-					bpTime = System.currentTimeMillis() - bpStartTime;
-			} else
-				bpTime = bpTotalTime;
 
+			bpTime = bptime.bpTotalAccTime;
 			writer.write(Long.toString(bpTime));
 			writer.close();
 		} catch (IOException e) {

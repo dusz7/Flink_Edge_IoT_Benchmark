@@ -454,9 +454,9 @@ def get_spout_sink_devices(in_topo_name, input_rates, c2wm):
     """
     Return the device/host the spout and sink bolts are running
     """
-    print ("\n\n")
-    print ("c2wm")
-    print (c2wm)
+    # print ("\n\n")
+    # print ("c2wm")
+    # print (c2wm)
 
     print ("input rates")
     print (input_rates)
@@ -694,6 +694,10 @@ def get_unique_configs(ir2bis):
             topos.append(list(t))
     return topos
 
+def save_iterator(_file, _list):
+    with open(_file, 'w') as f:
+        for item in _list:
+            f.write(str(item))
 
 def main():
     usage = "python <script_name.py> <jar_file> <topology_name> <csv_file_name> <topology_duration>"
@@ -726,6 +730,7 @@ def main():
     global bpMonitor
     bpMonitor = args.bpMonitor
 
+    print(numIterations)
 
     if in_topo_name not in valid_topos:
         print "not a valid topology name."
@@ -739,6 +744,8 @@ def main():
         unique_topos = get_unique_configs(ir2bis)
         print("\nRunning explored topologies with chosen input rates\n")
         print(unique_topos)
+        save_iterator('explored_topologies', unique_topos)
+
         if explore:
             # Now need to launch experiments for all topology configurations obtained from running the 
             # tuning experiment.
@@ -747,6 +754,7 @@ def main():
                 print ("Running Experiment with: " + str(t))
                 run_experiments(jar_name, in_topo_name, csv_file_name, riot, numWorkers, t, dfs)
 
+            print ("\nExploration Complete...\nCalculating ...")
             figs = []
             sps = []
             topo_paths = topo_to_paths[in_topo_name]

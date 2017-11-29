@@ -103,7 +103,7 @@ def get_topo_capacity_at_completion(in_topo_name, num_experiments, port=38999):
         data=conn.recv(4096)
         comp=data.split("&")
         in_r=comp[0]
-        print(comp[3])
+        # print(comp[3])
 
         cap_=conv_cap_to_dict(comp[1])  #Get dictionaty for capacity values
         lat_=conv_cap_to_dict(comp[2])  #Get dictionary for latency values

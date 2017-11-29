@@ -7,20 +7,20 @@ public class BpTime {
 	boolean bpActive = false;
 
 	public void updateBpCurrAccTime() {
-		System.out.println("BP Falling edge observed. Updating BP Current Time. Start time = " + this.bpStartTime
-				+ ", Now current time = " + System.currentTimeMillis());
+//		System.out.println("BP Falling edge observed. Updating BP Current Time. Start time = " + this.bpStartTime
+//				+ ", Now current time = " + System.currentTimeMillis());
 
 		this.bpCurrAccTime = this.bpCurrAccTime + (System.currentTimeMillis() - this.bpStartTime);
 		this.bpActive = false;
 
-		System.out.println("bp curr time = " + this.bpCurrAccTime);
+//		System.out.println("bp curr time = " + this.bpCurrAccTime);
 	}
 
 	/* setters */
 	public void setBpStartTime(long bpStartTime) {
 		this.bpStartTime = bpStartTime;
 		this.bpActive = true;
-		System.out.println("BP start time = " + this.bpStartTime);
+//		System.out.println("BP start time = " + this.bpStartTime);
 	}
 
 	public void setBpCurrAccTime(long bpCurrAccTime) {

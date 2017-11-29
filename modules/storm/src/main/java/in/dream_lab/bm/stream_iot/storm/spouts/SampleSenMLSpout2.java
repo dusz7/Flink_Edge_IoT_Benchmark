@@ -82,7 +82,7 @@ public class SampleSenMLSpout2 extends BaseRichSpout implements ISyntheticEventG
 		 * To get next event, instead of reading from eventqueue,
 		 * can use this.eventList.getRows().get(i)
 		 * */
-		List<String> entry = rows.get(index);
+		List<String> entry = rows.get(index  % rows.size());
 		index++;
 		if (entry == null || (this.msgId > this.startingMsgId + this.numEvents))
 			return;

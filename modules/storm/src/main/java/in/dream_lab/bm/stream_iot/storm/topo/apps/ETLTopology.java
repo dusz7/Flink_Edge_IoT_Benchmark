@@ -128,16 +128,24 @@ public class ETLTopology {
 
 		builder.setBolt("SenMlParseBolt", new SenMLParseBolt(p_), boltInstances.get(0)).shuffleGrouping("spout1");
 
-		builder.setBolt("RangeFilterBolt", new RangeFilterBolt(p_), boltInstances.get(1)).fieldsGrouping("SenMlParseBolt",
-				new Fields("OBSTYPE"));
+//		builder.setBolt("RangeFilterBolt", new RangeFilterBolt(p_), boltInstances.get(1)).fieldsGrouping("SenMlParseBolt",
+//				new Fields("OBSTYPE"));
 
-		builder.setBolt("BloomFilterBolt", new BloomFilterCheckBolt(p_), boltInstances.get(2)).fieldsGrouping("RangeFilterBolt",
-				new Fields("OBSTYPE"));
+		builder.setBolt("RangeFilterBolt", new RangeFilterBolt(p_), boltInstances.get(1)).shuffleGrouping("SenMlParseBolt");
+		
+//		builder.setBolt("BloomFilterBolt", new BloomFilterCheckBolt(p_), boltInstances.get(2)).fieldsGrouping("RangeFilterBolt",
+//				new Fields("OBSTYPE"));
 
-		builder.setBolt("InterpolationBolt", new InterpolationBolt(p_), boltInstances.get(3)).fieldsGrouping("BloomFilterBolt",
-				new Fields("OBSTYPE"));
-
-		builder.setBolt("JoinBolt", new JoinBolt(p_), boltInstances.get(4)).fieldsGrouping("InterpolationBolt", new Fields("MSGID"));
+		builder.setBolt("BloomFilterBolt", new BloomFilterCheckBolt(p_), boltInstances.get(2)).shuffleGrouping("RangeFilterBolt");
+		
+//		builder.setBolt("InterpolationBolt", new InterpolationBolt(p_), boltInstances.get(3)).fieldsGrouping("BloomFilterBolt",
+//				new Fields("OBSTYPE"));
+		
+		builder.setBolt("InterpolationBolt", new InterpolationBolt(p_), boltInstances.get(3)).shuffleGrouping("BloomFilterBolt");
+		
+//		builder.setBolt("JoinBolt", new JoinBolt(p_), boltInstances.get(4)).fieldsGrouping("InterpolationBolt", new Fields("MSGID"));
+		
+		builder.setBolt("JoinBolt", new JoinBolt(p_), boltInstances.get(4)).shuffleGrouping("InterpolationBolt");
 
 		builder.setBolt("AnnotationBolt", new AnnotationBolt(p_), boltInstances.get(5)).shuffleGrouping("JoinBolt");
 

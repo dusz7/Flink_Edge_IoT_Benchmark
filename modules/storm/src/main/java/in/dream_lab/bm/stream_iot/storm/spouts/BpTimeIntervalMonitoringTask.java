@@ -24,31 +24,29 @@ public class BpTimeIntervalMonitoringTask extends TimerTask {
 		// this window, if greater than T, update totalBP time. and set bpStart
 		// time to current time.
 
-		System.out.println("BP WINDOW:");
+//		System.out.println("BP WINDOW:");
 		if (bptime.bpActive) {
-			System.out.println("BP ACTIVE");
+//			System.out.println("BP ACTIVE");
 			long bpActiveTime = System.currentTimeMillis() - bptime.bpStartTime + bptime.bpCurrAccTime;
 			double pAge = (bpActiveTime / this.window) * 100;
 
 			if (pAge >= threshold) {
-				System.out.println("Active %age = " + pAge);
+//				System.out.println("Active %age = " + pAge);
 
 				bptime.bpTotalAccTime += bpActiveTime;
 				bptime.bpCurrAccTime = 0;
 				bptime.bpStartTime = System.currentTimeMillis();
 			}
-			System.out.println(bptime);
 		} else {
-			System.out.println("BP NOT ACTIVE");
+//			System.out.println("BP NOT ACTIVE");
 			long bpActiveTime = bptime.bpCurrAccTime;
 			double pAge = (bpActiveTime / this.window) * 100;
 
 			if (pAge >= threshold) {
-				System.out.println("Active %age = " + pAge);
+//				System.out.println("Active %age = " + pAge);
 				bptime.bpTotalAccTime += bpActiveTime;
 				bptime.bpCurrAccTime = 0;
 			}
-			System.out.println(bptime);
 		}
 		// Case 2: BP started and stopped during this window. (bpActive = false)
 		// in this case, bpstart will be zero.

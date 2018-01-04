@@ -68,6 +68,9 @@ public class ETLTopology {
 			}
 		} else {
 			boltInstances = new ArrayList<Integer>(Arrays.asList(1,1,1,1,1,1,1,1,1));
+			// boltInstances = new ArrayList<Integer>(Arrays.asList(4,4,4,4,4,4,4,4,4));
+			// boltInstances = new ArrayList<Integer>(Arrays.asList(1,1,1,1,1,1,1,1,2));
+			// boltInstances = new ArrayList<Integer>(Arrays.asList(2,1,1,1,1,1,1,1,2));
 		}
 		
 		List<String> resourceFileProps = RiotResourceFileProps.getRiotResourceFileProps();
@@ -93,14 +96,22 @@ public class ETLTopology {
 		conf.registerMetricsConsumer(MetricReporter.class, metricReporterConfig, 1);
 		
 		
-		/*
-		 * conf.put("policy", "signal"); conf.put("consume", "constant");
-		 * conf.put("constant", 50);
-		 * 
-		 * 
-		 * System.out.println("Policy: Signal");
-		 * System.out.println("Consume: CONSTANT-100");
-		 */
+		conf.put("policy", "signal-simple");
+        //conf.put("policy", "signal-group");
+        //conf.put("policy", "signal-fair");
+        //conf.put("waited_t", 8);
+        
+		conf.put("consume", "constant");
+		conf.put("constant", 100);
+       
+        conf.put("fog-runtime-debug", "false");
+        conf.put("debug-path", "/home/fuxinwei");
+        
+        conf.put("input-rate-adjust-enable", false);
+        conf.put("init-freqency", inputRate);
+        conf.put("delta-threshold", 50);
+        conf.put("expire-threshold", 60);
+        conf.put("force-stable", true);
 
 		Properties p_ = new Properties();
 		InputStream input = new FileInputStream(taskPropFilename);
@@ -123,7 +134,7 @@ public class ETLTopology {
 
 		System.out.println(spout1InputFilePath);
 
-		builder.setSpout("spout1", new SampleSenMLSpout(spout1InputFilePath, spoutLogFileName,
+		builder.setSpout("spout", new SampleSenMLSpout(spout1InputFilePath, spoutLogFileName,
 				argumentClass.getScalingFactor(), inputRate, numEvents), 1);
 
 		builder.setBolt("SenMlParseBolt", new SenMLParseBolt(p_), boltInstances.get(0)).shuffleGrouping("spout1");
@@ -143,9 +154,9 @@ public class ETLTopology {
 		
 		builder.setBolt("InterpolationBolt", new InterpolationBolt(p_), boltInstances.get(3)).shuffleGrouping("BloomFilterBolt");
 		
-//		builder.setBolt("JoinBolt", new JoinBolt(p_), boltInstances.get(4)).fieldsGrouping("InterpolationBolt", new Fields("MSGID"));
+		builder.setBolt("JoinBolt", new JoinBolt(p_), boltInstances.get(4)).fieldsGrouping("InterpolationBolt", new Fields("MSGID"));
 		
-		builder.setBolt("JoinBolt", new JoinBolt(p_), boltInstances.get(4)).shuffleGrouping("InterpolationBolt");
+//		builder.setBolt("JoinBolt", new JoinBolt(p_), boltInstances.get(4)).shuffleGrouping("InterpolationBolt");
 
 		builder.setBolt("AnnotationBolt", new AnnotationBolt(p_), boltInstances.get(5)).shuffleGrouping("JoinBolt");
 

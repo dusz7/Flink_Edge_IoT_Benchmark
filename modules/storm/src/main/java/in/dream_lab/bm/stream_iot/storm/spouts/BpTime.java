@@ -3,7 +3,7 @@ package in.dream_lab.bm.stream_iot.storm.spouts;
 public class BpTime {
 	long bpStartTime = 0;
 	long bpCurrAccTime = 0;
-	long bpTotalAccTime = 0;
+	public long bpTotalAccTime = 0;
 	boolean bpActive = false;
 
 	public void updateBpCurrAccTime() {

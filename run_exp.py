@@ -86,11 +86,12 @@ def get_topo_capacity_at_completion(in_topo_name, num_experiments, port=38999):
     try:
         s.bind((host, port))
     except socket.error as msg:
-        print 'Bind failed. Error Code : ' + str(msg[0]) + ' Message ' + msg[1]
+        print ('Bind failed. Error Code : ' + str(msg[0]) + ' Message ' + msg[1])
         sys.exit()
     #Start listening on socket
     s.listen(10)
-    print 'Listening for topology completion'
+    print ('Experiments launched = ' + str(num_experiments) + 
+        ', Waiting for experiments completion')
     
     completed=0
     topo_capacity_map={}
@@ -103,7 +104,8 @@ def get_topo_capacity_at_completion(in_topo_name, num_experiments, port=38999):
         data=conn.recv(4096)
         comp=data.split("&")
         in_r=comp[0]
-        # print(comp[3])
+        print("Got result for experiment with topology: " + in_topo_name + 
+            ", input rate = " + str(in_r))
 
         cap_=conv_cap_to_dict(comp[1])  #Get dictionaty for capacity values
         lat_=conv_cap_to_dict(comp[2])  #Get dictionary for latency values
@@ -178,6 +180,221 @@ def write_to_csv_file(path, _file_name, _str):
     with open(file_name, 'a') as f:
         f.write(_str)
 
+
+def launch_tuning_explore_experiment(input_rates, in_topo_name, jar_name, topo, data_file, pi_outdir, prop_file, num_events, bolt_instances, riot, num_workers):
+    """
+    bolt_instances : a dictionary that maps from input rate to a list of bolt 
+    instances where each list is specifies the number of instances for a particular topology
+    """
+    executed_topologies = []
+    commands = []
+    bolt_instances = str(bolt_instances)[1:-1].replace(" ", "")
+    print(bolt_instances)
+
+    for i in range(len(input_rates)):
+        # get bolt_instances for topo with this input_rate
+        # bolt_instances_for_ir = bolt_instances[input_rates[i]]
+        # # convert bolt_instances to str 
+        # bolt_instances_for_ir = str(bolt_instances_for_ir)[1:-1].replace(" ", "")
+
+        jar_path  = os.getcwd() + "/" + jar_name
+        topo_unique_name = in_topo_name + "_" + str(input_rates[i])
+
+        executed_topologies.append(topo_unique_name)
+                
+        if riot:
+            command_pre = storm_exe + " jar " + jar_path + " " + topo + " C " +  topo_unique_name  + " " + data_file + " 1 1 " + pi_outdir + " " + prop_file + " " + topo_unique_name
+        else:
+            command_pre = storm_exe + " jar " + jar_path + " " + topo + " C " +  topo_unique_name  + " 1 " + pi_outdir
+                    
+        commands.append(command_pre + " " + str(input_rates[i]) + " " + str(num_events[i]) + " " + str(num_workers) + " " + bolt_instances)
+        
+        print "Running experiment:"
+        print commands[i] + "\n"
+        process = subprocess.Popen(commands[i].split(), stdout=subprocess.PIPE)
+        output, error = process.communicate()
+        #print output
+
+    return (commands, executed_topologies)
+
+
+def explore_with_input_rates(jar_name, in_topo_name, csv_file_name, riot, singleStep, numIterations, numWorkers, latencyThreshold):
+    """
+    Steps:
+    1. Select [1,1,1,...1] as initial topology T
+    2. Run experiments with all input rates for topology T
+    3. Select capacities for input rate that gives Latency > ThreasholdLatency
+    4. Increase bolt instances according to capacitites of that topology.
+    5. Go back to step 2 and repeat.
+    """
+    exp_result_file_name = "tuning_exp_result.csv"
+    input_rates = list(input_rates_dict[in_topo_name])
+    num_events = list(num_events_dict[in_topo_name])
+    num_exp = len(input_rates)
+    num_launches = num_exp//num_pis if num_exp%num_pis == 0 else num_exp//num_pis + 1
+
+    if riot:
+        data_file = data_files[in_topo_name]
+        prop_file = property_files[in_topo_name]
+    else:
+        data_file = None
+        prop_file = None
+
+    topo = topo_qualified_path[in_topo_name]
+
+    exp_result_dir = results_dir[hostname]
+    path = paths[hostname]
+    os.chdir(path)
+
+    kill_topologies(path)
+    clean_dirs_on_pis(pi_outdir)
+
+    bolt_indices = topology_bolts[in_topo_name]
+    total_bolts = len(bolt_indices)
+
+    # Initial Bolt instances - all set to 1
+    initial_bolt_instances=[1 for _ in range(total_bolts)]
+    # initial_bolt_instances=[list(initial_bolt_instances) for v in range(num_exp)]
+    bolt_instances = initial_bolt_instances
+
+    capacities_dfs = []
+    latencies_dfs = []
+    bolt_instances_dfs = []
+    results_dfs = []
+    
+    latencies = [[None for _ in range(numIterations)] for _ in range(len(topo_to_paths[in_topo_name]))]
+    throughputs = [[None for _ in range(numIterations)] for _ in range(len(topo_to_paths[in_topo_name]))]
+
+    # Explore upto 10 topologies
+    for i in range(numIterations):
+        print ("Iteration = " + str(i))
+        print ("Topology = " + str(bolt_instances))
+        write_to_csv_file(path, exp_result_file_name, "\n\n################ Iteration = " + str(i) + " ###################\n")
+
+        print ("Running experiments for input rates = " + str(input_rates))
+        commands, executed_topologies = launch_tuning_explore_experiment(input_rates, in_topo_name, jar_name, 
+                        topo, data_file, pi_outdir, prop_file, num_events, bolt_instances, riot, numWorkers)
+
+        # get spout and sink files
+        spout_files, sink_files, bp_files = get_spout_sink_files(pi_outdir, executed_topologies, riot)
+        
+        # Wait until the experiments are done on the PIs
+        # get capacities for all the launched experiments
+        (topo_cap_map, topo_lat_map, component_to_worker_map) = get_topo_capacity_at_completion(port=PORT, in_topo_name=in_topo_name, num_experiments=len(input_rates))
+
+        #write_to_csv_file (path, "bolt_capacities.csv", print_dict_of_dicts(topo_cap_map)) # Log per-bolt capacities for all the experiments
+        _file = path+"/"+exp_result_file_name
+        write_to_csv_file(path, exp_result_file_name, "\nCapacities:\n")
+        cap_df = pd.DataFrame(topo_cap_map)
+        cap_df = cap_df.round(4)
+        cap_df_var = cap_df.apply(lambda x: np.sum(np.square(x - np.mean(x))) / len(x), axis=0)
+        cap_df_min= cap_df.apply(lambda x: min(x), axis=0)
+        cap_df.loc['variance'] = cap_df_var
+        cap_df.loc['minimum'] = cap_df_min
+        capacities_dfs.append(cap_df)
+        cap_df.to_csv(_file, mode='a', sep='\t', encoding='utf-8')
+
+        #write_to_csv_file (path, "bolt_capacities.csv", print_dict_of_dicts(topo_lat_map)) # Log per-bolt avg. execution latency for all the experiments
+        lat_df = pd.DataFrame(topo_lat_map)
+        lat_df = lat_df.round(4)
+        write_to_csv_file(path, exp_result_file_name, "\nLatencies:\n")
+        latencies_dfs.append(lat_df)
+        lat_df.to_csv(_file, mode='a', sep='\t', encoding='utf-8')
+    
+        spout_devices, sink_devices = get_spout_sink_devices(in_topo_name, input_rates, component_to_worker_map)
+
+        # directory to get resullts of the experiments
+        if not os.path.isdir(exp_result_dir):
+            os.mkdir(exp_result_dir)
+
+        # Copy result files from the R.PIs to this machine
+        # get_log_files_from_supervisors(devices, spout_files, sink_files, exp_result_dir)
+        get_spout_sink_log_files(spout_devices, sink_devices, spout_files, sink_files, bp_files, exp_result_dir)
+
+        # output files have been copied to this machine
+        # run script on these files to generate results...
+        # After this, the results have been logged to the csv file
+        _results = get_results(path, csv_file_name, exp_result_dir, jar_name, in_topo_name, num_exp, spout_files, sink_files, bp_files, executed_topologies)
+        write_to_csv_file(path, exp_result_file_name, "\nMeasured Throughput and Latency:\n")
+        results_df = pd.DataFrame(_results)
+        for col in results_df.columns:
+            results_df[col] = pd.to_numeric(results_df[col])
+        results_df = results_df.round(2)
+        
+        print ("\nDataframe\n")
+        print(results_df)
+        results_df.to_pickle(path+"/results_df")
+
+        print (cap_df)
+        cap_df.to_pickle(path+'/cap_df')
+
+        results_dfs.append(results_df)
+        results_df.to_csv(_file, mode='a', sep='\t', encoding='utf-8')
+
+
+
+        select_ir = (results_df.loc[latency_explore_paths[in_topo_name]] - 
+            latencyThreshold).abs().sort_values().index[0]
+
+        # select_ir = select_topo.split('_')[1]
+        print ("\nSelected Input rate: " + str(select_ir)+"\n")
+        
+        topo_paths = topo_to_paths[in_topo_name]
+        for _iter, _path in enumerate(topo_paths):
+            t = "throughput_" + _path
+            l = "latency_" + _path
+            latencies[_iter][i] = results_df.loc[l][select_ir]
+            throughputs[_iter][i] = results_df.loc[t][select_ir]
+
+        # Update the capacities for each topology that was launched.
+        capacities = topo_cap_map[select_ir]
+
+        key = select_ir
+        topo_cap_map[key].pop('sink', None) 
+        if in_topo_name == 'pred':
+            topo_cap_map[key].pop('LinearRegressionPredictorBolt', None) 
+        
+        bolt_with_max_cap = max(topo_cap_map[key], key=topo_cap_map[key].get) # get name of the bolt that has maximum capacity
+        
+        max_capacity = topo_cap_map[key][bolt_with_max_cap]
+        #print("bolt with max cap = " + bolt_with_max_cap)
+        ir=int(key.split("_")[1]) # input rate,
+
+        print(str(bolt_with_max_cap) + ", " + str(max_capacity))
+
+        bolt_index_with_max_capacity = bolt_indices[bolt_with_max_cap]
+        bolt_instances[bolt_index_with_max_capacity] = bolt_instances[bolt_index_with_max_capacity] + 1
+
+        # get all the spout/sink logs and generated images and archive them.
+        archive_results(path, jar_name, in_topo_name)
+        kill_topologies(path)
+        # change directory back...
+        os.chdir(path)
+        shutil.rmtree(exp_result_dir)
+
+    print (latencies)
+    print (throughputs)
+
+    if not os.path.isdir("output_images"):
+                os.mkdir("output_images")
+
+    for _iter in range(len(latencies)):
+        _path = topo_to_paths[in_topo_name][_iter]
+        fig, ax = plt.subplots()
+        ax.plot(latencies[_iter])
+        ax.set_xlabel('Iterations')
+        ax.set_ylabel('Latency')
+        ax.set_title("Latency " + _path)
+        plt.savefig(path+"/output_images/" + "Latency_" + _path)
+
+        fig, ax = plt.subplots()
+        ax.plot(throughputs[_iter])
+        ax.set_xlabel('Iterations')
+        ax.set_ylabel('Throughput')
+        ax.set_title("Throughput " + _path)
+        plt.savefig(path+"/output_images/" + "Throughput_" + _path)
+
+
 def run_tuning_experiment(jar_name, in_topo_name, csv_file_name, riot, singleStep, numIterations, numWorkers):
     # Runs the same topology with different input rates...
     # 1. Launch the topology
@@ -185,7 +402,6 @@ def run_tuning_experiment(jar_name, in_topo_name, csv_file_name, riot, singleSte
     # 3. Change the topology
     # 4. Repeat until max(capacities) >= 0.2
 
-    
     num_exp = num_experiments
 
     exp_result_file_name = "tuning_exp_result.csv"
@@ -222,7 +438,6 @@ def run_tuning_experiment(jar_name, in_topo_name, csv_file_name, riot, singleSte
     ir2bi = dict(zip(input_rates, initial_bolt_instances))
     print (ir2bi)
 
-
     ir2bis = {}
     for k in ir2bi.keys():
         ir2bis[k]=[[]]
@@ -232,6 +447,7 @@ def run_tuning_experiment(jar_name, in_topo_name, csv_file_name, riot, singleSte
     bolt_instances_dfs = []
     results_dfs = []
     
+
     # Explore upto 10 topologies
     for i in range(numIterations):
         prev_input_rates = list(input_rates)
@@ -360,8 +576,6 @@ def run_tuning_experiment(jar_name, in_topo_name, csv_file_name, riot, singleSte
         # change directory back...
         os.chdir(path)
         shutil.rmtree(exp_result_dir)
-    
-
 
     return ir2bis
 
@@ -710,11 +924,12 @@ def main():
     parser.add_argument('--tuning', action="store_true", default=False, help="Running tuning experiment?")
     parser.add_argument('--riot', action="store_true", default=False, help="Running RIOTBench application?")
     parser.add_argument('--explore', action="store_true", default=False, help="Run experiments on tuned topologies with different input rates?")
+    parser.add_argument('--explore_with_ir', action="store_true", default=False, help="Run topology tuning experiment while chosing input rates")
     parser.add_argument('--singleStep', action="store_true", default=False, help="Whether to take increase bolt instances only by 1 during topo tuning")
     parser.add_argument('--numIterations', type=int, default=1, choices=xrange(1, 50), help="Nummber of iterations for which to run the experiment")
     parser.add_argument('--numWorkers', type=int, default=1, choices=xrange(1, 10), help="Nummber of workers to launch for the topology")
+    parser.add_argument('--latencyThreshold', type=int, default=50, help="Latency Threshold")
     parser.add_argument('--bpMonitor', action="store_true", default=False, help="Whether backpressure is being monitored")
-
 
     args = parser.parse_args()
 
@@ -730,12 +945,15 @@ def main():
     global bpMonitor
     bpMonitor = args.bpMonitor
 
-    print(numIterations)
-
     if in_topo_name not in valid_topos:
         print "not a valid topology name."
         print "can only execute " + str (valid_topos)
         exit(-1)
+
+    if args.explore_with_ir:
+        explore_with_input_rates(jar_name, in_topo_name, csv_file_name, riot, 
+            singleStep, numIterations, numWorkers, args.latencyThreshold)
+        exit()
 
     if not tuning:
         run_experiments(jar_name, in_topo_name, csv_file_name, riot, numWorkers)
@@ -763,6 +981,8 @@ def main():
                 figs.append(fig)
                 sps.append(fig.add_subplot(111))
 
+            print ('Saving Dataframe')
+            # dfs.to_csv('dfs.csv')
             print ("\n\n")
             for conf, frame in dfs.items():
                 frame=frame.reindex(columns=sorted(frame.columns, key=natural_sort_key))

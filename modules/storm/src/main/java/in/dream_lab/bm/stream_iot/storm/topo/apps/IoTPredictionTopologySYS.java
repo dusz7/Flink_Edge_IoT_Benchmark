@@ -69,6 +69,9 @@ public class IoTPredictionTopologySYS {
 			}
 		} else {
 			boltInstances = new ArrayList<Integer>(Arrays.asList(1,1,1,1,1));
+			// boltInstances = new ArrayList<Integer>(Arrays.asList(4,4,4,4,4));
+			// boltInstances = new ArrayList<Integer>(Arrays.asList(2,1,1,1,3));
+			// boltInstances = new ArrayList<Integer>(Arrays.asList(3,1,1,1,4));
 		}
 		
 		System.out.println("Bolt instances");
@@ -83,12 +86,22 @@ public class IoTPredictionTopologySYS {
 		conf.setDebug(false);
 		conf.setNumAckers(0);
 		
-//		conf.put("policy", "signal");
-//		conf.put("consume", "half");
-//		
-//		
-//		System.out.println("policy" + "signal");
-//		System.out.println("consume" + "HALF");
+		conf.put("policy", "signal-simple");
+        //conf.put("policy", "signal-group");
+        //conf.put("policy", "signal-fair");
+        //conf.put("waited_t", 8);
+        
+		conf.put("consume", "constant");
+		conf.put("constant", 100);
+       
+        conf.put("fog-runtime-debug", "false");
+        conf.put("debug-path", "/home/fuxinwei");
+        
+        conf.put("input-rate-adjust-enable", false);
+        conf.put("init-freqency", inputRate);
+        conf.put("delta-threshold", 50);
+        conf.put("expire-threshold", 60);
+        conf.put("force-stable", true);
 		
 		MetricReporterConfig metricReporterConfig = new MetricReporterConfig(".*",
 				SimpleStormMetricProcessor.class.getCanonicalName(), Long.toString(inputRate),
@@ -122,7 +135,7 @@ public class IoTPredictionTopologySYS {
 
         builder.setBolt("SenMLParseBoltPREDSYS",
                 new SenMLParseBoltPREDSYS(p_), boltInstances.get(0))
-                .shuffleGrouping("spout1");
+                .shuffleGrouping("spout");
 
 
 /*        builder.setSpout("mqttSubscribeTaskBolt",

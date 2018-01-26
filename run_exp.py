@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 import re
 from scipy.interpolate import spline
 import pickle
+import glob
 
 from exp_setup import *
 
@@ -426,12 +427,14 @@ def explore_with_input_rates(jar_name, in_topo_name, csv_file_name, riot, single
         save_obj(topo_lat_dict, "topo_lat_dict", path)
         save_obj(topo_results_dict, "topo_results_dict", path)
 
-        print ('-'*145)
+        pd.set_option('expand_frame_repr', False)
+        print ('-'*150)
         print ( "| IR providing latency closest to threshold (" + str(latencyThreshold) +"): " 
             + select_ir.split('_')[-1] + " | Bolt with max capacity: " + str(bolt_with_max_cap) + 
             " | Max capacity: " + "{:2.4f}".format(max_capacity) + " | " + 
             " elapsed time: {:.4f} min".format((time.time()-iter_start)/60))
-        print ('-'*145)
+        print (results_df.T)
+        print ('-'*150)
 
         bolt_index_with_max_capacity = bolt_indices[bolt_with_max_cap]
         bolt_instances[bolt_index_with_max_capacity] = bolt_instances[bolt_index_with_max_capacity] + 1
@@ -779,7 +782,7 @@ def get_spout_sink_devices(in_topo_name, input_rates, c2wm):
 
     spout_devices = []
     sink_devices = []
-    dev_user = "pi@"
+    dev_user = username+"@"
     
     for i,v in enumerate(input_rates):
         #print ("Input rate: " + str(v))
@@ -870,7 +873,10 @@ def get_results(path, csv_file_name, exp_result_dir, jar_name, in_topo_name, num
                 bp_file = bp_files[i].split("/")[-1]
                 bp = read_back_pressure(bp_file)
             
-            resultObject = script.get_results(executed_topologies[i], spout_file, sink_file)
+            resultObject = script.get_Results(
+                                executed_topologies[i], 
+                                spout_file, sink_file)
+
             results = resultObject.get_csv_rep(in_topo_name)    #results[0] --> Header, results[1] --> value
 
             res = resultObject.get_data_dict(in_topo_name)
@@ -894,6 +900,11 @@ def get_results(path, csv_file_name, exp_result_dir, jar_name, in_topo_name, num
     return exp_results
 
 def archive_results(path, jar_name, in_topo_name):
+    
+    # Remove logs
+    for f in glob.glob("*.log"):
+        os.remove(f)
+
     all_files = os.listdir(os.getcwd())
     tarfile_name = "experiment-"+jar_name+"-"+in_topo_name+ "-" + time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime()) + ".tar"
     out = tarfile.open(tarfile_name, mode='w')

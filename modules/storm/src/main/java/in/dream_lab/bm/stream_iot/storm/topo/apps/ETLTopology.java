@@ -137,7 +137,7 @@ public class ETLTopology {
 		builder.setSpout("spout", new SampleSenMLSpout(spout1InputFilePath, spoutLogFileName,
 				argumentClass.getScalingFactor(), inputRate, numEvents), 1);
 
-		builder.setBolt("SenMlParseBolt", new SenMLParseBolt(p_), boltInstances.get(0)).shuffleGrouping("spout1");
+		builder.setBolt("SenMlParseBolt", new SenMLParseBolt(p_), boltInstances.get(0)).shuffleGrouping("spout");
 
 //		builder.setBolt("RangeFilterBolt", new RangeFilterBolt(p_), boltInstances.get(1)).fieldsGrouping("SenMlParseBolt",
 //				new Fields("OBSTYPE"));

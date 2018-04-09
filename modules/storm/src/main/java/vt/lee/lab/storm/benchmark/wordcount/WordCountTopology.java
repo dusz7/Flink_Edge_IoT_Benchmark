@@ -38,7 +38,6 @@ public class WordCountTopology {
 		int numWorkers = argumentClass.getNumWorkers();
 		List<Integer> boltInstances = argumentClass.getBoltInstances();
 		
-		// TODO
 		if (boltInstances != null) {
 			if ((boltInstances.size() != 2)) {
 				System.out.println("Invalid Number of bolt instances provided. Exiting");

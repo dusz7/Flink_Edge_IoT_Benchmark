@@ -52,6 +52,8 @@ parser.add_argument('--bpMonitor', action="store_true", default=False, help="Whe
 
 args = parser.parse_args()
 
+print (vars(args))
+
 bpMonitor = args.bpMonitor
 
 

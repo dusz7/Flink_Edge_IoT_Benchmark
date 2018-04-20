@@ -67,10 +67,10 @@ public class ETLTopology {
 				System.exit(-1);
 			}
 		} else {
-			boltInstances = new ArrayList<Integer>(Arrays.asList(1,1,1,1,1,1,1,1,1));
+			// boltInstances = new ArrayList<Integer>(Arrays.asList(1,1,1,1,1,1,1,1,1));
 			// boltInstances = new ArrayList<Integer>(Arrays.asList(4,4,4,4,4,4,4,4,4));
-			// boltInstances = new ArrayList<Integer>(Arrays.asList(1,1,1,1,1,1,1,1,2));
-			// boltInstances = new ArrayList<Integer>(Arrays.asList(2,1,1,1,1,1,1,1,2));
+			boltInstances = new ArrayList<Integer>(Arrays.asList(1,1,1,1,1,1,1,1,2));
+			//boltInstances = new ArrayList<Integer>(Arrays.asList(2,1,1,1,1,1,1,1,2));
 		}
 		
 		List<String> resourceFileProps = RiotResourceFileProps.getRiotResourceFileProps();
@@ -90,29 +90,22 @@ public class ETLTopology {
 		
 		/*only get capacity metrics*/
         MetricReporterConfig metricReporterConfig = new MetricReporterConfig(".*",
-				SimpleStormMetricProcessor.class.getCanonicalName(), Long.toString(inputRate), Long.toString(numEvents*2));
+				SimpleStormMetricProcessor.class.getCanonicalName(), Long.toString(inputRate), Long.toString((long) (numEvents*1.95)));
 		
 		
 		conf.registerMetricsConsumer(MetricReporter.class, metricReporterConfig, 1);
 		
-		
-		conf.put("policy", "signal-simple");
-        //conf.put("policy", "signal-group");
-        //conf.put("policy", "signal-fair");
-        //conf.put("waited_t", 8);
+		conf.put("policy", "eda-random");
+		//conf.put("policy", "eda-dynamic");
         
 		conf.put("consume", "constant");
 		conf.put("constant", 100);
-       
-        conf.put("fog-runtime-debug", "false");
-        conf.put("debug-path", "/home/fuxinwei");
-        
-        conf.put("input-rate-adjust-enable", false);
-        conf.put("init-freqency", inputRate);
-        conf.put("delta-threshold", 50);
-        conf.put("expire-threshold", 60);
-        conf.put("force-stable", true);
-
+		
+		conf.put("get_wait_time", true);
+		conf.put("get_empty_time", true);
+		conf.put("info_path", argumentClass.getOutputDirName());
+		conf.put("get_queue_time", true);
+		
 		Properties p_ = new Properties();
 		InputStream input = new FileInputStream(taskPropFilename);
 		p_.load(input);

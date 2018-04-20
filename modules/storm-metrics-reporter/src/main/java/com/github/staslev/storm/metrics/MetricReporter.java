@@ -15,6 +15,7 @@ import org.apache.storm.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -42,12 +43,12 @@ public class MetricReporter implements IMetricsConsumer {
 	private MetricMatcher allowedMetrics;
 	private StormMetricProcessor stormMetricProcessor;
 	
-	private Map<String, Double> capMap;
-	private Map<String, Integer> capCountMap;
-	private Map<String, Double> execLatencyMap;
-	private Map<String, Integer> execLatencyObs;
-	private Map<String, Double> execCountMap;
-	private Map<String, Integer> execCountObs;
+	private Map<String, List<Double>> capMap;
+	private Map<String, List<Double>> execLatencyMap;
+	private Map<String, List<Double>> execCountMap;
+	private Map<String, List<Double>> waitLatMap;
+	private Map<String, List<Double>> emptyTimeMap;
+	private Map<String, List<Double>> queueTimeMap;
 	private Map<String, String> componentToWorker;
 	
 	
@@ -127,12 +128,12 @@ public class MetricReporter implements IMetricsConsumer {
 		totalEvents = config.getTotalEvents();
 
 		//System.out.println("TOTAL EVENTS = " + totalEvents);
-		capMap = new HashMap<String, Double>();
-		capCountMap = new HashMap<String, Integer>();
-		execLatencyMap = new HashMap<String, Double>();
-		execLatencyObs = new HashMap<String, Integer>();
-		execCountMap = new HashMap<String, Double>();
-		execCountObs = new HashMap<String, Integer>();
+		capMap = new HashMap<String, List<Double>>();
+		execLatencyMap = new HashMap<String, List<Double>>();
+		execCountMap = new HashMap<String, List<Double>>();
+		waitLatMap = new HashMap<String, List<Double>>();
+		emptyTimeMap = new HashMap<String, List<Double>>();
+		queueTimeMap = new HashMap<String, List<Double>>();
 		componentToWorker = new HashMap<String, String>();
 		
 		Map stormConfig = Utils.readStormConfig();
@@ -174,20 +175,47 @@ public class MetricReporter implements IMetricsConsumer {
 		
 		/*save values for capacity and the capacity reporting frequency*/
 		for (Metric m : capacityMetrics) {
-			capMap.put(m.getComponent(), capMap.getOrDefault(m.getComponent(), 0.0) + m.getValue());
-			capCountMap.put(m.getComponent(), capCountMap.getOrDefault(m.getComponent(), 0) + 1);
+			if (!capMap.containsKey(m.getComponent())) {
+				capMap.put(m.getComponent(), new ArrayList<Double>());
+			}
+			capMap.get(m.getComponent()).add(m.getValue());
 		}		
 		setCompletedEvents(component2metrics);
 		
 		/*Checking some other metrics*/
 		for (Metric m : allMetrics) {
 			if (m.getMetricName().contains("execute-latency")) {
-				execLatencyMap.put(m.getComponent(), execLatencyMap.getOrDefault(m.getComponent(), 0.0) + m.getValue());
-				execLatencyObs.put(m.getComponent(), execLatencyObs.getOrDefault(m.getComponent(), 0) + 1);
+				if (!execLatencyMap.containsKey(m.getComponent())) {
+					execLatencyMap.put(m.getComponent(), new ArrayList<Double>());
+				}
+				execLatencyMap.get(m.getComponent()).add(m.getValue());
 			}
 			if (m.getMetricName().contains("execute-count")) {
-				execCountMap.put(m.getComponent(), execCountMap.getOrDefault(m.getComponent(), 0.0) + m.getValue());
-				execCountObs.put(m.getComponent(), execCountObs.getOrDefault(m.getComponent(), 0) + 1);
+				if (!execCountMap.containsKey(m.getComponent())) {
+					execCountMap.put(m.getComponent(), new ArrayList<Double>());
+				}
+				execCountMap.get(m.getComponent()).add(m.getValue());
+			}
+			
+			if (m.getMetricName().contains("wait-latency")) {
+				if (!waitLatMap.containsKey(m.getComponent())) {
+					waitLatMap.put(m.getComponent(), new ArrayList<Double>());
+				}
+				waitLatMap.get(m.getComponent()).add(m.getValue());
+			}
+			
+			if (m.getMetricName().contains("empty-time")) {
+				if (!emptyTimeMap.containsKey(m.getComponent())) {
+					emptyTimeMap.put(m.getComponent(), new ArrayList<Double>());
+				}
+				emptyTimeMap.get(m.getComponent()).add(m.getValue());
+			}
+			
+			if (m.getMetricName().contains("queue-time")) {
+				if (!queueTimeMap.containsKey(m.getComponent())) {
+					queueTimeMap.put(m.getComponent(), new ArrayList<Double>());
+				}
+				queueTimeMap.get(m.getComponent()).add(m.getValue());
 			}
 		}
 
@@ -197,26 +225,84 @@ public class MetricReporter implements IMetricsConsumer {
 			Map<String, Double> approxCap = new HashMap<String, Double>();
 			Map<String, Double> approxLat = new HashMap<String, Double>();
 			Map<String, Double> approxCnt = new HashMap<String, Double>();
+			Map<String, Double> approxWait = new HashMap<String, Double>();
+			Map<String, Double> approxEmpty = new HashMap<String, Double>();
+			Map<String, Double> approxQueue = new HashMap<String, Double>();
 			
-			for (String cap : capMap.keySet()) {
-				approxCap.put(cap, capMap.get(cap) / capCountMap.get(cap));
+			for (String id : capMap.keySet()) {
+				List<Double> list = capMap.get(id);
+				int count = 0;
+				double sum = 0;
+				for (int i = list.size() / 4; i < list.size() * 3 / 4; i++) {
+					count++;
+					sum += list.get(i);
+				}
+				approxCap.put(id, sum / count);
 			}
 			
-			for (String lat : execLatencyMap.keySet()) {
-				approxLat.put(lat, execLatencyMap.get(lat) / execLatencyObs.get(lat));
+			for (String id : execLatencyMap.keySet()) {
+				List<Double> list = execLatencyMap.get(id);
+				int count = 0;
+				double sum = 0;
+				for (int i = list.size() / 4; i < list.size() * 3 / 4; i++) {
+					count++;
+					sum += list.get(i);
+				}
+				approxLat.put(id, sum / count);
 			}
 			
-			for (String cnt : execCountMap.keySet()) {
-				approxCnt.put(cnt, execCountMap.get(cnt) / execCountObs.get(cnt));
+			for (String id : execCountMap.keySet()) {
+				List<Double> list = execCountMap.get(id);
+				int count = 0;
+				double sum = 0;
+				for (int i = list.size() / 4; i < list.size() * 3 / 4; i++) {
+					count++;
+					sum += list.get(i);
+				}
+				approxCnt.put(id, sum / count);
 			}
-
+			
+			for (String id : waitLatMap.keySet()) {
+				List<Double> list = waitLatMap.get(id);
+				int count = 0;
+				double sum = 0;
+				for (int i = list.size() / 4; i < list.size() * 3 / 4; i++) {
+					count++;
+					sum += list.get(i);
+				}
+				approxWait.put(id, sum / count);
+			}
+			
+			for (String id : emptyTimeMap.keySet()) {
+				List<Double> list = emptyTimeMap.get(id);
+				int count = 0;
+				double sum = 0;
+				for (int i = list.size() / 4; i < list.size() * 3 / 4; i++) {
+					count++;
+					sum += list.get(i);
+				}
+				approxEmpty.put(id, sum / count);
+			}
+			
+			for (String id : queueTimeMap.keySet()) {
+				List<Double> list = queueTimeMap.get(id);
+				int count = 0;
+				double sum = 0;
+				for (int i = list.size() / 4; i < list.size() * 3 / 4; i++) {
+					count++;
+					sum += list.get(i);
+				}
+				approxQueue.put(id, sum / count);
+			}
+			
 			try {
 				InetAddress addr = InetAddress.getByName(nimbusIp);
 				socket = new Socket(addr, port);
 				out = new PrintWriter(socket.getOutputStream(), true);
 				/* Send data to server */
 				
-				out.println(inputRate + "&" + approxCap + "&" + approxLat + "&" + componentToWorker);
+				out.println(inputRate + "&" + approxCap + "&" + approxLat + "&" + componentToWorker + 
+						"&" + approxCnt + "&" + approxWait + "&" + approxEmpty + "&" + approxQueue);
 				out.close();
 				try {
 					socket.close();
@@ -234,7 +320,6 @@ public class MetricReporter implements IMetricsConsumer {
 			LOG.info(approxCap.toString());
 			LOG.info("COMPLETED EVENTS = " + completedEvents);
 			LOG.info(capMap.toString());
-			LOG.info(capCountMap.toString());
 			LOG.info(approxLat.toString());
 			LOG.info(approxCnt.toString());
 			LOG.info("componentToWorker mapping: ");

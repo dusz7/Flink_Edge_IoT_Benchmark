@@ -15,6 +15,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 
+import com.esotericsoftware.minlog.Log;
+
 public class EventGen {
 	ISyntheticEventGen iseg;
 	ExecutorService executorService;
@@ -134,19 +136,19 @@ public class EventGen {
 
 			this.executorService = Executors.newFixedThreadPool(numThreads);
 
-			Semaphore sem1 = new Semaphore(0);
-
-			Semaphore sem2 = new Semaphore(0);
+//			Semaphore sem1 = new Semaphore(0);
+//
+//			Semaphore sem2 = new Semaphore(0);
 
 			SubEventGen[] subEventGenArr = new SubEventGen[numThreads];
 			for (int i = 0; i < numThreads; i++) {
 				// this.executorService.execute(new SubEventGen(this.iseg,
 				// nestedList.get(i)));
-				subEventGenArr[i] = new SubEventGen(this.iseg, nestedList.get(i), sem1, sem2, this.rate);
+				subEventGenArr[i] = new SubEventGen(this.iseg, nestedList.get(i), this.rate);
 				this.executorService.execute(subEventGenArr[i]);
 			}
 
-			sem1.acquire(numThreads);
+//			sem1.acquire(numThreads);
 			// set the start time to all the thread objects
 			long experiStartTs = System.currentTimeMillis();
 			for (int i = 0; i < numThreads; i++) {
@@ -157,14 +159,15 @@ public class EventGen {
 					subEventGenArr[i].experiDuration = experimentDurationMillis;
 				this.executorService.execute(subEventGenArr[i]);
 			}
-			sem2.release(numThreads);
+//			sem2.release(numThreads);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		} 
+//		catch (InterruptedException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 	}
 }
 
@@ -176,6 +179,12 @@ class SubEventGen implements Runnable {
 	Long experiDuration = 1800000L;
 	double delay = 0;
 
+	
+	public SubEventGen(ISyntheticEventGen iseg, TableClass eventList) {
+		this.iseg = iseg;
+		this.eventList = eventList;
+	} 
+	
 	public SubEventGen(ISyntheticEventGen iseg, TableClass eventList, Semaphore sem1, Semaphore sem2) {
 		this.iseg = iseg;
 		this.eventList = eventList;
@@ -190,15 +199,25 @@ class SubEventGen implements Runnable {
 			System.out.println(Thread.currentThread().getName() + "Delay: " + this.delay);
 		}
 	}
+	
+	public SubEventGen(ISyntheticEventGen iseg, TableClass eventList, int rate) {
+		this(iseg, eventList);
+		if (rate != 0) {
+			this.delay = (1 / (double) rate) * 1000000000; /* delay in ns */
+			System.out.println(Thread.currentThread().getName() + "Delay: " + this.delay);
+		}
+	}
 
 	@Override
 	public void run() {
-		sem1.release();
-		try {
-			sem2.acquire();
-		} catch (InterruptedException e1) {
-			e1.printStackTrace();
-		}
+		Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+		
+//		sem1.release();
+//		try {
+//			sem2.acquire();
+//		} catch (InterruptedException e1) {
+//			e1.printStackTrace();
+//		}
 		List<List<String>> rows = this.eventList.getRows();
 		int rowLen = rows.size();
 		List<Long> timestamps = this.eventList.getTs();
@@ -207,8 +226,11 @@ class SubEventGen implements Runnable {
 		System.out.println(this.getClass().getName() + " - runOnce: " + runOnce);
 		long currentRuntime = 0;
 		long emitCount = 0;
-		Long initTime = System.currentTimeMillis();
-		Long _1000_event_emit_time;
+		long initTime = System.currentTimeMillis();
+		long event_emit_time;
+		long event_emit_period;
+		long emitPeriodCount = 0;
+		long emitPeriodSum = 0;
 		
 		do {
 			//initTime = System.currentTimeMillis();
@@ -223,9 +245,14 @@ class SubEventGen implements Runnable {
 				
 				this.iseg.receive(event);
 				emitCount++;
-//				if (emitCount%1000 == 0) {
-//					_1000_event_emit_time = System.currentTimeMillis();
-//					System.out.println("1000 EVENTS EMITTED IN: " + (_1000_event_emit_time - initTime));
+				
+//				if (emitCount%10000 == 0) {
+//					emitPeriodCount++;
+//					event_emit_time = System.currentTimeMillis();
+//					event_emit_period = event_emit_time - initTime;
+//					emitPeriodSum += event_emit_period;
+//					Log.info("10000 EVENTS EMITTED IN: " + (event_emit_period));
+//					Log.info("Moving average event emit: " + (double) emitPeriodSum/emitPeriodCount);
 //					initTime = System.currentTimeMillis();
 //				}
 

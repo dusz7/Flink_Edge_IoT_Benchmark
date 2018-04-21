@@ -53,6 +53,8 @@ public class MetricReporter implements IMetricsConsumer {
 	
 	private long totalEvents = 0;
 	private long inputRate = 0;
+	private long topologyDuration = 0;
+	private long startTime;
 	private double completedEvents = 0;
 	private boolean reported = false;
 	private String nimbusIp;
@@ -125,7 +127,9 @@ public class MetricReporter implements IMetricsConsumer {
 		stormMetricProcessor = config.getStormMetricProcessor(stormConf);
 		inputRate = config.getInputRate();
 		totalEvents = config.getTotalEvents();
-
+		topologyDuration = ((totalEvents/2) / inputRate); // actual topology duration in seconds
+		startTime = System.currentTimeMillis(); // estimated start time of topology
+		
 		//System.out.println("TOTAL EVENTS = " + totalEvents);
 		capMap = new HashMap<String, Double>();
 		capCountMap = new HashMap<String, Integer>();
@@ -193,7 +197,13 @@ public class MetricReporter implements IMetricsConsumer {
 
 		/* Now the topology has finished execution. Calculate averages of capacity
 		 * over all recorded measurement s and send to the nimbus node. */
-		if (completedEvents >= totalEvents && !reported) {
+		long passedTime = System.currentTimeMillis() - startTime;
+		boolean finishTopology = passedTime / 1000 >= topologyDuration + 3*60; 
+		// passedTime/1000 --> time since start of topology in seconds
+		// 5*60 max delay allowed 
+		
+		LOG.info("METRIC_REPORTER: Completed Events: " + completedEvents + ", passed time: " + passedTime / 1000);
+		if ((completedEvents >= totalEvents && !reported) || finishTopology) {
 			Map<String, Double> approxCap = new HashMap<String, Double>();
 			Map<String, Double> approxLat = new HashMap<String, Double>();
 			Map<String, Double> approxCnt = new HashMap<String, Double>();

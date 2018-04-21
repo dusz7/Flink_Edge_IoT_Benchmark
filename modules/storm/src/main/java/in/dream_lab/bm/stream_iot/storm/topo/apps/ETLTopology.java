@@ -95,23 +95,36 @@ public class ETLTopology {
 		
 		conf.registerMetricsConsumer(MetricReporter.class, metricReporterConfig, 1);
 		
-		
 		conf.put("policy", "signal-simple");
+		conf.put("consume", "constant");
+		conf.put("constant", 100);
+
+		conf.put("fog-runtime-debug", "false");
+		conf.put("debug-path", "/home/fuxinwei");
+
+		conf.put("input-rate-adjust-enable", false);
+		conf.put("init-freqency", inputRate);
+		conf.put("delta-threshold", 50);
+		conf.put("expire-threshold", 60);
+		conf.put("force-stable", true); 
+		
+		
+//		conf.put("policy", "signal-simple");
         //conf.put("policy", "signal-group");
         //conf.put("policy", "signal-fair");
         //conf.put("waited_t", 8);
         
-		conf.put("consume", "constant");
-		conf.put("constant", 100);
-       
-        conf.put("fog-runtime-debug", "false");
-        conf.put("debug-path", "/home/fuxinwei");
-        
-        conf.put("input-rate-adjust-enable", false);
-        conf.put("init-freqency", inputRate);
-        conf.put("delta-threshold", 50);
-        conf.put("expire-threshold", 60);
-        conf.put("force-stable", true);
+//		conf.put("consume", "constant");
+//		conf.put("constant", 100);
+//       
+//        conf.put("fog-runtime-debug", "false");
+//        conf.put("debug-path", "/home/fuxinwei");
+//        
+//        conf.put("input-rate-adjust-enable", false);
+//        conf.put("init-freqency", inputRate);
+//        conf.put("delta-threshold", 50);
+//        conf.put("expire-threshold", 60);
+//        conf.put("force-stable", true);
 
 		Properties p_ = new Properties();
 		InputStream input = new FileInputStream(taskPropFilename);

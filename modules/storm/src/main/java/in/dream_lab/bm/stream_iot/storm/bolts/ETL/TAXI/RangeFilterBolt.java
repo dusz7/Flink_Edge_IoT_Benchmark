@@ -66,6 +66,12 @@ public class RangeFilterBolt extends BaseRichBolt {
     	Values values = new Values(msgId,sensorId ,meta,obsType ,updatedValue); 
     	
     	//System.out.println(this.getClass().getName() + " - LOGS - " + values.toString());
+    	if (input.getLongByField("TIMESTAMP") > 0) {
+			values.add(System.currentTimeMillis());
+		} else {
+			values.add(-1L);
+		}
+    	
     	collector.emit(values);
     }
 
@@ -76,7 +82,7 @@ public class RangeFilterBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-    	outputFieldsDeclarer.declare(new Fields("MSGID", "SENSORID" , "META", "OBSTYPE", "OBSVAL"));
+    	outputFieldsDeclarer.declare(new Fields("MSGID", "SENSORID" , "META", "OBSTYPE", "OBSVAL", "TIMESTAMP"));
     }
 
 }

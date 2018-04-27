@@ -55,7 +55,16 @@ public class MQTTPublishBolt extends BaseRichBolt {
         map.put(AbstractTask.DEFAULT_KEY, obsVal);
     	Float res = mqttPublishTask.doTask(map);  
     	//long time = System.currentTimeMillis();
-    	collector.emit(new Values(msgId, meta, obsType, obsVal));
+    	
+    	Values values = new Values(msgId, meta, obsType, obsVal);
+    	
+    	if (input.getLongByField("TIMESTAMP") > 0) {
+			values.add(System.currentTimeMillis());
+		} else {
+			values.add(-1L);
+		}
+    	
+    	collector.emit(values);
     }
 
     @Override
@@ -65,7 +74,7 @@ public class MQTTPublishBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("MSGID", "META", "OBSTYPE", "OBSVAL"));
+        outputFieldsDeclarer.declare(new Fields("MSGID", "META", "OBSTYPE", "OBSVAL", "TIMESTAMP"));
     }
 
 }

@@ -112,6 +112,13 @@ public class LinearRegressionPredictorBolt extends BaseRichBolt {
 			if (res != Float.MIN_VALUE) {
 				Values values = new Values(sensorMeta, obsVal, msgId, res.toString(), "MLR");
 				//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+				
+				if (input.getLongByField("TIMESTAMP") > 0) {
+					values.add(System.currentTimeMillis());
+				} else {
+					values.add(-1L);
+				}
+				
 				collector.emit(values);
 			} else {
 				if (l.isWarnEnabled())
@@ -129,7 +136,7 @@ public class LinearRegressionPredictorBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("META", "OBSVAL", "MSGID", "RES", "ANALAYTICTYPE"));
+		outputFieldsDeclarer.declare(new Fields("META", "OBSVAL", "MSGID", "RES", "ANALAYTICTYPE", "TIMESTAMP"));
 	}
 
 }

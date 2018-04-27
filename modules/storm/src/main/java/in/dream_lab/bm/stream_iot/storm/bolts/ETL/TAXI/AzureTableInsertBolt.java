@@ -69,7 +69,16 @@ public class AzureTableInsertBolt  extends BaseRichBolt {
     	 	//collector.emit(new Values(batchFirstMsgId, meta, obsType, (String)input.getValueByField("OBSVAL")));
     	}
     	//long time = System.currentTimeMillis();
-    	collector.emit(new Values(msgId, meta, obsType, obsVal));
+    	
+    	Values values = new Values(msgId, meta, obsType, obsVal);
+    	
+    	if (input.getLongByField("TIMESTAMP") > 0) {
+			values.add(System.currentTimeMillis());
+		} else {
+			values.add(-1L);
+		}
+    	
+    	collector.emit(values);
     	
     }
 
@@ -80,7 +89,7 @@ public class AzureTableInsertBolt  extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-    	outputFieldsDeclarer.declare(new Fields("MSGID", "META", "OBSTYPE", "OBSVAL"));
+    	outputFieldsDeclarer.declare(new Fields("MSGID", "META", "OBSTYPE", "OBSVAL", "TIMESTAMP"));
     }
 
 }

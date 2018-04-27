@@ -93,6 +93,13 @@ public class BlockWindowAverageBolt extends BaseRichBolt {
 						l.info("avgres AVG:{}", avgres.toString());*/
 					Values values = new Values(sensorMeta, sensorID, obsType, avgres.toString(), obsVal, msgId, "AVG");
 					//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+					
+					if (input.getLongByField("TIMESTAMP") > 0) {
+						values.add(System.currentTimeMillis());
+					} else {
+						values.add(-1L);
+					}
+					
 					collector.emit(values);
 
 				} else {
@@ -111,7 +118,7 @@ public class BlockWindowAverageBolt extends BaseRichBolt {
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
 		outputFieldsDeclarer
-				.declare(new Fields("META", "SENSORID", "OBSTYPE", "AVGRES", "OBSVAL", "MSGID", "ANALAYTICTYPE"));
+				.declare(new Fields("META", "SENSORID", "OBSTYPE", "AVGRES", "OBSVAL", "MSGID", "ANALAYTICTYPE", "TIMESTAMP"));
 	}
 
 }

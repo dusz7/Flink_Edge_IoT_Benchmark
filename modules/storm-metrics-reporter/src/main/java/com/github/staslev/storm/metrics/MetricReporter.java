@@ -289,10 +289,14 @@ public class MetricReporter implements IMetricsConsumer {
 				int count = 0;
 				double sum = 0;
 				for (int i = list.size() / 4; i < list.size() * 3 / 4; i++) {
-					count++;
-					sum += list.get(i);
+					if (list.get(i) > 0) {
+						sum += list.get(i);
+						count++;
+					}
 				}
-				approxQueue.put(id, sum / count);
+				if (count > 0) {
+					approxQueue.put(id, sum / count);
+				}
 			}
 			
 			try {

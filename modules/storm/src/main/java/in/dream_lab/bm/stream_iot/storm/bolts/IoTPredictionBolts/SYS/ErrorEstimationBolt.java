@@ -78,6 +78,13 @@ public class ErrorEstimationBolt extends BaseRichBolt {
 */			
 			Values values = new Values(sensorMeta, errval, msgId, analyticsType, obsVal);
             //System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+			
+			if (input.getLongByField("TIMESTAMP") > 0) {
+				values.add(System.currentTimeMillis());
+			} else {
+				values.add(-1L);
+			}
+			
 			collector.emit(values);
 
 		}
@@ -89,7 +96,7 @@ public class ErrorEstimationBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("META", "ERROR", "MSGID", "ANALAYTICTYPE", "OBSVAL"));
+		outputFieldsDeclarer.declare(new Fields("META", "ERROR", "MSGID", "ANALAYTICTYPE", "OBSVAL", "TIMESTAMP"));
 	}
 
 }

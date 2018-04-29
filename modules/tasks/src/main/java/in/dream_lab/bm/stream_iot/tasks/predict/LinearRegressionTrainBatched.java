@@ -108,7 +108,7 @@ public class LinearRegressionTrainBatched extends AbstractTask {
 			instancesBuf = new StringBuffer(instanceHeader);
 
 			if (result >= 0)
-				return Float.valueOf(0); // success
+				return Float.valueOf(0); 
 
 		} catch (Exception e) {
 			l.warn("error training decision tree", e);

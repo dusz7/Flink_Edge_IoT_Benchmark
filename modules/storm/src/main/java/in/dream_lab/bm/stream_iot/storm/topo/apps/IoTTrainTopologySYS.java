@@ -78,6 +78,8 @@ public class IoTTrainTopologySYS {
 		conf.put("get_queue_time", true);
 		conf.put("queue_time_sample_freq", inputRate * 3);
 
+		conf.put("TRAIN_DATA_FILE", resourceDir + "/train_input_data.csv");
+
 		Properties p_ = new Properties();
 		InputStream input = new FileInputStream(taskPropFilename);
 		p_.load(input);
@@ -95,32 +97,36 @@ public class IoTTrainTopologySYS {
 
 		TopologyBuilder builder = new TopologyBuilder();
 
-		String spout1InputFilePath = resourceDir + "/inputFileForTimerSpout-CITY.csv";
+		String spout1InputFilePath = resourceDir + "/inputFileForTimerSpout-CITY_NoAz.csv";
 
-		builder.setSpout("TimeSpout",
-				new SampleSpoutTimerForTrain(spout1InputFilePath, spoutLogFileName, argumentClass.getScalingFactor(), inputRate, numEvents),
-				1);
+		builder.setSpout("TimeSpout", new SampleSpoutTimerForTrain(spout1InputFilePath, spoutLogFileName,
+				argumentClass.getScalingFactor(), inputRate, numEvents), 1);
 
-		builder.setBolt("AzureTableRangeQueryBolt", new AzureTableRangeQueryBolt(p_), 1)
-				.shuffleGrouping("TimeSpout");
+		// builder.setBolt("AzureTableRangeQueryBolt", new
+		// AzureTableRangeQueryBolt(p_), 1)
+		// .shuffleGrouping("TimeSpout");
+
+		builder.setBolt("data-read-bolt", new ReadTrainDataBolt(p_), 1).shuffleGrouping("TimeSpout");
 
 		builder.setBolt("LinearRegressionTrainBolt", new LinearRegressionTrainBolt(p_), 1)
-				.shuffleGrouping("AzureTableRangeQueryBolt");
+				.shuffleGrouping("data-read-bolt");
 
-		builder.setBolt("AzureBlobUploadTaskBolt", new AzureBlobUploadTaskBolt(p_), 1)
-				.shuffleGrouping("DecisionTreeTrainBolt")
+		// builder.setBolt("AzureBlobUploadTaskBolt", new
+		// AzureBlobUploadTaskBolt(p_), 1)
+		// .shuffleGrouping("DecisionTreeTrainBolt").shuffleGrouping("LinearRegressionTrainBolt");
+
+		// builder.setBolt("MQTTPublishBolt", new MQTTPublishBolt(p_),
+		// 1).shuffleGrouping("AzureBlobUploadTaskBolt");
+
+		builder.setBolt("MQTTPublishBolt", new MQTTPublishBolt(p_), 1).shuffleGrouping("DecisionTreeTrainBolt")
 				.shuffleGrouping("LinearRegressionTrainBolt");
 
-		builder.setBolt("MQTTPublishBolt", new MQTTPublishBolt(p_), 1)
-				.shuffleGrouping("AzureBlobUploadTaskBolt");
-
-		builder.setBolt("AnnotateDTClassBolt", new AnnotateDTClassBolt(p_), 1)
-				.shuffleGrouping("AzureTableRangeQueryBolt");
+		builder.setBolt("AnnotateDTClassBolt", new AnnotateDTClassBolt(p_), 1).shuffleGrouping("data-read-bolt");
 
 		builder.setBolt("DecisionTreeTrainBolt", new DecisionTreeTrainBolt(p_), 1)
 				.shuffleGrouping("AnnotateDTClassBolt");
 
-		builder.setBolt("sink", new IoTTrainTopologySinkBolt(sinkLogFileName), 1).shuffleGrouping("AzureBlobUploadTaskBolt");
+		builder.setBolt("sink", new IoTTrainTopologySinkBolt(sinkLogFileName), 1).shuffleGrouping("MQTTPublishBolt");
 
 		StormTopology stormTopology = builder.createTopology();
 

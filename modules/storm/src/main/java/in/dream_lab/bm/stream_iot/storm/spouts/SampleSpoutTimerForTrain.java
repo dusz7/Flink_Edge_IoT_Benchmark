@@ -52,8 +52,9 @@ public class SampleSpoutTimerForTrain extends BaseRichSpout implements ISyntheti
 	public SampleSpoutTimerForTrain(String csvFileName, String outSpoutCSVLogFileName, double scalingFactor) {
 		this(csvFileName, outSpoutCSVLogFileName, scalingFactor, "");
 	}
-	
-	public SampleSpoutTimerForTrain(String csvFileName, String outSpoutCSVLogFileName, double scalingFactor, int inputRate, long numEvents) {
+
+	public SampleSpoutTimerForTrain(String csvFileName, String outSpoutCSVLogFileName, double scalingFactor,
+			int inputRate, long numEvents) {
 		this(csvFileName, outSpoutCSVLogFileName, scalingFactor, "");
 		this.inputRate = inputRate;
 		this.numEvents = numEvents;
@@ -61,14 +62,15 @@ public class SampleSpoutTimerForTrain extends BaseRichSpout implements ISyntheti
 
 	@Override
 	public void nextTuple() {
-		
-		int count = 0, MAX_COUNT = 1; // FIXME?
+
+		int count = 0, MAX_COUNT = 1;
 
 		while (count < MAX_COUNT) {
-			List<String> entry = this.eventQueue.poll(); // nextTuple should not
-															// block!
+			List<String> entry = this.eventQueue.poll();
+
 			if (entry == null || (this.msgId > this.startingMsgId + this.numEvents))
 				return;
+
 			count++;
 			Values values = new Values();
 			StringBuilder rowStringBuf = new StringBuilder();
@@ -82,7 +84,6 @@ public class SampleSpoutTimerForTrain extends BaseRichSpout implements ISyntheti
 			values.add(rowString);
 			msgId++;
 			values.add(Long.toString(msgId));
-
 			values.add(ROWKEYSTART);
 			values.add(ROWKEYEND);
 
@@ -110,7 +111,7 @@ public class SampleSpoutTimerForTrain extends BaseRichSpout implements ISyntheti
 
 			e.printStackTrace();
 		}
-		
+
 		_collector = collector;
 		this.eventGen = new EventGen(this, this.scalingFactor, this.inputRate);
 		this.eventQueue = new LinkedBlockingQueue<List<String>>();
@@ -130,7 +131,6 @@ public class SampleSpoutTimerForTrain extends BaseRichSpout implements ISyntheti
 		System.out.println("Failure called");
 	}
 
-	
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		// TODO Auto-generated method stub
@@ -141,11 +141,11 @@ public class SampleSpoutTimerForTrain extends BaseRichSpout implements ISyntheti
 	}
 
 	@Override
-	public void receive(List<String> event) {;
+	public void receive(List<String> event) {
+		;
 		try {
 			this.eventQueue.put(event);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

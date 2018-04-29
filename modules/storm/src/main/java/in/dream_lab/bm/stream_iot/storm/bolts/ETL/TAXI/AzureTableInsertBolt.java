@@ -1,10 +1,7 @@
 package in.dream_lab.bm.stream_iot.storm.bolts.ETL.TAXI;
 
-import in.dream_lab.bm.stream_iot.tasks.AbstractTask;
-import in.dream_lab.bm.stream_iot.tasks.filter.RangeFilterCheck;
-import in.dream_lab.bm.stream_iot.tasks.io.AzureTableBatchInsert;
-import in.dream_lab.bm.stream_iot.tasks.io.AzureTableInsert;
-
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -19,68 +16,77 @@ import org.apache.storm.tuple.Values;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AzureTableInsertBolt  extends BaseRichBolt {
+import in.dream_lab.bm.stream_iot.tasks.io.AzureTableBatchInsert;
 
-    private Properties p;
+public class AzureTableInsertBolt extends BaseRichBolt {
 
-    public AzureTableInsertBolt(Properties p_)
-    {
-         p=p_;
+	private Properties p;
 
-    }
-    OutputCollector collector;
-    private static Logger l; 
-    public static void initLogger(Logger l_) {     l = l_; }
-    AzureTableBatchInsert azureTableInsertTask; 
-    private HashMap<String, String> tuplesMap ;
-    private int insertBatchSize ;
-    private String batchFirstMsgId;
-    @Override
-    public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
+	public AzureTableInsertBolt(Properties p_) {
+		p = p_;
 
-        this.collector=outputCollector;
-        initLogger(LoggerFactory.getLogger("APP"));
+	}
 
-        azureTableInsertTask= new AzureTableBatchInsert();
+	OutputCollector collector;
+	private static Logger l;
 
-        azureTableInsertTask.setup(l,p);
-        tuplesMap = new HashMap<String, String>();
-        insertBatchSize = Integer.parseInt(p.getProperty("IO.AZURE_TABLE.INSERTBATCHSIZE", "100"));
-    }
+	public static void initLogger(Logger l_) {
+		l = l_;
+	}
 
-    @Override
-    public void execute(Tuple input) 
-    {
-    	String msgId = (String)input.getValueByField("MSGID");
-    	String meta = (String)input.getValueByField("META");
-    	String obsType = (String)input.getValueByField("OBSTYPE");
-    	String obsVal = (String)input.getValueByField("OBSVAL");
-    	String val = obsVal + "," + msgId;
-    	int count = tuplesMap.size();
-    	
-    	if(count == 0 )
-    		batchFirstMsgId = msgId;
-    	tuplesMap.put(String.valueOf(count), obsVal);
-    	if(tuplesMap.size() >= insertBatchSize )
-    	{
-    		//System.out.println(this.getClass().getName() + " - " + Thread.currentThread().getId() + "-"+Thread.currentThread().getName());
-    		Float res = azureTableInsertTask.doTask(tuplesMap);
-    		tuplesMap = new HashMap<>();
-    	 	//collector.emit(new Values(batchFirstMsgId, meta, obsType, (String)input.getValueByField("OBSVAL")));
-    	}
-    	//long time = System.currentTimeMillis();
-    	collector.emit(new Values(msgId, meta, obsType, obsVal));
-    	
-    }
+	AzureTableBatchInsert azureTableInsertTask;
+	private HashMap<String, String> tuplesMap;
+	private int insertBatchSize;
+	private String batchFirstMsgId;
 
-    @Override
-    public void cleanup() {
-    	azureTableInsertTask.tearDown();
-    }
 
-    @Override
-    public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-    	outputFieldsDeclarer.declare(new Fields("MSGID", "META", "OBSTYPE", "OBSVAL"));
-    }
+	@Override
+	public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
+
+		this.collector = outputCollector;
+		initLogger(LoggerFactory.getLogger("APP"));
+
+		azureTableInsertTask = new AzureTableBatchInsert();
+
+		azureTableInsertTask.setup(l, p);
+		tuplesMap = new HashMap<String, String>();
+		insertBatchSize = Integer.parseInt(p.getProperty("IO.AZURE_TABLE.INSERTBATCHSIZE", "100"));
+	}
+
+	@Override
+	public void execute(Tuple input) {
+		String msgId = (String) input.getValueByField("MSGID");
+		String meta = (String) input.getValueByField("META");
+		String obsType = (String) input.getValueByField("OBSTYPE");
+		String obsVal = (String) input.getValueByField("OBSVAL");
+		String val = obsVal + "," + msgId;
+		int count = tuplesMap.size();
+
+		if (count == 0)
+			batchFirstMsgId = msgId;
+		tuplesMap.put(String.valueOf(count), obsVal);
+		if (tuplesMap.size() >= insertBatchSize) {
+			// System.out.println(this.getClass().getName() + " - " +
+			// Thread.currentThread().getId() +
+			// "-"+Thread.currentThread().getName());
+			Float res = azureTableInsertTask.doTask(tuplesMap);
+			tuplesMap = new HashMap<>();
+			// collector.emit(new Values(batchFirstMsgId, meta, obsType,
+			// (String)input.getValueByField("OBSVAL")));
+		}
+		// long time = System.currentTimeMillis();
+		collector.emit(new Values(msgId, meta, obsType, obsVal));
+
+	}
+
+	@Override
+	public void cleanup() {
+		azureTableInsertTask.tearDown();
+	}
+
+	@Override
+	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
+		outputFieldsDeclarer.declare(new Fields("MSGID", "META", "OBSTYPE", "OBSVAL"));
+	}
 
 }

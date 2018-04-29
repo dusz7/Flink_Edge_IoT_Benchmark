@@ -114,7 +114,10 @@ public class LinearRegressionPredictor extends AbstractTask<String, Float> {
 			}
 
 			testInstance = WekaUtil.prepareInstance(instanceHeader, testTuple, l);
-
+			
+			//System.out.println("LR: " + lr);
+			//System.out.println("testInstance attributes: " + testInstance.numAttributes());
+			
 			int prediction = (int) lr.classifyInstance(testInstance);
 			/*if (l.isInfoEnabled()) {
 				l.info(" ----------------------------------------- ");

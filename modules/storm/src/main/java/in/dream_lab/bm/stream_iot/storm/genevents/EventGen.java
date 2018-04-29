@@ -50,9 +50,6 @@ public class EventGen {
 
 	// Launches all the threads
 	public void launch(String csvFileName, String outCSVFileName, long experimentDurationMillis) {
-		// 1. Load CSV to in-memory data structure
-		// 2. Assign a thread with (new SubEventGen(myISEG, eventList))
-		// 3. Attach this thread to ThreadPool
 		try {
 			int numThreads = GlobalConstants.numThreads; // currently, 1
 			// double scalingFactor = GlobalConstants.accFactor;
@@ -69,46 +66,26 @@ public class EventGen {
 			List<TableClass> nestedList = CsvSplitter.roundRobinSplitCsvToMemory(csvFileName, numThreads, scalingFactor,
 					datasetType);
 
-/*			System.out.println(this.getClass().getName() + " splitted csv files to memory. nestedList");
-			for (TableClass c : nestedList)
-				System.out.println(this.getClass().getName() + " " + c.toString() + " \n + Header" + c.getHeader()
-						+ "\n # Rows" + c.getRows());
-*/
 			this.executorService = Executors.newFixedThreadPool(numThreads);
-
-			Semaphore sem1 = new Semaphore(0);
-
-			Semaphore sem2 = new Semaphore(0);
 
 			SubEventGen[] subEventGenArr = new SubEventGen[numThreads];
 			for (int i = 0; i < numThreads; i++) {
-				// this.executorService.execute(new SubEventGen(this.iseg,
-				// nestedList.get(i)));
-				subEventGenArr[i] = new SubEventGen(this.iseg, nestedList.get(i), sem1, sem2, this.rate);
-				//System.out.println(this.getClass().getName() + " submitting first runnable");
+				subEventGenArr[i] = new SubEventGen(this.iseg, nestedList.get(i), this.rate);
 				this.executorService.execute(subEventGenArr[i]);
 			}
-
-			sem1.acquire(numThreads);
-
-			//System.out.println(this.getClass().getName() + " acquired sem1");
 
 			long experiStartTs = System.currentTimeMillis();
 			// set the start time to all the thread objects
 			for (int i = 0; i < numThreads; i++) {
-				// this.executorService.execute(new SubEventGen(this.iseg,
-				// nestedList.get(i)));
+
 				subEventGenArr[i].experiStartTime = experiStartTs;
 				if (experimentDurationMillis > 0)
 					subEventGenArr[i].experiDuration = experimentDurationMillis;
 				this.executorService.execute(subEventGenArr[i]);
 			}
-			sem2.release(numThreads);
-			
+			// sem2.release(numThreads);
+
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -136,19 +113,13 @@ public class EventGen {
 
 			this.executorService = Executors.newFixedThreadPool(numThreads);
 
-//			Semaphore sem1 = new Semaphore(0);
-//
-//			Semaphore sem2 = new Semaphore(0);
-
 			SubEventGen[] subEventGenArr = new SubEventGen[numThreads];
 			for (int i = 0; i < numThreads; i++) {
-				// this.executorService.execute(new SubEventGen(this.iseg,
-				// nestedList.get(i)));
 				subEventGenArr[i] = new SubEventGen(this.iseg, nestedList.get(i), this.rate);
 				this.executorService.execute(subEventGenArr[i]);
 			}
 
-//			sem1.acquire(numThreads);
+			// sem1.acquire(numThreads);
 			// set the start time to all the thread objects
 			long experiStartTs = System.currentTimeMillis();
 			for (int i = 0; i < numThreads; i++) {
@@ -159,15 +130,15 @@ public class EventGen {
 					subEventGenArr[i].experiDuration = experimentDurationMillis;
 				this.executorService.execute(subEventGenArr[i]);
 			}
-//			sem2.release(numThreads);
+			// sem2.release(numThreads);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} 
-//		catch (InterruptedException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+		}
+		// catch (InterruptedException e) {
+		// // TODO Auto-generated catch block
+		// e.printStackTrace();
+		// }
 	}
 }
 
@@ -179,12 +150,11 @@ class SubEventGen implements Runnable {
 	Long experiDuration = 1800000L;
 	double delay = 0;
 
-	
 	public SubEventGen(ISyntheticEventGen iseg, TableClass eventList) {
 		this.iseg = iseg;
 		this.eventList = eventList;
-	} 
-	
+	}
+
 	public SubEventGen(ISyntheticEventGen iseg, TableClass eventList, Semaphore sem1, Semaphore sem2) {
 		this.iseg = iseg;
 		this.eventList = eventList;
@@ -199,7 +169,7 @@ class SubEventGen implements Runnable {
 			System.out.println(Thread.currentThread().getName() + "Delay: " + this.delay);
 		}
 	}
-	
+
 	public SubEventGen(ISyntheticEventGen iseg, TableClass eventList, int rate) {
 		this(iseg, eventList);
 		if (rate != 0) {
@@ -211,13 +181,13 @@ class SubEventGen implements Runnable {
 	@Override
 	public void run() {
 		Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
-		
-//		sem1.release();
-//		try {
-//			sem2.acquire();
-//		} catch (InterruptedException e1) {
-//			e1.printStackTrace();
-//		}
+
+		// sem1.release();
+		// try {
+		// sem2.acquire();
+		// } catch (InterruptedException e1) {
+		// e1.printStackTrace();
+		// }
 		List<List<String>> rows = this.eventList.getRows();
 		int rowLen = rows.size();
 		List<Long> timestamps = this.eventList.getTs();
@@ -231,9 +201,9 @@ class SubEventGen implements Runnable {
 		long event_emit_period;
 		long emitPeriodCount = 0;
 		long emitPeriodSum = 0;
-		
+
 		do {
-			//initTime = System.currentTimeMillis();
+			// initTime = System.currentTimeMillis();
 			for (int i = 0; i < rowLen && (runOnce || (currentRuntime < experiDuration)); i++) {
 				// Long deltaTs = timestamps.get(i);
 				List<String> event = rows.get(i);
@@ -242,25 +212,26 @@ class SubEventGen implements Runnable {
 				long start = System.nanoTime();
 				while (start + delay >= System.nanoTime())
 					;
-				
+
 				this.iseg.receive(event);
 				emitCount++;
-				
-//				if (emitCount%10000 == 0) {
-//					emitPeriodCount++;
-//					event_emit_time = System.currentTimeMillis();
-//					event_emit_period = event_emit_time - initTime;
-//					emitPeriodSum += event_emit_period;
-//					Log.info("10000 EVENTS EMITTED IN: " + (event_emit_period));
-//					Log.info("Moving average event emit: " + (double) emitPeriodSum/emitPeriodCount);
-//					initTime = System.currentTimeMillis();
-//				}
+
+				// if (emitCount%10000 == 0) {
+				// emitPeriodCount++;
+				// event_emit_time = System.currentTimeMillis();
+				// event_emit_period = event_emit_time - initTime;
+				// emitPeriodSum += event_emit_period;
+				// Log.info("10000 EVENTS EMITTED IN: " + (event_emit_period));
+				// Log.info("Moving average event emit: " + (double)
+				// emitPeriodSum/emitPeriodCount);
+				// initTime = System.currentTimeMillis();
+				// }
 
 				currentRuntime = (long) ((currentTs - experiStartTime) + (delay / 1000000));
 
 			}
 			experiRestartTime = System.currentTimeMillis();
-			
+
 		} while (!runOnce && (currentRuntime < experiDuration));
 
 	}

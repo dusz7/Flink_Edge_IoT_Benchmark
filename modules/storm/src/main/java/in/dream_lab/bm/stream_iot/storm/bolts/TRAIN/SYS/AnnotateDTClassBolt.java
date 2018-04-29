@@ -60,7 +60,7 @@ public class AnnotateDTClassBolt extends BaseRichBolt {
 		// msgId + " rowKeyEnd: " + rowkeyend
 		// + "\ndata: \n" + data);
 
-		HashMap<String, String> map = new HashMap();
+		HashMap<String, String> map = new HashMap<String, String>();
 		map.put(AbstractTask.DEFAULT_KEY, data);
 
 		// Stopwatch stopwatch = Stopwatch.createStarted(); //

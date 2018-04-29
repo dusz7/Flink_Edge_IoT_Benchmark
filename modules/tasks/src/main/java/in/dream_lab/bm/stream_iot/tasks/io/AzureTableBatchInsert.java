@@ -2,6 +2,8 @@ package in.dream_lab.bm.stream_iot.tasks.io;
 
 import in.dream_lab.bm.stream_iot.tasks.AbstractTask;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,98 +19,100 @@ import com.microsoft.azure.storage.table.TableBatchOperation;
 import com.microsoft.azure.storage.table.TableOperation;
 import com.microsoft.azure.storage.table.TableServiceEntity;
 
-
-public class AzureTableBatchInsert extends AbstractTask<String,Float>
-{	
+public class AzureTableBatchInsert extends AbstractTask<String, Float> {
 	private static final Object SETUP_LOCK = new Object();
-	private static String storageConnStr ;
-	private static String tableName ;
+	private static String storageConnStr;
+	private static String tableName;
 	private static boolean doneSetup = false;
 	private static int useMsgField;
 	private static String entity;
-	private CloudTable table ;
-	private String sampleData;  
-	
+	private CloudTable table;
+	private String sampleData;
+	BufferedWriter writer;
+
 	@Override
-	public void setup(Logger l_, Properties p_) 
-	{
+	public void setup(Logger l_, Properties p_) {
 		super.setup(l_, p_);
-		synchronized (SETUP_LOCK) 
-		{
-			if(!doneSetup)
-			{ 
-				storageConnStr = p_.getProperty("IO.AZURE_STORAGE_CONN_STR"); 
-				tableName = p_.getProperty("IO.AZURE_TABLE.TABLE_NAME");		
-				useMsgField = Integer.parseInt(p_.getProperty("IO.AZURE_TABLE.USE_MSG_FIELD", "0")); 	//not used
-				entity = p_.getProperty("IO.AZURE_TABLE.WRITE_ENTITY");			// not used
-				doneSetup=true;
+		synchronized (SETUP_LOCK) {
+			if (!doneSetup) {
+				storageConnStr = p_.getProperty("IO.AZURE_STORAGE_CONN_STR");
+				tableName = p_.getProperty("IO.AZURE_TABLE.TABLE_NAME");
+				useMsgField = Integer.parseInt(p_.getProperty("IO.AZURE_TABLE.USE_MSG_FIELD", "0")); // not
+																										// used
+				entity = p_.getProperty("IO.AZURE_TABLE.WRITE_ENTITY"); // not
+																		// used
+				doneSetup = true;
 			}
-			table = connectToAzTable(storageConnStr,tableName ,l );
+			table = connectToAzTable(storageConnStr, tableName, l);
+
+//			String fileName = "/home/talha/iot/storm/benchmarks/riot/outdir/reg-SYS/train_input_data.csv";
+//			try {
+//				writer = new BufferedWriter(new FileWriter(fileName));
+//			} catch (Exception e) {
+//				System.out.print("Exception while creating buffered writer for " + fileName);
+//			}
 		}
 	}
 
 	@Override
-	public Float doTaskLogic(Map map) 
-	{
+	public Float doTaskLogic(Map map) {
 		String tuple;
-		//System.out.println("Size of map in azure insert task " + map.size());
-		 // Define a batch operation.
-		//System.out.println(this.getClass().getName() + " - " + Thread.currentThread().getId() + "-"+Thread.currentThread().getName());
-	    TableBatchOperation batchOperation = new TableBatchOperation();
-		try 
-		{
-			for(int i = 0; i < map.size(); i++)
-			{
-				tuple = (String)map.get(String.valueOf(i));
+		// System.out.println("Size of map in azure insert task " + map.size());
+		// Define a batch operation.
+		// System.out.println(this.getClass().getName() + " - " +
+		// Thread.currentThread().getId() +
+		// "-"+Thread.currentThread().getName());
+		TableBatchOperation batchOperation = new TableBatchOperation();
+		try {
+			for (int i = 0; i < map.size(); i++) {
+				tuple = (String) map.get(String.valueOf(i));
 				SYSCity obj = SYSCity.parseString(tuple);
-				batchOperation.insert(obj);			
-			 }
-			
-			//System.out.println("AzureTableBatchInsert - Insert: " + table);			
-			
-			//ArrayList a = table.execute(batchOperation);
-			
-			System.out.println(this.getClass().getName() + " Cannot connect - LOGGING - ");// + a.size() + " - " + a.get(0));
-			return (float)map.size();
-		}
-			catch (Exception e) 
-			{
-				e.printStackTrace();
+//				writer.write(tuple + "\n");
+				// System.out.println("AZURE_TABLE_INSERT");
+				// System.out.println(tuple);
+				batchOperation.insert(obj);
 			}
-			return 0.1f;
+			// System.out.println("AzureTableBatchInsert - Insert: " + table);
+
+			// ArrayList a = table.execute(batchOperation);
+
+			System.out.println(this.getClass().getName() + " Cannot connect - LOGGING - ");
+			return (float) map.size();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return 0.1f;
 	}
-	
+
 	/***
 	 *
 	 * @param azStorageConnStr
 	 * @param tableName
 	 * @param l
-    * @return
-    */
+	 * @return
+	 */
 	public static CloudTable connectToAzTable(String azStorageConnStr, String tableName, Logger l) {
 		CloudTable cloudTable = null;
 		try {
-		
+
 			// Retrieve storage account from connection-string.
 			CloudStorageAccount storageAccount = CloudStorageAccount.parse(azStorageConnStr);
-			
+
 			// Create the table client
 			CloudTableClient tableClient = storageAccount.createCloudTableClient();
-			
+
 			// Create a cloud table object for the table.
 			cloudTable = tableClient.getTableReference(tableName);
-		
-		} catch (Exception e) 
-		{
-			l.warn("Exception in connectToAzTable: "+tableName, e);
+
+		} catch (Exception e) {
+			l.warn("Exception in connectToAzTable: " + tableName, e);
 		}
 		return cloudTable;
 	}
-	
-	
-	public static  final class TaxiTrip extends TableServiceEntity
-	{
-		private String taxi_identifier,hack_license, pickup_datetime,drop_datetime; 
+
+	public static final class TaxiTrip extends TableServiceEntity {
+		private String taxi_identifier, hack_license, pickup_datetime, drop_datetime;
+
 		public String getDrop_datetime() {
 			return drop_datetime;
 		}
@@ -116,10 +120,12 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 		public void setDrop_datetime(String drop_datetime) {
 			this.drop_datetime = drop_datetime;
 		}
-		private String trip_time_in_secs,trip_distance;
-		private String pickup_longitude,pickup_latitude,dropoff_longitude,dropoff_latitude,payment_type;
-		private String fare_amount,surcharge,mta_tax,tip_amount,tolls_amount, total_amount;
+
+		private String trip_time_in_secs, trip_distance;
+		private String pickup_longitude, pickup_latitude, dropoff_longitude, dropoff_latitude, payment_type;
+		private String fare_amount, surcharge, mta_tax, tip_amount, tolls_amount, total_amount;
 		private String company, driver, city;
+
 		public String getCompany() {
 			return company;
 		}
@@ -167,7 +173,7 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 		public void setPickup_datetime(String l) {
 			this.pickup_datetime = l;
 		}
-		
+
 		public String getTrip_time_in_secs() {
 			return trip_time_in_secs;
 		}
@@ -187,6 +193,7 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 		public String getPickup_longitude() {
 			return pickup_longitude;
 		}
+
 		public void setPickup_longitude(String pickup_longitude) {
 			this.pickup_longitude = pickup_longitude;
 		}
@@ -218,13 +225,15 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 		public String getPayment_type() {
 			return payment_type;
 		}
+
 		public void setPayment_type(String payment_type) {
 			this.payment_type = payment_type;
 		}
-		
+
 		public String getFare_amount() {
 			return fare_amount;
 		}
+
 		public void setFare_amount(String fare_amount) {
 			this.fare_amount = fare_amount;
 		}
@@ -268,13 +277,12 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 		public void setTotal_amount(String total_amount) {
 			this.total_amount = total_amount;
 		}
-		
-		public static  TaxiTrip parseString(String s)
-		{
+
+		public static TaxiTrip parseString(String s) {
 			TaxiTrip taxiObj = new TaxiTrip();
 			String fields[] = s.split(",");
-			Random r = new Random(); 
-			taxiObj.rowKey = fields[0]+"-" +fields[1]+"-"+fields[2] + r.nextInt(100);
+			Random r = new Random();
+			taxiObj.rowKey = fields[0] + "-" + fields[1] + "-" + fields[2] + r.nextInt(100);
 			taxiObj.partitionKey = "partition";
 			taxiObj.setTaxi_identifier(fields[0]);
 			taxiObj.setHack_license(fields[1]);
@@ -299,92 +307,110 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 			return taxiObj;
 		}
 	}
-	
-	public static  final class SYSCity extends TableServiceEntity
-	{
-		private String ts,source,longitude,latitude,temperature,humidity,light,dust,airquality_raw,location,type;
-		//private String msgId;
+
+	public static final class SYSCity extends TableServiceEntity {
+		private String ts, source, longitude, latitude, temperature, humidity, light, dust, airquality_raw, location,
+				type;
+
+		// private String msgId;
 		public String getTs() {
 			return ts;
 		}
+
 		public void setTs(String timestamp) {
 			this.ts = timestamp;
 		}
+
 		public String getSource() {
 			return source;
 		}
+
 		public void setSource(String source) {
 			this.source = source;
 		}
+
 		public String getLongitude() {
 			return longitude;
 		}
+
 		public void setLongitude(String longitude) {
 			this.longitude = longitude;
 		}
+
 		public String getLatitude() {
 			return latitude;
 		}
+
 		public void setLatitude(String latitude) {
 			this.latitude = latitude;
 		}
+
 		public String getTemperature() {
 			return temperature;
 		}
+
 		public void setTemperature(String temperature) {
 			this.temperature = temperature;
 		}
+
 		public String getHumidity() {
 			return humidity;
 		}
+
 		public void setHumidity(String humidity) {
 			this.humidity = humidity;
 		}
+
 		public String getLight() {
 			return light;
 		}
+
 		public void setLight(String light) {
 			this.light = light;
 		}
+
 		public String getDust() {
 			return dust;
 		}
+
 		public void setDust(String dust) {
 			this.dust = dust;
 		}
+
 		public String getAirquality_raw() {
 			return airquality_raw;
 		}
+
 		public void setAirquality_raw(String airquality_raw) {
 			this.airquality_raw = airquality_raw;
 		}
+
 		public String getLocation() {
 			return location;
 		}
+
 		public void setLocation(String location) {
 			this.location = location;
 		}
+
 		private String getType() {
 			return type;
 		}
+
 		private void setType(String type) {
 			this.type = type;
 		}
-/*		private void setMsgId(String msgId) {
-			this.msgId = msgId;
-		}
-		private String getMsgId() {
-			return this.msgId;
-		}*/
-		
-		
-		public static  SYSCity parseString(String s)
-		{
+		/*
+		 * private void setMsgId(String msgId) { this.msgId = msgId; } private
+		 * String getMsgId() { return this.msgId; }
+		 */
+
+		public static SYSCity parseString(String s) {
 			SYSCity obj = new SYSCity();
 			String fields[] = s.split(",");
-			Random r = new Random(); 
-			//obj.rowKey = fields[11];
-			obj.rowKey = fields[0]+"-" +fields[1];
+			Random r = new Random();
+			// obj.rowKey = fields[11];
+			obj.rowKey = fields[0] + "-" + fields[1];
 			obj.partitionKey = "partition";
 			obj.setTs(fields[0]);
 			obj.setSource(fields[1]);
@@ -396,29 +422,24 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 			obj.setDust(fields[7]);
 			obj.setAirquality_raw(fields[8]);
 			obj.setLocation(fields[9]);
-			obj.setType(fields[10]);	
-			//obj.setMsgId(fields[11]);
+			obj.setType(fields[10]);
+			// obj.setMsgId(fields[11]);
 			return obj;
 		}
 	}
-	
-	public static final class FITdata extends TableServiceEntity
-	{
-		private String subjectId,acc_chest_x,acc_chest_y,acc_chest_z,
-		               ecg_lead_1,ecg_lead_2,acc_ankle_x,acc_ankle_y,acc_ankle_z,
-		               gyro_ankle_x,gyro_ankle_y,gyro_ankle_z,
-		               magnetometer_ankle_x,magnetometer_ankle_y,magnetometer_ankle_z,
-		               acc_arm_x,acc_arm_y,acc_arm_z,
-		               gyro_arm_x,gyro_arm_y,gyro_arm_z,
-		               magnetometer_arm_x,magnetometer_arm_y,magnetometer_arm_z,
-		               label, age, gender;
+
+	public static final class FITdata extends TableServiceEntity {
+		private String subjectId, acc_chest_x, acc_chest_y, acc_chest_z, ecg_lead_1, ecg_lead_2, acc_ankle_x,
+				acc_ankle_y, acc_ankle_z, gyro_ankle_x, gyro_ankle_y, gyro_ankle_z, magnetometer_ankle_x,
+				magnetometer_ankle_y, magnetometer_ankle_z, acc_arm_x, acc_arm_y, acc_arm_z, gyro_arm_x, gyro_arm_y,
+				gyro_arm_z, magnetometer_arm_x, magnetometer_arm_y, magnetometer_arm_z, label, age, gender;
 		private long ts;
-		public static  FITdata parseString(String s)
-		{
+
+		public static FITdata parseString(String s) {
 			FITdata obj = new FITdata();
 			String fields[] = s.split(",");
-			Random r = new Random(); 
-			obj.rowKey = fields[0]+"-" +fields[1] +r.nextInt(100);
+			Random r = new Random();
+			obj.rowKey = fields[0] + "-" + fields[1] + r.nextInt(100);
 			obj.partitionKey = "partition";
 			obj.setSubjectId(fields[0]);
 			obj.setTs(Long.parseLong(fields[1]));
@@ -451,27 +472,22 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 			obj.setGender(fields[28]);
 			return obj;
 		}
-		
-		
+
 		public String getAge() {
 			return age;
 		}
-
 
 		public void setAge(String age) {
 			this.age = age;
 		}
 
-
 		public String getGender() {
 			return gender;
 		}
 
-
 		public void setGender(String gender) {
 			this.gender = gender;
 		}
-
 
 		public String getSubjectId() {
 			return subjectId;
@@ -680,15 +696,16 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 		public void setLabel(String label) {
 			this.label = label;
 		}
-		
+
 	}
 
-	public static final class GRIDdata extends TableServiceEntity
-	{
-		private String meterid,ts,energyconsumed, code,tariff,stimulus,sme;
+	public static final class GRIDdata extends TableServiceEntity {
+		private String meterid, ts, energyconsumed, code, tariff, stimulus, sme;
+
 		public String getTs() {
 			return ts;
 		}
+
 		public void setTs(String ts) {
 			this.ts = ts;
 		}
@@ -741,12 +758,11 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 			this.sme = sme;
 		}
 
-		public static  GRIDdata parseString(String s)
-		{
+		public static GRIDdata parseString(String s) {
 			GRIDdata gridData = new GRIDdata();
 			String fields[] = s.split(",");
-			Random r = new Random(); 
-			gridData.rowKey = fields[0]+"-"+fields[1];
+			Random r = new Random();
+			gridData.rowKey = fields[0] + "-" + fields[1];
 			gridData.partitionKey = "partition2";
 			gridData.setMeterid(fields[0]);
 			gridData.setTs(fields[1]);
@@ -759,6 +775,3 @@ public class AzureTableBatchInsert extends AbstractTask<String,Float>
 		}
 	}
 }
-		
-	
-

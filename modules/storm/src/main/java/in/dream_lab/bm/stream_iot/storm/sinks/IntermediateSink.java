@@ -16,7 +16,7 @@ public class IntermediateSink extends Sink {
 		String identifier = msgId + "," + source;
 
 		try {
-			ba.batchLogwriter(Long.parseLong(ts), identifier);
+			getBa().batchLogwriter(Long.parseLong(ts), identifier);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

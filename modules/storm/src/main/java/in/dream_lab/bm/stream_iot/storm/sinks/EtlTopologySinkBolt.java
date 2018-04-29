@@ -17,7 +17,7 @@ public class EtlTopologySinkBolt extends Sink {
 		String identifier = msgId + "," + source;
 
 		try {
-			ba.batchLogwriter(time, identifier);
+			getBa().batchLogwriter(time, identifier);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

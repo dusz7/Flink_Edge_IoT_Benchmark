@@ -26,7 +26,7 @@ public class Sink extends BaseRichBolt {
 		l = l_;
 	}
 
-	BatchedFileLogging ba;
+	private BatchedFileLogging ba;
 	String csvFileNameOutSink; // Full path name of the file at the sink bolt
 
 	public Sink(String csvFileNameOutSink) {
@@ -44,7 +44,7 @@ public class Sink extends BaseRichBolt {
 		this.collector = outputCollector;
 		BatchedFileLogging.writeToTemp(this, this.csvFileNameOutSink);
 		// ba=new BatchedFileLogging();
-		ba = new BatchedFileLogging(this.csvFileNameOutSink, topologyContext.getThisComponentId());
+		setBa(new BatchedFileLogging(this.csvFileNameOutSink, topologyContext.getThisComponentId()));
 		/*
 		 * if (ba != null) System.out.println(Thread.currentThread().getId() +
 		 * Thread.currentThread().getName() + this.getClass().getName() +
@@ -57,7 +57,7 @@ public class Sink extends BaseRichBolt {
 		String msgId = input.getStringByField("MSGID");
 
 		try {
-			ba.batchLogwriter(System.currentTimeMillis(), msgId);
+			getBa().batchLogwriter(System.currentTimeMillis(), msgId);
 			// ba.batchLogwriter(System.currentTimeMillis(),msgId+","+exe_time);//addon
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -68,5 +68,13 @@ public class Sink extends BaseRichBolt {
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
 
+	}
+
+	public BatchedFileLogging getBa() {
+		return ba;
+	}
+
+	public void setBa(BatchedFileLogging ba) {
+		this.ba = ba;
 	}
 }

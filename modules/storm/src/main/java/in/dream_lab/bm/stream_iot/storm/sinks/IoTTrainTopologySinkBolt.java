@@ -15,7 +15,7 @@ public class IoTTrainTopologySinkBolt extends Sink {
 		String identifier = msgId + "," + analyticType;
 
 		try {
-			ba.batchLogwriter(System.currentTimeMillis(), identifier);
+			getBa().batchLogwriter(System.currentTimeMillis(), identifier);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

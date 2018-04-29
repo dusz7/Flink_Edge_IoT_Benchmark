@@ -71,7 +71,7 @@ public class SecondOrderMomentBolt extends BaseRichBolt {
 
             }
             else {
-                if (l.isWarnEnabled()) l.warn("Error in secondordermomentBolt");
+                // if (l.isWarnEnabled()) l.warn("Error in secondordermomentBolt");
                 throw new RuntimeException();
             }
         }

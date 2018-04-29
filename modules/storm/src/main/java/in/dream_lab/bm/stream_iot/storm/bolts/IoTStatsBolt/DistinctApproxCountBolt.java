@@ -32,7 +32,8 @@ public class DistinctApproxCountBolt extends BaseRichBolt {
 		l = l_;
 	}
 
-	DistinctApproxCount distinctApproxCount;
+	// DistinctApproxCount distinctApproxCount;
+	Map<String, DistinctApproxCount> distinctMap;
 	String useMsgField;
 	// Map<String, DistinctApproxCount> distinctApproxCountMap ;
 
@@ -44,27 +45,36 @@ public class DistinctApproxCountBolt extends BaseRichBolt {
 		this.useMsgField = p.getProperty("AGGREGATE.DISTINCT_APPROX_COUNT.USE_MSG_FIELD");
 		// distinctApproxCountMap = new HashMap<String, DistinctApproxCount>();
 		//System.out.println("use msg  " + useMsgField);
-		distinctApproxCount = new DistinctApproxCount();
-		distinctApproxCount.setup(l, p);
+		// distinctApproxCount = new DistinctApproxCount();
+		// distinctApproxCount.setup(l, p);
+		
+		distinctMap = new HashMap<String, DistinctApproxCount>();
 	}
 
 	@Override
 	public void execute(Tuple input) {
 
 		String msgId = input.getStringByField("MSGID");
-		String sensorMeta = input.getStringByField("META");
-		String sensorID = input.getStringByField("SENSORID");
-		String obsType = input.getStringByField("OBSTYPE");
+		String sensorMeta = input.getStringByField("sensorMeta");
+		String sensorID = input.getStringByField("sensorID");
+		String obsType = input.getStringByField("obsType");
 
 		HashMap<String, String> map = new HashMap();
 		map.put(AbstractTask.DEFAULT_KEY, sensorID);
 
-		Float res = null;
-
-		if (obsType.equals(useMsgField)) { // useMsgField=source
-			distinctApproxCount.doTask(map);
-			res = (Float) distinctApproxCount.getLastResult();
+		if (!distinctMap.containsKey(obsType)) {
+			DistinctApproxCount distinctApproxCount = new DistinctApproxCount();
+			distinctApproxCount.setup(l, p);
+			distinctMap.put(obsType, distinctApproxCount);
 		}
+		
+		DistinctApproxCount distinctApproxCount = distinctMap.get(obsType);
+		
+		Float res = null;
+		//if (obsType.equals(useMsgField)) { // useMsgField=source
+		distinctApproxCount.doTask(map);
+		res = (Float) distinctApproxCount.getLastResult();
+		//}
 
 		if (res != null) {
 			sensorMeta = sensorMeta.concat(",").concat(obsType);
@@ -74,8 +84,8 @@ public class DistinctApproxCountBolt extends BaseRichBolt {
 				//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
 				collector.emit(values);
 			} else {
-				if (l.isWarnEnabled())
-					l.warn("Error in distinct approx");
+				//if (l.isWarnEnabled())
+				//	l.warn("Error in distinct approx");
 				throw new RuntimeException();
 			}
 		}
@@ -88,7 +98,7 @@ public class DistinctApproxCountBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("META", "SENSORID", "OBSTYPE", "res", "MSGID"));
+		outputFieldsDeclarer.declare(new Fields("sensorMeta", "sensorID", "obsType", "res", "MSGID"));
 	}
 
 }

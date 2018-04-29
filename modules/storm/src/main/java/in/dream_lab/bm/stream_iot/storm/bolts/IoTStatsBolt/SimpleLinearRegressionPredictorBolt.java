@@ -53,10 +53,10 @@ public class SimpleLinearRegressionPredictorBolt extends BaseRichBolt {
 	@Override
 	public void execute(Tuple input) {
 		String msgId = input.getStringByField("MSGID");
-		String sensorMeta = input.getStringByField("META");
+		String sensorMeta = input.getStringByField("sensorMeta");
 
-		String sensorID = input.getStringByField("SENSORID");
-		String obsType = input.getStringByField("OBSTYPE");
+		String sensorID = input.getStringByField("sensorID");
+		String obsType = input.getStringByField("obsType");
 		String key = sensorID + obsType;
 
 		String kalmanUpdatedVal = input.getStringByField("kalmanUpdatedVal");
@@ -100,7 +100,7 @@ public class SimpleLinearRegressionPredictorBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("SENSORID", "META", "OBSTYPE", "res", "MSGID"));
+		outputFieldsDeclarer.declare(new Fields("sensorID", "sensorMeta", "obsType", "res", "MSGID"));
 	}
 
 }

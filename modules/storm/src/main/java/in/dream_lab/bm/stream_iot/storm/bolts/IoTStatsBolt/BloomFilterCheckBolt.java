@@ -2,6 +2,7 @@ package in.dream_lab.bm.stream_iot.storm.bolts.IoTStatsBolt;
 
 import in.dream_lab.bm.stream_iot.tasks.AbstractTask;
 import in.dream_lab.bm.stream_iot.tasks.filter.BloomFilterCheck;
+import in.dream_lab.bm.stream_iot.tasks.filter.MultipleBloomFilterCheck;
 
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
@@ -28,7 +29,8 @@ public class BloomFilterCheckBolt extends BaseRichBolt {
     private OutputCollector collector; 
 	private Properties p;
 
-    BloomFilterCheck bloomFilterCheck;
+    // BloomFilterCheck bloomFilterCheck;
+    MultipleBloomFilterCheck bloomFilterCheck;
 
 
     public BloomFilterCheckBolt(Properties p_){
@@ -40,7 +42,8 @@ public class BloomFilterCheckBolt extends BaseRichBolt {
 
         this.collector=outputCollector;
         
-        bloomFilterCheck=new BloomFilterCheck();
+        // bloomFilterCheck=new BloomFilterCheck();
+        bloomFilterCheck = new MultipleBloomFilterCheck();
         bloomFilterCheck.setup(l,p);
     }
 
@@ -55,7 +58,8 @@ public class BloomFilterCheckBolt extends BaseRichBolt {
         String obsType=input.getStringByField("obsType");
         
         HashMap<String, String> map = new HashMap();
-        map.put(AbstractTask.DEFAULT_KEY, obsVal);
+        // map.put(AbstractTask.DEFAULT_KEY, obsVal);
+        map.put(obsType, obsVal);
         Float res = bloomFilterCheck.doTask(map); // obsval change
 
 
@@ -63,14 +67,14 @@ public class BloomFilterCheckBolt extends BaseRichBolt {
         if(res!=null ) {
             if(res!=Float.MIN_VALUE) {
 
-                if(l.isInfoEnabled())
-                l.info("res from bloom-"+res);
+                // if(l.isInfoEnabled())
+                // l.info("res from bloom-"+res);
 
                 if(res==1)
                     collector.emit(new Values(sensorMeta,sensorID,obsType,obsVal,msgId));
             }
             else {
-                if (l.isWarnEnabled()) l.warn("Error in BloomFilterCheckBolt");
+                // if (l.isWarnEnabled()) l.warn("Error in BloomFilterCheckBolt");
                 throw new RuntimeException();
             }
         }

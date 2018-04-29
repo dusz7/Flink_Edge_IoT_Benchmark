@@ -61,19 +61,22 @@ public class IoTTrainTopologySYS {
 		conf.setDebug(false);
 		conf.setNumAckers(0);
 		
-		conf.put("policy", "signal");
-		conf.put("consume", "all");
+		// conf.put("policy", "eda-random");
+		conf.put("policy", "eda-dynamic");
+		// conf.put("policy", "eda-static");
+		// conf.put("static-bolt-ids", "SenMLParseBoltPREDSYS,DecisionTreeClassifyBolt,LinearRegressionPredictorBolt,BlockWindowAverageBolt,ErrorEstimationBolt,MQTTPublishBolt,sink");
+		// conf.put("static-bolt-weights", "30,17,21,14,14,37,45");
+		// conf.put("static-bolt-weights", "17,19,25,15,15,27,47");
 		
-		System.out.println("\n\n CONSUME ALL \n\n");
-		
-		
-		/*conf.put("policy", "signal");
+		// conf.put("consume", "all");
 		conf.put("consume", "constant");
 		conf.put("constant", 100);
-
-		System.out.println("\n\n CONSUME CONSTANT 100 \n\n");*/
 		
-		// conf.setNumWorkers(12);
+		conf.put("get_wait_time", true);
+		conf.put("get_empty_time", true);
+		conf.put("info_path", argumentClass.getOutputDirName());
+		conf.put("get_queue_time", true);
+		conf.put("queue_time_sample_freq", inputRate * 3);
 
 		Properties p_ = new Properties();
 		InputStream input = new FileInputStream(taskPropFilename);

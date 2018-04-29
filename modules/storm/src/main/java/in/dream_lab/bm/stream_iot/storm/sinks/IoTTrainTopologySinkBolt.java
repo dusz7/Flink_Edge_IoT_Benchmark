@@ -11,8 +11,9 @@ public class IoTTrainTopologySinkBolt extends Sink {
 	@Override
 	public void execute(Tuple input) {
 		String msgId = input.getStringByField("MSGID");
-		String analyticType = input.getStringByField("ANALYTICTYPE");
-		String identifier = msgId + "," + analyticType;
+		//String analyticType = input.getStringByField("ANALYTICTYPE");
+		//String identifier = msgId + "," + analyticType;
+		String identifier = msgId + ",onepath";
 
 		try {
 			ba.batchLogwriter(System.currentTimeMillis(), identifier);

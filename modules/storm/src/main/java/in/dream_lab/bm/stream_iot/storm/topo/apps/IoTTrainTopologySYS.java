@@ -22,6 +22,10 @@ import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.utils.Utils;
 
+import com.github.staslev.storm.metrics.MetricReporter;
+import com.github.staslev.storm.metrics.MetricReporterConfig;
+import com.github.staslev.storm.metrics.yammer.SimpleStormMetricProcessor;
+
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Enumeration;
@@ -61,8 +65,14 @@ public class IoTTrainTopologySYS {
 		conf.setDebug(false);
 		conf.setNumAckers(0);
 		
-		// conf.put("policy", "eda-random");
-		conf.put("policy", "eda-dynamic");
+		MetricReporterConfig metricReporterConfig = new MetricReporterConfig(".*",
+				SimpleStormMetricProcessor.class.getCanonicalName(), Long.toString(inputRate), Long.toString((long) (numEvents*1.95)));
+		
+		
+		conf.registerMetricsConsumer(MetricReporter.class, metricReporterConfig, 1);
+		
+		conf.put("policy", "eda-random");
+		// conf.put("policy", "eda-dynamic");
 		// conf.put("policy", "eda-static");
 		// conf.put("static-bolt-ids", "SenMLParseBoltPREDSYS,DecisionTreeClassifyBolt,LinearRegressionPredictorBolt,BlockWindowAverageBolt,ErrorEstimationBolt,MQTTPublishBolt,sink");
 		// conf.put("static-bolt-weights", "30,17,21,14,14,37,45");
@@ -76,7 +86,7 @@ public class IoTTrainTopologySYS {
 		conf.put("get_empty_time", true);
 		conf.put("info_path", argumentClass.getOutputDirName());
 		conf.put("get_queue_time", true);
-		conf.put("queue_time_sample_freq", inputRate * 3);
+		conf.put("queue_time_sample_freq", inputRate);
 
 		conf.put("TRAIN_DATA_FILE", resourceDir + "/train_input_data.csv");
 
@@ -106,9 +116,9 @@ public class IoTTrainTopologySYS {
 		// AzureTableRangeQueryBolt(p_), 1)
 		// .shuffleGrouping("TimeSpout");
 
-		builder.setBolt("data-read-bolt", new ReadTrainDataBolt(p_), 1).shuffleGrouping("TimeSpout");
+		builder.setBolt("data-read-bolt", new ReadTrainDataBolt(p_), 2).shuffleGrouping("TimeSpout");
 
-		builder.setBolt("LinearRegressionTrainBolt", new LinearRegressionTrainBolt(p_), 1)
+		builder.setBolt("LinearRegressionTrainBolt", new LinearRegressionTrainBolt(p_), 4)
 				.shuffleGrouping("data-read-bolt");
 
 		// builder.setBolt("AzureBlobUploadTaskBolt", new
@@ -123,7 +133,7 @@ public class IoTTrainTopologySYS {
 
 		builder.setBolt("AnnotateDTClassBolt", new AnnotateDTClassBolt(p_), 1).shuffleGrouping("data-read-bolt");
 
-		builder.setBolt("DecisionTreeTrainBolt", new DecisionTreeTrainBolt(p_), 1)
+		builder.setBolt("DecisionTreeTrainBolt", new DecisionTreeTrainBolt(p_), 4)
 				.shuffleGrouping("AnnotateDTClassBolt");
 
 		builder.setBolt("sink", new IoTTrainTopologySinkBolt(sinkLogFileName), 1).shuffleGrouping("MQTTPublishBolt");

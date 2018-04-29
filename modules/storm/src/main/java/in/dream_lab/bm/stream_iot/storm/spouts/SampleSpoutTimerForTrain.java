@@ -11,11 +11,15 @@ import org.apache.storm.topology.base.BaseRichSpout;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.tuple.Values;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Timer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -32,6 +36,12 @@ public class SampleSpoutTimerForTrain extends BaseRichSpout implements ISyntheti
 	int inputRate;
 	long numEvents;
 	long startingMsgId;
+	boolean bpMonitor = false;
+	boolean recordBp = false;
+	long bpStartTime = 0;
+	long bpTotalTime = 0;
+	Timer timer;
+	BpTime bptime;
 
 	public SampleSpoutTimerForTrain() {
 		// this.csvFileName = "/home/ubuntu/sample100_sense.csv";
@@ -86,13 +96,46 @@ public class SampleSpoutTimerForTrain extends BaseRichSpout implements ISyntheti
 			values.add(Long.toString(msgId));
 			values.add(ROWKEYSTART);
 			values.add(ROWKEYEND);
-
+			
+			if (this.msgId > (this.startingMsgId + this.numEvents / 3)
+					&& (this.msgId < (this.startingMsgId + (this.numEvents * 3) / 4))) {
+				values.add(System.currentTimeMillis());
+			} else {
+				values.add(-1L);
+			}
+			
 			this._collector.emit(values);
 
-			try {
-				ba.batchLogwriter(System.currentTimeMillis(), "MSGID," + msgId);
-			} catch (Exception e) {
-				e.printStackTrace();
+			// start monitoring backpressure
+			if ((this.msgId == (this.startingMsgId + this.numEvents / 3) && !bpMonitor)) {
+				bpMonitor = true;
+				long window = 2000;
+				BpTimeIntervalMonitoringTask bpTask = new BpTimeIntervalMonitoringTask(bptime, window, 5.0);
+				timer = new Timer("BpIntervalTimer");
+				timer.scheduleAtFixedRate(bpTask, 10, window);
+			}
+
+			// stop monitoring backpressure
+			if ((this.msgId == (this.startingMsgId + (this.numEvents * 3) / 4) && bpMonitor))
+				bpMonitor = false;
+
+			if (this.msgId == this.startingMsgId + this.numEvents - 1) {
+				String dir = outSpoutCSVLogFileName.substring(0, outSpoutCSVLogFileName.lastIndexOf("/") + 1);
+				String filename = outSpoutCSVLogFileName.substring(outSpoutCSVLogFileName.lastIndexOf("/") + 1);
+				filename = dir + "back_pressure-" + filename;
+				writeBPTime(filename);
+
+				timer.cancel();
+			}
+
+			/* skip logging first 1/3 of events to reach a stable condition */
+			if (this.msgId > (this.startingMsgId + this.numEvents / 3)
+					&& (this.msgId < (this.startingMsgId + (this.numEvents * 3) / 4))) {
+				try {
+					ba.batchLogwriter(System.currentTimeMillis(), "MSGID," + msgId);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -117,18 +160,28 @@ public class SampleSpoutTimerForTrain extends BaseRichSpout implements ISyntheti
 		this.eventQueue = new LinkedBlockingQueue<List<String>>();
 		String uLogfilename = this.outSpoutCSVLogFileName;
 		this.eventGen.launch(this.csvFileName, uLogfilename); // Launch threads
-
+		
+		bptime = new BpTime();
 		ba = new BatchedFileLogging(uLogfilename, context.getThisComponentId());
 	}
 
 	@Override
 	public void ack(Object msgId) {
-		System.out.println("Acker called");
+		if (bpMonitor) {
+			recordBp = true;
+			// bpStartTime = System.currentTimeMillis();
+			bptime.setBpStartTime(System.currentTimeMillis());
+		}
 	}
 
 	@Override
 	public void fail(Object msgId) {
-		System.out.println("Failure called");
+		if (recordBp) {
+			// bpTotalTime = bpTotalTime + (System.currentTimeMillis() -
+			// bpStartTime);
+			bptime.updateBpCurrAccTime();
+			recordBp = false;
+		}
 	}
 
 	@Override
@@ -137,7 +190,7 @@ public class SampleSpoutTimerForTrain extends BaseRichSpout implements ISyntheti
 		// List<String> fieldsList = EventGen.getHeadersFromCSV(csvFileName);
 		// fieldsList.add("MSGID");
 		// declarer.declare(new Fields(fieldsList));
-		declarer.declare(new Fields("RowString", "MSGID", "ROWKEYSTART", "ROWKEYEND"));
+		declarer.declare(new Fields("RowString", "MSGID", "ROWKEYSTART", "ROWKEYEND", "TIMESTAMP"));
 	}
 
 	@Override
@@ -146,6 +199,21 @@ public class SampleSpoutTimerForTrain extends BaseRichSpout implements ISyntheti
 		try {
 			this.eventQueue.put(event);
 		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void writeBPTime(String fileName) {
+		BufferedWriter writer;
+		long bpTime = 0;
+		try {
+			writer = new BufferedWriter(new FileWriter(fileName));
+
+			bpTime = bptime.bpTotalAccTime;
+			writer.write(Long.toString(bpTime));
+			writer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

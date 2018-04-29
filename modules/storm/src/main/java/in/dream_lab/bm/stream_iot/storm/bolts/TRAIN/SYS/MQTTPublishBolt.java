@@ -51,7 +51,16 @@ public class MQTTPublishBolt extends BaseRichBolt {
 		HashMap<String, String> map = new HashMap<String, String>();
 		map.put(AbstractTask.DEFAULT_KEY, filename);
 		Float res = mqttPublishTask.doTask(map);
-		collector.emit(new Values(msgId, filename, analyticType));
+		
+		Values values = new Values(msgId, filename, analyticType);
+		
+		if (input.getLongByField("TIMESTAMP") > 0) {
+			values.add(System.currentTimeMillis());
+		} else {
+			values.add(-1L);
+		}
+		
+		collector.emit(values);
 	}
 
 	@Override
@@ -61,7 +70,7 @@ public class MQTTPublishBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("MSGID", "FILENAME", "ANALYTICTYPE"));
+		outputFieldsDeclarer.declare(new Fields("MSGID", "FILENAME", "ANALYTICTYPE", "TIMESTAMP"));
 	}
 
 }

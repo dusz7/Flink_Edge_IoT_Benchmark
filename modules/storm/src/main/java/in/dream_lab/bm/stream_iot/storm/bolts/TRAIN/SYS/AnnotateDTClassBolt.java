@@ -75,6 +75,13 @@ public class AnnotateDTClassBolt extends BaseRichBolt {
 
 		Values values = new Values(msgId, annotData, rowkeyend);
 		//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+		
+		if (input.getLongByField("TIMESTAMP") > 0) {
+			values.add(System.currentTimeMillis());
+		} else {
+			values.add(-1L);
+		}
+		
 		collector.emit(values);
 	}
 
@@ -85,7 +92,7 @@ public class AnnotateDTClassBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("MSGID", "ANNOTDATA", "ROWKEYEND"));
+		outputFieldsDeclarer.declare(new Fields("MSGID", "ANNOTDATA", "ROWKEYEND", "TIMESTAMP"));
 	}
 
 }

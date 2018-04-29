@@ -67,7 +67,15 @@ public class ParseProjectSYSBolt extends BaseRichBolt {
                 // l.info("sensorDetails : "+sensorDetails );
 
                 for(int obsIndex=0;obsIndex<observedValArr.length;obsIndex++){
-                    collector.emit(new Values(sensorDetails,sensorID,obsType[obsIndex],observedValArr[obsIndex],msgId));
+                	Values values = new Values(sensorDetails,sensorID,obsType[obsIndex],observedValArr[obsIndex],msgId);
+                	
+                	if (input.getLongByField("TIMESTAMP") > 0) {
+    					values.add(System.currentTimeMillis());
+    				} else {
+    					values.add(-1L);
+    				}
+                	
+                    collector.emit(values);
                 }
 
             }
@@ -81,7 +89,7 @@ public class ParseProjectSYSBolt extends BaseRichBolt {
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
 //        outputFieldsDeclarer.declare(new Fields("RowString","MSGID","Res"));
-        outputFieldsDeclarer.declare(new Fields("sensorMeta","sensorID","obsType","obsVal","MSGID")); // obsType = {temp, humid, airq, light, dust}
+        outputFieldsDeclarer.declare(new Fields("sensorMeta","sensorID","obsType","obsVal","MSGID", "TIMESTAMP")); // obsType = {temp, humid, airq, light, dust}
     }
 
 }

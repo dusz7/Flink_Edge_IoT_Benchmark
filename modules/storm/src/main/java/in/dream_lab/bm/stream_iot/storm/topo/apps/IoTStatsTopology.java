@@ -20,6 +20,10 @@ import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.utils.Utils;
 
+import com.github.staslev.storm.metrics.MetricReporter;
+import com.github.staslev.storm.metrics.MetricReporterConfig;
+import com.github.staslev.storm.metrics.yammer.SimpleStormMetricProcessor;
+
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Enumeration;
@@ -59,8 +63,12 @@ public class IoTStatsTopology {
 		conf.setDebug(false);
 		conf.setNumAckers(0);
 		
-		// conf.put("policy", "eda-random");
-		conf.put("policy", "eda-dynamic");
+		MetricReporterConfig metricReporterConfig = new MetricReporterConfig(".*",
+				SimpleStormMetricProcessor.class.getCanonicalName(), Long.toString(inputRate), Long.toString((long) (numEvents*14.8*0.95)));
+		conf.registerMetricsConsumer(MetricReporter.class, metricReporterConfig, 1);
+		
+		conf.put("policy", "eda-random");
+		// conf.put("policy", "eda-dynamic");
 		// conf.put("policy", "eda-static");
 		// conf.put("static-bolt-ids", "SenMLParseBoltPREDSYS,DecisionTreeClassifyBolt,LinearRegressionPredictorBolt,BlockWindowAverageBolt,ErrorEstimationBolt,MQTTPublishBolt,sink");
 		// conf.put("static-bolt-weights", "30,17,21,14,14,37,45");
@@ -75,6 +83,8 @@ public class IoTStatsTopology {
 		conf.put("info_path", argumentClass.getOutputDirName());
 		conf.put("get_queue_time", true);
 		conf.put("queue_time_sample_freq", inputRate * 3);
+		
+		conf.put(Config.WORKER_HEAP_MEMORY_MB, 1024);
 		
         Properties p_=new Properties();
         InputStream input = new FileInputStream(taskPropFilename);

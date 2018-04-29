@@ -82,6 +82,13 @@ public class DistinctApproxCountBolt extends BaseRichBolt {
 			if (res != Float.MIN_VALUE) {
 				Values values = new Values(sensorMeta, sensorID, obsType, res.toString(), msgId);
 				//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+				
+				if (input.getLongByField("TIMESTAMP") > 0) {
+    				values.add(System.currentTimeMillis());
+    			} else {
+    				values.add(-1L);
+    			}
+				
 				collector.emit(values);
 			} else {
 				//if (l.isWarnEnabled())
@@ -98,7 +105,7 @@ public class DistinctApproxCountBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("sensorMeta", "sensorID", "obsType", "res", "MSGID"));
+		outputFieldsDeclarer.declare(new Fields("sensorMeta", "sensorID", "obsType", "res", "MSGID", "TIMESTAMP"));
 	}
 
 }

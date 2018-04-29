@@ -91,6 +91,13 @@ public class KalmanFilterBolt extends BaseRichBolt {
 			if (kalmanUpdatedVal != null) {
 				Values values = new Values(sensorMeta, sensorID, obsType, kalmanUpdatedVal.toString(), msgId);
 				//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+				
+				if (input.getLongByField("TIMESTAMP") > 0) {
+					values.add(System.currentTimeMillis());
+				} else {
+					values.add(-1L);
+				}
+				
 				collector.emit(values);
 			} else {
 				// if (l.isWarnEnabled())
@@ -107,7 +114,7 @@ public class KalmanFilterBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("sensorMeta", "sensorID", "obsType", "kalmanUpdatedVal", "MSGID"));
+		outputFieldsDeclarer.declare(new Fields("sensorMeta", "sensorID", "obsType", "kalmanUpdatedVal", "MSGID", "TIMESTAMP"));
 	}
 
 }

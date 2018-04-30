@@ -135,7 +135,7 @@ public class IoTStatsTopology {
                 .fieldsGrouping("BloomFilterCheckBolt",new Fields("obsType")); // another change done already
 
         builder.setBolt("MQTTPublishTaskBolt",
-                new MQTTPublishTaskBolt(p_), 1)
+                new MQTTPublishTaskBolt(p_), 3)
                 .shuffleGrouping("SimpleLinearRegressionPredictorBolt")
                 .shuffleGrouping("SecondOrderMomentBolt")
                 .shuffleGrouping("DistinctApproxCountBolt");

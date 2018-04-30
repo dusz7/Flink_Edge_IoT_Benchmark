@@ -69,8 +69,8 @@ public class ETLTopology {
 		} else {
 			// boltInstances = new ArrayList<Integer>(Arrays.asList(1,1,1,1,1,1,1,1,1));
 			// boltInstances = new ArrayList<Integer>(Arrays.asList(4,4,4,4,4,4,4,4,4));
-			// boltInstances = new ArrayList<Integer>(Arrays.asList(1,1,1,1,1,1,1,1,2));
-			boltInstances = new ArrayList<Integer>(Arrays.asList(2,1,1,1,1,1,1,1,2));
+			boltInstances = new ArrayList<Integer>(Arrays.asList(1,1,1,1,1,1,1,1,2));
+			// boltInstances = new ArrayList<Integer>(Arrays.asList(2,1,1,1,1,1,1,1,2));
 		}
 		
 		List<String> resourceFileProps = RiotResourceFileProps.getRiotResourceFileProps();
@@ -96,14 +96,16 @@ public class ETLTopology {
 		conf.registerMetricsConsumer(MetricReporter.class, metricReporterConfig, 1);
 		
 		// conf.put("policy", "eda-random");
-		// conf.put("policy", "eda-dynamic");
-		conf.put("policy", "eda-static");
-		conf.put("static-bolt-ids", "SenMlParseBolt,RangeFilterBolt,BloomFilterBolt,InterpolationBolt,JoinBolt,AnnotationBolt,AzureInsert,CsvToSenMLBolt,PublishBolt,sink");
+		conf.put("policy", "eda-dynamic");
+		// conf.put("policy", "eda-static");
+		// conf.put("static-bolt-ids", "SenMlParseBolt,RangeFilterBolt,BloomFilterBolt,InterpolationBolt,JoinBolt,AnnotationBolt,AzureInsert,CsvToSenMLBolt,PublishBolt,sink");
 		// conf.put("static-bolt-weights", "31,15,15,25,17,9,8,19,14,22");
-		conf.put("static-bolt-weights", "12,17,16,33,16,8,8,23,14,27");
-        
+		// conf.put("static-bolt-weights", "12,17,16,33,16,8,8,23,14,27");
+		
+		// conf.put("consume", "all");
+		// conf.put("consume", "half");
 		conf.put("consume", "constant");
-		conf.put("constant", 100);
+		conf.put("constant", 400);
 		
 		conf.put("get_wait_time", true);
 		conf.put("get_empty_time", true);

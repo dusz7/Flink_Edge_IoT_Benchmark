@@ -114,19 +114,13 @@ public class LinearRegressionPredictor extends AbstractTask<String, Float> {
 			}
 
 			testInstance = WekaUtil.prepareInstance(instanceHeader, testTuple, l);
-			
-			//System.out.println("LR: " + lr);
-			//System.out.println("testInstance attributes: " + testInstance.numAttributes());
-			
-			int prediction = (int) lr.classifyInstance(testInstance);
-			/*if (l.isInfoEnabled()) {
-				l.info(" ----------------------------------------- ");
-				l.info("Test data               : {}", testInstance);
-				l.info("Test data prediction result {}", prediction);
-			}*/
 
+			float prediction = Float.MIN_VALUE;
+			synchronized (SETUP_LOCK) {
+				prediction = (float) lr.classifyInstance(testInstance);
+			}
 			// set parent to have the actual predictions
-			return super.setLastResult((float) prediction);
+			return super.setLastResult(prediction);
 
 		} catch (Exception e) {
 			l.warn("error with clasification of testInstance: " + testInstance, e);

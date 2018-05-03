@@ -90,6 +90,8 @@ public class SimpleLinearRegressionPredictorBolt extends BaseRichBolt {
 			Values values = new Values(sensorID, sensorMeta, obsType, resTostring.toString(), msgId);
 			//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
 			
+			values.add("SLR");
+			
 			if (input.getLongByField("TIMESTAMP") > 0) {
 				values.add(System.currentTimeMillis());
 			} else {
@@ -107,7 +109,7 @@ public class SimpleLinearRegressionPredictorBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("sensorID", "sensorMeta", "obsType", "res", "MSGID", "TIMESTAMP"));
+		outputFieldsDeclarer.declare(new Fields("sensorID", "sensorMeta", "obsType", "res", "MSGID", "ANALYTICTYPE", "TIMESTAMP"));
 	}
 
 }

@@ -7,6 +7,7 @@ package in.dream_lab.bm.stream_iot.storm.topo.apps;
 import in.dream_lab.bm.stream_iot.storm.bolts.IoTStatsBolt.*;
 import in.dream_lab.bm.stream_iot.storm.genevents.factory.ArgumentClass;
 import in.dream_lab.bm.stream_iot.storm.genevents.factory.ArgumentParser;
+import in.dream_lab.bm.stream_iot.storm.sinks.IoTPredictionTopologySinkBolt;
 import in.dream_lab.bm.stream_iot.storm.sinks.Sink;
 import in.dream_lab.bm.stream_iot.storm.spouts.SampleSenMLSpout;
 import in.dream_lab.bm.stream_iot.storm.spouts.SampleSpout;
@@ -77,7 +78,7 @@ public class IoTStatsTopology {
 		// conf.put("consume", "all");
 		// conf.put("consume", "half");
 		conf.put("consume", "constant");
-		conf.put("constant", 400);
+		conf.put("constant", 100);
 		
 		conf.put("get_wait_time", true);
 		conf.put("get_empty_time", true);
@@ -141,7 +142,8 @@ public class IoTStatsTopology {
                 .shuffleGrouping("SecondOrderMomentBolt")
                 .shuffleGrouping("DistinctApproxCountBolt");
 
-        builder.setBolt("sink", new Sink(sinkLogFileName), 1).shuffleGrouping("MQTTPublishTaskBolt");
+        //builder.setBolt("sink", new Sink(sinkLogFileName), 1).shuffleGrouping("MQTTPublishTaskBolt");
+        builder.setBolt("sink", new IoTPredictionTopologySinkBolt(sinkLogFileName), 1).shuffleGrouping("MQTTPublishTaskBolt");
 
 
         StormTopology stormTopology = builder.createTopology();

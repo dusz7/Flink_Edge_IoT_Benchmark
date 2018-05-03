@@ -68,6 +68,8 @@ public class MQTTPublishTaskBolt extends BaseRichBolt {
         if(publishedRes!=null ) {
         	Values values = new Values(publishedRes,msgId);
         	
+        	values.add(input.getStringByField("ANALYTICTYPE"));
+        	
         	if (input.getLongByField("TIMESTAMP") > 0) {
 				values.add(System.currentTimeMillis());
 			} else {
@@ -85,7 +87,7 @@ public class MQTTPublishTaskBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("publishedRes","MSGID", "TIMESTAMP"));
+        outputFieldsDeclarer.declare(new Fields("publishedRes","MSGID", "ANALYTICTYPE", "TIMESTAMP"));
     }
 
 }

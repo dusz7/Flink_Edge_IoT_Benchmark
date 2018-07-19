@@ -55,9 +55,10 @@ public class Sink extends BaseRichBolt {
 	@Override
 	public void execute(Tuple input) {
 		String msgId = input.getStringByField("MSGID");
+		String identifier = msgId + ",onepath";
 
 		try {
-			getBa().batchLogwriter(System.currentTimeMillis(), msgId);
+			ba.batchLogwriter(System.currentTimeMillis(), identifier);
 			// ba.batchLogwriter(System.currentTimeMillis(),msgId+","+exe_time);//addon
 		} catch (Exception e) {
 			e.printStackTrace();

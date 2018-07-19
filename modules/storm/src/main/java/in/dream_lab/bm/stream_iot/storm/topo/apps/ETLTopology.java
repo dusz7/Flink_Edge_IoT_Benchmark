@@ -67,9 +67,9 @@ public class ETLTopology {
 				System.exit(-1);
 			}
 		} else {
-			boltInstances = new ArrayList<Integer>(Arrays.asList(1,1,1,1,1,1,1,1,1));
+			// boltInstances = new ArrayList<Integer>(Arrays.asList(1,1,1,1,1,1,1,1,1));
 			// boltInstances = new ArrayList<Integer>(Arrays.asList(4,4,4,4,4,4,4,4,4));
-			// boltInstances = new ArrayList<Integer>(Arrays.asList(1,1,1,1,1,1,1,1,2));
+			boltInstances = new ArrayList<Integer>(Arrays.asList(1,1,1,1,1,1,1,1,2));
 			// boltInstances = new ArrayList<Integer>(Arrays.asList(2,1,1,1,1,1,1,1,2));
 		}
 		
@@ -90,42 +90,29 @@ public class ETLTopology {
 		
 		/*only get capacity metrics*/
         MetricReporterConfig metricReporterConfig = new MetricReporterConfig(".*",
-				SimpleStormMetricProcessor.class.getCanonicalName(), Long.toString(inputRate), Long.toString(numEvents*2));
+				SimpleStormMetricProcessor.class.getCanonicalName(), Long.toString(inputRate), Long.toString((long) (numEvents*1.95)));
 		
 		
 		conf.registerMetricsConsumer(MetricReporter.class, metricReporterConfig, 1);
 		
-		conf.put("policy", "signal-simple");
+		// conf.put("policy", "eda-random");
+		conf.put("policy", "eda-dynamic");
+		// conf.put("policy", "eda-static");
+		// conf.put("static-bolt-ids", "SenMlParseBolt,RangeFilterBolt,BloomFilterBolt,InterpolationBolt,JoinBolt,AnnotationBolt,AzureInsert,CsvToSenMLBolt,PublishBolt,sink");
+		// conf.put("static-bolt-weights", "31,15,15,25,17,9,8,19,14,22");
+		// conf.put("static-bolt-weights", "12,17,16,33,16,8,8,23,14,27");
+		
+		// conf.put("consume", "all");
+		// conf.put("consume", "half");
 		conf.put("consume", "constant");
-		conf.put("constant", 100);
-
-		conf.put("fog-runtime-debug", "false");
-		conf.put("debug-path", "/home/fuxinwei");
-
-		conf.put("input-rate-adjust-enable", false);
-		conf.put("init-freqency", inputRate);
-		conf.put("delta-threshold", 50);
-		conf.put("expire-threshold", 60);
-		conf.put("force-stable", true); 
+		conf.put("constant", 400);
 		
+		conf.put("get_wait_time", true);
+		conf.put("get_empty_time", true);
+		conf.put("info_path", argumentClass.getOutputDirName());
+		conf.put("get_queue_time", true);
+		conf.put("queue_time_sample_freq", inputRate * 3);
 		
-//		conf.put("policy", "signal-simple");
-        //conf.put("policy", "signal-group");
-        //conf.put("policy", "signal-fair");
-        //conf.put("waited_t", 8);
-        
-//		conf.put("consume", "constant");
-//		conf.put("constant", 100);
-//       
-//        conf.put("fog-runtime-debug", "false");
-//        conf.put("debug-path", "/home/fuxinwei");
-//        
-//        conf.put("input-rate-adjust-enable", false);
-//        conf.put("init-freqency", inputRate);
-//        conf.put("delta-threshold", 50);
-//        conf.put("expire-threshold", 60);
-//        conf.put("force-stable", true);
-
 		Properties p_ = new Properties();
 		InputStream input = new FileInputStream(taskPropFilename);
 		p_.load(input);

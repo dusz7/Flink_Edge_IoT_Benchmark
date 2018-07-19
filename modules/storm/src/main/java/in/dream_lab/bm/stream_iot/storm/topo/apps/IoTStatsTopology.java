@@ -7,7 +7,9 @@ package in.dream_lab.bm.stream_iot.storm.topo.apps;
 import in.dream_lab.bm.stream_iot.storm.bolts.IoTStatsBolt.*;
 import in.dream_lab.bm.stream_iot.storm.genevents.factory.ArgumentClass;
 import in.dream_lab.bm.stream_iot.storm.genevents.factory.ArgumentParser;
+import in.dream_lab.bm.stream_iot.storm.sinks.IoTPredictionTopologySinkBolt;
 import in.dream_lab.bm.stream_iot.storm.sinks.Sink;
+import in.dream_lab.bm.stream_iot.storm.spouts.SampleSenMLSpout;
 import in.dream_lab.bm.stream_iot.storm.spouts.SampleSpout;
 import vt.lee.lab.storm.riot_resources.RiotResourceFileProps;
 
@@ -18,6 +20,10 @@ import org.apache.storm.generated.StormTopology;
 import org.apache.storm.topology.TopologyBuilder;
 import org.apache.storm.tuple.Fields;
 import org.apache.storm.utils.Utils;
+
+import com.github.staslev.storm.metrics.MetricReporter;
+import com.github.staslev.storm.metrics.MetricReporterConfig;
+import com.github.staslev.storm.metrics.yammer.SimpleStormMetricProcessor;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -44,16 +50,44 @@ public class IoTStatsTopology {
         String logFilePrefix = argumentClass.getTopoName() + "-" + argumentClass.getExperiRunId() + "-" + argumentClass.getScalingFactor() + ".log";
         String sinkLogFileName = argumentClass.getOutputDirName() + "/sink-" + logFilePrefix;
         String spoutLogFileName = argumentClass.getOutputDirName() + "/spout-" + logFilePrefix;
-        String taskPropFilename=argumentClass.getTasksPropertiesFilename();
-        System.out.println("taskPropFilename-"+taskPropFilename);
+        String taskPropFilename= inputPath + "/" +  argumentClass.getTasksPropertiesFilename();
+        // System.out.println("taskPropFilename-"+taskPropFilename);
 
+        int inputRate = argumentClass.getInputRate();
+		long numEvents = argumentClass.getNumEvents();
+		int numWorkers = argumentClass.getNumWorkers();
+        
 		List<String> resourceFileProps = RiotResourceFileProps.getRiotResourceFileProps();
         
         Config conf = new Config();
         conf.put(Config.TOPOLOGY_BACKPRESSURE_ENABLE, true);
 		conf.setDebug(false);
 		conf.setNumAckers(0);
-
+		
+		MetricReporterConfig metricReporterConfig = new MetricReporterConfig(".*",
+				SimpleStormMetricProcessor.class.getCanonicalName(), Long.toString(inputRate), Long.toString((long) (numEvents*14.8*0.95)));
+		conf.registerMetricsConsumer(MetricReporter.class, metricReporterConfig, 1);
+		
+		// conf.put("policy", "eda-random");
+		conf.put("policy", "eda-dynamic");
+		// conf.put("policy", "eda-static");
+		// conf.put("static-bolt-ids", "SenMLParseBoltPREDSYS,DecisionTreeClassifyBolt,LinearRegressionPredictorBolt,BlockWindowAverageBolt,ErrorEstimationBolt,MQTTPublishBolt,sink");
+		// conf.put("static-bolt-weights", "30,17,21,14,14,37,45");
+		// conf.put("static-bolt-weights", "17,19,25,15,15,27,47");
+        
+		// conf.put("consume", "all");
+		// conf.put("consume", "half");
+		conf.put("consume", "constant");
+		conf.put("constant", 100);
+		
+		conf.put("get_wait_time", true);
+		conf.put("get_empty_time", true);
+		conf.put("info_path", argumentClass.getOutputDirName());
+		conf.put("get_queue_time", true);
+		conf.put("queue_time_sample_freq", inputRate * 3);
+		
+		conf.put(Config.WORKER_HEAP_MEMORY_MB, 1024);
+		
         Properties p_=new Properties();
         InputStream input = new FileInputStream(taskPropFilename);
         p_.load(input);
@@ -69,12 +103,14 @@ public class IoTStatsTopology {
 			}
 		}
 
-		String spout1InputFilePath = resourceDir + "/SYS_sample_data_senml.csv";
+		String spout1InputFilePath = resourceDir + "/train_input_data.csv";
 		
         TopologyBuilder builder = new TopologyBuilder();
 
-        builder.setSpout("spout", new SampleSpout(spout1InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
-                1);
+        // builder.setSpout("spout", new SampleSpout(spout1InputFilePath, spoutLogFileName, argumentClass.getScalingFactor()),
+         //       1);
+        builder.setSpout("spout", new SampleSenMLSpout(spout1InputFilePath, spoutLogFileName, argumentClass.getScalingFactor(), inputRate, numEvents),
+                       1);
 
         builder.setBolt("ParseProjectSYSBolt",
                 new ParseProjectSYSBolt(p_), 1)
@@ -101,12 +137,13 @@ public class IoTStatsTopology {
                 .fieldsGrouping("BloomFilterCheckBolt",new Fields("obsType")); // another change done already
 
         builder.setBolt("MQTTPublishTaskBolt",
-                new MQTTPublishTaskBolt(p_), 1)
+                new MQTTPublishTaskBolt(p_), 3)
                 .shuffleGrouping("SimpleLinearRegressionPredictorBolt")
                 .shuffleGrouping("SecondOrderMomentBolt")
                 .shuffleGrouping("DistinctApproxCountBolt");
 
-        builder.setBolt("sink", new Sink(sinkLogFileName), 1).shuffleGrouping("MQTTPublishTaskBolt");
+        //builder.setBolt("sink", new Sink(sinkLogFileName), 1).shuffleGrouping("MQTTPublishTaskBolt");
+        builder.setBolt("sink", new IoTPredictionTopologySinkBolt(sinkLogFileName), 1).shuffleGrouping("MQTTPublishTaskBolt");
 
 
         StormTopology stormTopology = builder.createTopology();

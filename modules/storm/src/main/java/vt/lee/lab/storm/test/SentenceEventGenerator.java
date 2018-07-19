@@ -62,12 +62,12 @@ class SentenceGenerator implements Runnable {
 
 	@Override
 	public void run() {
-		long currentRuntime = 0;
+		//long currentRuntime = 0;
 		long emitted = 0;
 
 		do {
 			String event = this.events[_rand.nextInt(this.events.length)];
-			Long currentTs = System.currentTimeMillis();
+			//Long currentTs = System.currentTimeMillis();
 
 			this.issg.receive(event);
 
@@ -75,10 +75,10 @@ class SentenceGenerator implements Runnable {
 			while (start + delay >= System.nanoTime())
 				;
 
-			currentRuntime = (long) ((currentTs - experiStartTime) + (delay / 1000000));
+			//currentRuntime = (long) ((currentTs - experiStartTime) + (delay / 1000000));
 			emitted++;
-
-		} while (currentRuntime < experimentDuration && emitted <= numEvents);
+		} while (emitted <= numEvents);
+		//} while (currentRuntime < experimentDuration && emitted <= numEvents);
 
 	}
 

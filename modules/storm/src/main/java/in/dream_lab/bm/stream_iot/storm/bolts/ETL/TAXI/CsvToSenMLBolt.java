@@ -65,6 +65,13 @@ public class CsvToSenMLBolt extends BaseRichBolt {
 		Values values = new Values(msgId, meta, "senml", updatedValue);
 		// System.out.println(this.getClass().getName() + " - LOG - " +
 		// values.toString());
+		
+		if (input.getLongByField("TIMESTAMP") > 0) {
+			values.add(System.currentTimeMillis());
+		} else {
+			values.add(-1L);
+		}
+		
 		collector.emit(values);
 	}
 
@@ -75,7 +82,7 @@ public class CsvToSenMLBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("MSGID", "META", "OBSTYPE", "OBSVAL"));
+		outputFieldsDeclarer.declare(new Fields("MSGID", "META", "OBSTYPE", "OBSVAL", "TIMESTAMP"));
 	}
 
 }

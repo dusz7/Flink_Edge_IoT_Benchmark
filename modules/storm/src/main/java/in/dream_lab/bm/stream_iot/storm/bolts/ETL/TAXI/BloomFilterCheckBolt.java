@@ -66,12 +66,25 @@ public class BloomFilterCheckBolt  extends BaseRichBolt {
 	    	String updatedValue = (res != 0) ? obsVal : "null";
 	    	Values values = new Values(msgId, sensorId ,meta,obsType ,updatedValue);
 	    	//System.out.println(this.getClass().getName() + " - LOGS - BloomFilter Applied - " + values.toString());
+	    	
+	    	if (input.getLongByField("TIMESTAMP") > 0) {
+				values.add(System.currentTimeMillis());
+			} else {
+				values.add(-1L);
+			}
+	    	
 	    	collector.emit(values);
     	}
     	else 
     	{
     		Values values = new Values(msgId, sensorId ,meta,obsType ,obsVal);
     		//System.out.println(this.getClass().getName() + " - LOGS - " + values.toString());
+    		
+    		if (input.getLongByField("TIMESTAMP") > 0) {
+				values.add(System.currentTimeMillis());
+			} else {
+				values.add(-1L);
+			}
     		collector.emit(values);
     	}
     }
@@ -83,7 +96,7 @@ public class BloomFilterCheckBolt  extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-    	outputFieldsDeclarer.declare(new Fields("MSGID", "SENSORID" , "META", "OBSTYPE", "OBSVAL"));
+    	outputFieldsDeclarer.declare(new Fields("MSGID", "SENSORID" , "META", "OBSTYPE", "OBSVAL", "TIMESTAMP"));
     }
 
 }

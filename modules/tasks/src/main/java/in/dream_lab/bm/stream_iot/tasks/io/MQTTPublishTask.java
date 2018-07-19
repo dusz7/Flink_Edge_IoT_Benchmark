@@ -55,8 +55,8 @@ public class MQTTPublishTask extends AbstractTask implements MqttCallback {
 		apolloClient = UUID.randomUUID().toString();
 		mqttClient = connectToMQTT(apolloURL, apolloClient, this, l);
 		assert mqttClient != null;
-		if (l.isInfoEnabled())
-			l.info("Client ID {} is connected.", mqttClient.getClientId());
+		//if (l.isInfoEnabled())
+		//	l.info("Client ID {} is connected.", mqttClient.getClientId());
 	}
 
 	@Override
@@ -74,7 +74,7 @@ public class MQTTPublishTask extends AbstractTask implements MqttCallback {
 		try { /* publish the message */
 			if (!mqttClient.isConnected()) {
 				System.out.println("MQTT not connected ");
-				l.warn("Client ID {} was not connected. Reconnecting...", mqttClient.getClientId());
+				//l.warn("Client ID {} was not connected. Reconnecting...", mqttClient.getClientId());
 				mqttClient = connectToMQTT(apolloURL, apolloClient, this, l); // connect
 																				// on
 																				// demand
@@ -109,9 +109,9 @@ public class MQTTPublishTask extends AbstractTask implements MqttCallback {
 		} catch (MqttException e) {
 			l.warn("Exception when closing mqtt client" + mqttClient, e);
 		}
-		if (l.isInfoEnabled()) {
-			l.info("Connection closed !!");
-		}
+		//if (l.isInfoEnabled()) {
+		//	l.info("Connection closed !!");
+		//}
 		return result;
 	}
 
@@ -128,9 +128,9 @@ public class MQTTPublishTask extends AbstractTask implements MqttCallback {
 			connOpt.setUserName(apolloUserName);
 			connOpt.setPassword(apolloPassword.toCharArray());
 
-			if (l.isInfoEnabled())
-				l.info("Apollo Client {}, URL {}, Username {}, Pass {}", apolloClient, apolloURL, apolloUserName,
-						apolloPassword);
+			//if (l.isInfoEnabled())
+			//	l.info("Apollo Client {}, URL {}, Username {}, Pass {}", apolloClient, apolloURL, apolloUserName,
+			//			apolloPassword);
 
 			// client with no persistence
 			MqttClient myClient = new MqttClient(apolloURL, apolloClient, null);
@@ -140,8 +140,8 @@ public class MQTTPublishTask extends AbstractTask implements MqttCallback {
 			myClient.setCallback(callback);
 			myClient.connect(connOpt);
 
-			if (l.isInfoEnabled())
-				l.info("Connected to Apollo thru client {} - ", myClient);
+			//if (l.isInfoEnabled())
+			//	l.info("Connected to Apollo thru client {} - ", myClient);
 
 			return myClient;
 		} catch (Exception e) {
@@ -154,7 +154,7 @@ public class MQTTPublishTask extends AbstractTask implements MqttCallback {
 
 	@Override
 	public void connectionLost(Throwable e) {
-		l.warn("MQTT connectionLost for client ID " + apolloClient, e);
+		//l.warn("MQTT connectionLost for client ID " + apolloClient, e);
 	}
 
 	@Override

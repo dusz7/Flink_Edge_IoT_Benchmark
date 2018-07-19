@@ -75,6 +75,13 @@ public class MQTTPublishBolt extends BaseRichBolt {
 		
 		Values values = new Values(msgId, meta,analyticsType, obsVal);
 		//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+		
+		if (input.getLongByField("TIMESTAMP") > 0) {
+			values.add(System.currentTimeMillis());
+		} else {
+			values.add(-1L);
+		}
+		
 		collector.emit(values);
 		
 	}
@@ -86,7 +93,7 @@ public class MQTTPublishBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("MSGID", "META", "ANALYTICTYPE" ,"OBSVAL"));
+		outputFieldsDeclarer.declare(new Fields("MSGID", "META", "ANALYTICTYPE" ,"OBSVAL", "TIMESTAMP"));
 	}
 
 }

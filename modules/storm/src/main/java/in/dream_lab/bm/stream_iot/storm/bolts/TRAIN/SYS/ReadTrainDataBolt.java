@@ -77,12 +77,19 @@ public class ReadTrainDataBolt extends BaseRichBolt {
 
 		}
 		Values values = new Values(bf.toString(), msgId, ROWKEYEND);
+		
+		if (input.getLongByField("TIMESTAMP") > 0) {
+			values.add(System.currentTimeMillis());
+		} else {
+			values.add(-1L);
+		}
+		
 		collector.emit(values);
 	}
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("TRAINDATA", "MSGID", "ROWKEYEND"));
+		declarer.declare(new Fields("TRAINDATA", "MSGID", "ROWKEYEND", "TIMESTAMP"));
 	}
 
 	private List<AzureTableRangeQueryTaskSYS.SYS_City> readData(long start, long end) {

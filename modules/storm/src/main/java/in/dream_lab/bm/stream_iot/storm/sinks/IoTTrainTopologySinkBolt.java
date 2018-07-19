@@ -13,6 +13,7 @@ public class IoTTrainTopologySinkBolt extends Sink {
 		String msgId = input.getStringByField("MSGID");
 		String analyticType = input.getStringByField("ANALYTICTYPE");
 		String identifier = msgId + "," + analyticType;
+		// String identifier = msgId + ",onepath";
 
 		try {
 			getBa().batchLogwriter(System.currentTimeMillis(), identifier);

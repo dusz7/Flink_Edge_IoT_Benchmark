@@ -94,7 +94,14 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 		msgId++;
 		values.add(Long.toString(msgId));
 		values.add(newRow);
-
+		
+		if (this.msgId > (this.startingMsgId + this.numEvents / 3)
+				&& (this.msgId < (this.startingMsgId + (this.numEvents * 3) / 4))) {
+			values.add(System.currentTimeMillis());
+		} else {
+			values.add(-1L);
+		}
+		
 		this._collector.emit(values);
 
 		// start monitoring backpressure
@@ -171,7 +178,7 @@ public class SampleSenMLSpout extends BaseRichSpout implements ISyntheticEventGe
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("MSGID", "PAYLOAD"));
+		declarer.declare(new Fields("MSGID", "PAYLOAD", "TIMESTAMP"));
 	}
 
 	@Override

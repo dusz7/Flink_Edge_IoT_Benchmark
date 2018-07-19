@@ -67,12 +67,26 @@ public class InterpolationBolt extends BaseRichBolt {
 		if (res == null) {
 			Values values = new Values(msgId, sensorId, meta, obsType, obsVal); 
 			//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+			
+			if (input.getLongByField("TIMESTAMP") > 0) {
+				values.add(System.currentTimeMillis());
+			} else {
+				values.add(-1L);
+			}
+			
 			collector.emit(values);
 		}
 		else {
 			if (res != Float.MIN_VALUE) {
 				Values values = new Values(msgId, sensorId, meta, obsType, res.toString()); 
 				//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+				
+				if (input.getLongByField("TIMESTAMP") > 0) {
+					values.add(System.currentTimeMillis());
+				} else {
+					values.add(-1L);
+				}
+				
 				collector.emit(values);
 
 			} else {
@@ -90,7 +104,7 @@ public class InterpolationBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("MSGID", "SENSORID", "META", "OBSTYPE", "OBSVAL"));
+		outputFieldsDeclarer.declare(new Fields("MSGID", "SENSORID", "META", "OBSTYPE", "OBSVAL", "TIMESTAMP"));
 	}
 
 }

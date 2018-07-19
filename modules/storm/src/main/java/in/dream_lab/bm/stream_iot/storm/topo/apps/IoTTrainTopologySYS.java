@@ -71,8 +71,8 @@ public class IoTTrainTopologySYS {
 		
 		conf.registerMetricsConsumer(MetricReporter.class, metricReporterConfig, 1);
 		
-		conf.put("policy", "eda-random");
-		// conf.put("policy", "eda-dynamic");
+		// conf.put("policy", "eda-random");
+		conf.put("policy", "eda-dynamic");
 		// conf.put("policy", "eda-static");
 		// conf.put("static-bolt-ids", "SenMLParseBoltPREDSYS,DecisionTreeClassifyBolt,LinearRegressionPredictorBolt,BlockWindowAverageBolt,ErrorEstimationBolt,MQTTPublishBolt,sink");
 		// conf.put("static-bolt-weights", "30,17,21,14,14,37,45");

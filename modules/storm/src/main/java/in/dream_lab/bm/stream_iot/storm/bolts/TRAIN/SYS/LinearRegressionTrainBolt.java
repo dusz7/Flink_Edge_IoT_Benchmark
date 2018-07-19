@@ -126,6 +126,13 @@ public class LinearRegressionTrainBolt extends BaseRichBolt {
 		if (res != null) {
 			if (res != Float.MIN_VALUE) {
 				Values values = new Values(model, msgId, rowkeyend, "MLR", filename);
+				
+				if (input.getLongByField("TIMESTAMP") > 0) {
+					values.add(System.currentTimeMillis());
+				} else {
+					values.add(-1L);
+				}
+				
 				collector.emit(values);
 			} else {
 				if (l.isWarnEnabled())
@@ -142,7 +149,7 @@ public class LinearRegressionTrainBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("MODEL", "MSGID", "ROWKEYEND", "ANALAYTICTYPE", "FILENAME"));
+		outputFieldsDeclarer.declare(new Fields("MODEL", "MSGID", "ROWKEYEND", "ANALAYTICTYPE", "FILENAME", "TIMESTAMP"));
 	}
 
 }

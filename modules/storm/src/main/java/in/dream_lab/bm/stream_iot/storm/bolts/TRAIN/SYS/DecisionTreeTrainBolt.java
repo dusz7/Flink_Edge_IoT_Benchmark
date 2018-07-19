@@ -84,6 +84,13 @@ public class DecisionTreeTrainBolt extends BaseRichBolt {
 				Values values = new Values(model, msgid, rowkeyend, "DTC", filename);
 				// System.out.println(this.getClass().getName() + " - EMITS - "
 				// + values.toString());
+				
+				if (input.getLongByField("TIMESTAMP") > 0) {
+					values.add(System.currentTimeMillis());
+				} else {
+					values.add(-1L);
+				}
+				
 				collector.emit(values);
 			} else {
 				if (l.isWarnEnabled())
@@ -100,7 +107,7 @@ public class DecisionTreeTrainBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("MODEL", "MSGID", "ROWKEYEND", "ANALAYTICTYPE", "FILENAME"));
+		outputFieldsDeclarer.declare(new Fields("MODEL", "MSGID", "ROWKEYEND", "ANALAYTICTYPE", "FILENAME", "TIMESTAMP"));
 	}
 
 }

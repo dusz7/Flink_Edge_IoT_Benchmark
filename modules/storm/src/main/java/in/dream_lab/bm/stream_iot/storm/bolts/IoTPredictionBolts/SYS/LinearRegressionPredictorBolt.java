@@ -58,7 +58,6 @@ public class LinearRegressionPredictorBolt extends BaseRichBolt {
 		// String obsType=input.getStringByField("OBSTYPE");
 		// String obsVal = input.getStringByField("OBSVAL");
 
-		
 		String msgtype = input.getStringByField("MSGTYPE");
 		String analyticsType = input.getStringByField("ANALAYTICTYPE");
 
@@ -73,9 +72,10 @@ public class LinearRegressionPredictorBolt extends BaseRichBolt {
 			// input.getValueByField("BlobModelObject");
 			// byte[] blobModelObjects =
 			// input.getBinaryByField("BlobModelObject");
-/*			if (l.isInfoEnabled())
-				l.info("blob model size " + bytesInputStream.toString());
-*/
+			/*
+			 * if (l.isInfoEnabled()) l.info("blob model size " +
+			 * bytesInputStream.toString());
+			 */
 			// TODO: 1- Either write model file to local disk - no task code
 			// change
 			// TODO: 2- Pass it as bytestream , need to update the code for task
@@ -85,10 +85,10 @@ public class LinearRegressionPredictorBolt extends BaseRichBolt {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-/*			if (this.l.isInfoEnabled()) {
-				this.l.info("Model is {} ", LinearRegressionPredictor.lr.toString());
-			}*/
-
+			/*
+			 * if (this.l.isInfoEnabled()) { this.l.info("Model is {} ",
+			 * LinearRegressionPredictor.lr.toString()); }
+			 */
 		}
 
 		if (!msgtype.equals("modelupdate")) {
@@ -96,8 +96,9 @@ public class LinearRegressionPredictorBolt extends BaseRichBolt {
 			msgId = input.getStringByField("MSGID");
 			// sensorMeta = input.getStringByField("META");
 
-/*			if (l.isInfoEnabled())
-				l.info("obsVal-" + obsVal);*/
+			/*
+			 * if (l.isInfoEnabled()) l.info("obsVal-" + obsVal);
+			 */
 		}
 		//
 
@@ -106,12 +107,13 @@ public class LinearRegressionPredictorBolt extends BaseRichBolt {
 		map.put(AbstractTask.DEFAULT_KEY, obsVal);
 		Float res = linearRegressionPredictor.doTask(map);
 
-//		l.info("res linearRegressionPredictor-" + res);
+		// l.info("res linearRegressionPredictor-" + res);
 
 		if (res != null) {
 			if (res != Float.MIN_VALUE) {
 				Values values = new Values(sensorMeta, obsVal, msgId, res.toString(), "MLR");
-				//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+				// System.out.println(this.getClass().getName() + " - EMITS - "
+				// + values.toString());
 				collector.emit(values);
 			} else {
 				if (l.isWarnEnabled())

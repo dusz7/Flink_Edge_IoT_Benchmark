@@ -99,8 +99,7 @@ public class SampleSpoutTimerForTrain extends BaseRichSpout implements ISyntheti
 
 	@Override
 	public void open(Map map, TopologyContext context, SpoutOutputCollector collector) {
-		// TODO Auto-generated method stub
-
+		
 		BatchedFileLogging.writeToTemp(this, this.outSpoutCSVLogFileName);
 		Random r = new Random();
 

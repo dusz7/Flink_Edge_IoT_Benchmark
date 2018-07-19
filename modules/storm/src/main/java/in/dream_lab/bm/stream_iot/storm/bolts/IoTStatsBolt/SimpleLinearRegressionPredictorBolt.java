@@ -88,10 +88,10 @@ public class SimpleLinearRegressionPredictorBolt extends BaseRichBolt {
 			sensorMeta = sensorMeta.concat(",").concat(obsType);
 			obsType = "SLR";
 			Values values = new Values(sensorID, sensorMeta, obsType, resTostring.toString(), msgId);
-			//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+			// System.out.println(this.getClass().getName() + " - EMITS - " +
+			// values.toString());
 			collector.emit(values);
 		}
-
 	}
 
 	@Override

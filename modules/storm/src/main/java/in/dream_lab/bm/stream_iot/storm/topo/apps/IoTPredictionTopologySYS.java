@@ -4,7 +4,6 @@ package in.dream_lab.bm.stream_iot.storm.topo.apps;
  * Created by anshushukla on 03/06/16.
  */
 
-
 import in.dream_lab.bm.stream_iot.storm.bolts.ETL.TAXI.SenMLParseBolt;
 import in.dream_lab.bm.stream_iot.storm.bolts.IoTPredictionBolts.SYS.*;
 import in.dream_lab.bm.stream_iot.storm.genevents.factory.ArgumentClass;
@@ -36,83 +35,80 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
 
-
 /**
  * Created by anshushukla on 18/05/15.
  */
 public class IoTPredictionTopologySYS {
 
-    public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {
 
-        ArgumentClass argumentClass = ArgumentParser.parserCLI(args);
-        if (argumentClass == null) {
-            System.out.println("ERROR! INVALID NUMBER OF ARGUMENTS");
-            return;
-        }
+		ArgumentClass argumentClass = ArgumentParser.parserCLI(args);
+		if (argumentClass == null) {
+			System.out.println("ERROR! INVALID NUMBER OF ARGUMENTS");
+			return;
+		}
 		String resourceDir = System.getenv("RIOT_RESOURCES");
 		String inputPath = System.getenv("RIOT_INPUT_PROP_PATH");
 
-        String logFilePrefix = argumentClass.getTopoName() + "-" + argumentClass.getExperiRunId() + "-" + argumentClass.getScalingFactor() + ".log";
-        String sinkLogFileName = argumentClass.getOutputDirName() + "/sink-" + logFilePrefix;
-        String spoutLogFileName = argumentClass.getOutputDirName() + "/spout-" + logFilePrefix;
-        String taskPropFilename = inputPath + "/" +  argumentClass.getTasksPropertiesFilename();
-        System.out.println("taskPropFilename-"+taskPropFilename);
+		String logFilePrefix = argumentClass.getTopoName() + "-" + argumentClass.getExperiRunId() + "-"
+				+ argumentClass.getScalingFactor() + ".log";
+		String sinkLogFileName = argumentClass.getOutputDirName() + "/sink-" + logFilePrefix;
+		String spoutLogFileName = argumentClass.getOutputDirName() + "/spout-" + logFilePrefix;
+		String taskPropFilename = inputPath + "/" + argumentClass.getTasksPropertiesFilename();
+		System.out.println("taskPropFilename-" + taskPropFilename);
 		int inputRate = argumentClass.getInputRate();
 		long numEvents = argumentClass.getNumEvents();
 		int numWorkers = argumentClass.getNumWorkers();
 
 		List<Integer> boltInstances = argumentClass.getBoltInstances();
 		if (boltInstances != null) {
-			if ((boltInstances.size() != 5)) {
+			if ((boltInstances.size() != 6)) {
 				System.out.println("Invalid Number of bolt instances provided. Exiting");
 				System.exit(-1);
 			}
 		} else {
-			boltInstances = new ArrayList<Integer>(Arrays.asList(1,1,1,1,1));
+			boltInstances = new ArrayList<Integer>(Arrays.asList(1, 1, 1, 1, 1, 1));
 			// boltInstances = new ArrayList<Integer>(Arrays.asList(4,4,4,4,4));
 			// boltInstances = new ArrayList<Integer>(Arrays.asList(2,1,1,1,3));
 			// boltInstances = new ArrayList<Integer>(Arrays.asList(3,1,1,1,4));
 		}
-		
+
 		System.out.println("Bolt instances");
 		System.out.println(boltInstances);
-		
-		
+
 		List<String> resourceFileProps = RiotResourceFileProps.getPredSysResourceFileProps();
 
-
-        Config conf = new Config();
+		Config conf = new Config();
 		conf.put(Config.TOPOLOGY_BACKPRESSURE_ENABLE, true);
 		conf.setDebug(false);
 		conf.setNumAckers(0);
-		
+
 		conf.put("policy", "signal-simple");
-        //conf.put("policy", "signal-group");
-        //conf.put("policy", "signal-fair");
-        //conf.put("waited_t", 8);
-        
+		// conf.put("policy", "signal-group");
+		// conf.put("policy", "signal-fair");
+		// conf.put("waited_t", 8);
+
 		conf.put("consume", "constant");
 		conf.put("constant", 100);
-       
-        conf.put("fog-runtime-debug", "false");
-        conf.put("debug-path", "/home/fuxinwei");
-        
-        conf.put("input-rate-adjust-enable", false);
-        conf.put("init-freqency", inputRate);
-        conf.put("delta-threshold", 50);
-        conf.put("expire-threshold", 60);
-        conf.put("force-stable", true);
-		
+
+		conf.put("fog-runtime-debug", "false");
+		conf.put("debug-path", "/home/fuxinwei");
+
+		conf.put("input-rate-adjust-enable", false);
+		conf.put("init-freqency", inputRate);
+		conf.put("delta-threshold", 50);
+		conf.put("expire-threshold", 60);
+		conf.put("force-stable", true);
+
 		MetricReporterConfig metricReporterConfig = new MetricReporterConfig(".*",
 				SimpleStormMetricProcessor.class.getCanonicalName(), Long.toString(inputRate),
 				Long.toString(numEvents * 2));
 
 		conf.registerMetricsConsumer(MetricReporter.class, metricReporterConfig, 1);
-		
 
-        Properties p_=new Properties();
-        InputStream input = new FileInputStream(taskPropFilename);
-        p_.load(input);
+		Properties p_ = new Properties();
+		InputStream input = new FileInputStream(taskPropFilename);
+		p_.load(input);
 
 		Enumeration e = p_.propertyNames();
 
@@ -125,76 +121,74 @@ public class IoTPredictionTopologySYS {
 			}
 		}
 
-        TopologyBuilder builder = new TopologyBuilder();
+		TopologyBuilder builder = new TopologyBuilder();
 
+		String spout1InputFilePath = resourceDir + "/SYS_sample_data_senml.csv";
 
-        String spout1InputFilePath= resourceDir + "/SYS_sample_data_senml.csv";
-        
-         builder.setSpout("spout1", new SampleSenMLSpout(spout1InputFilePath, spoutLogFileName, argumentClass.getScalingFactor(), inputRate, numEvents),
-                1);
+		builder.setSpout("spout1", new SampleSenMLSpout(spout1InputFilePath, spoutLogFileName,
+				argumentClass.getScalingFactor(), inputRate, numEvents), 1);
 
-        builder.setBolt("SenMLParseBoltPREDSYS",
-                new SenMLParseBoltPREDSYS(p_), boltInstances.get(0))
-                .shuffleGrouping("spout");
+		builder.setBolt("SenMLParseBoltPREDSYS", new SenMLParseBoltPREDSYS(p_), boltInstances.get(0))
+				.shuffleGrouping("spout1");
 
+		/*
+		 * builder.setSpout("mqttSubscribeTaskBolt", new
+		 * MQTTSubscribeSpout(p_,"dummyLog-SYS"), 1); // "RowString" should have
+		 * path of blob
+		 * 
+		 * builder.setBolt("AzureBlobDownloadTaskBolt", new
+		 * AzureBlobDownloadTaskBolt(p_), 1)
+		 * .shuffleGrouping("mqttSubscribeTaskBolt");
+		 */
 
-/*        builder.setSpout("mqttSubscribeTaskBolt",
-                new MQTTSubscribeSpout(p_,"dummyLog-SYS"), 1); // "RowString" should have path of blob
+		builder.setBolt("DecisionTreeClassifyBolt", new DecisionTreeClassifyBolt(p_), boltInstances.get(1))
+				.shuffleGrouping("SenMLParseBoltPREDSYS");
+		// .fieldsGrouping("AzureBlobDownloadTaskBolt",new
+		// Fields("ANALAYTICTYPE"));
+		//
+		//
+		builder.setBolt("LinearRegressionPredictorBolt", new LinearRegressionPredictorBolt(p_), boltInstances.get(2))
+				.shuffleGrouping("SenMLParseBoltPREDSYS");
+		// .fieldsGrouping("AzureBlobDownloadTaskBolt",new
+		// Fields("ANALAYTICTYPE"));
 
-        builder.setBolt("AzureBlobDownloadTaskBolt",
-                new AzureBlobDownloadTaskBolt(p_), 1)
-                .shuffleGrouping("mqttSubscribeTaskBolt");*/
+		builder.setBolt("BlockWindowAverageBolt", new BlockWindowAverageBolt(p_), boltInstances.get(3))
+				.shuffleGrouping("SenMLParseBoltPREDSYS");
 
-        builder.setBolt("DecisionTreeClassifyBolt",
-                new DecisionTreeClassifyBolt(p_), boltInstances.get(1))
-                .shuffleGrouping("SenMLParseBoltPREDSYS");
-//                .fieldsGrouping("AzureBlobDownloadTaskBolt",new Fields("ANALAYTICTYPE"));
-//
-//
-        builder.setBolt("LinearRegressionPredictorBolt",
-                new LinearRegressionPredictorBolt(p_), 1)
-                .shuffleGrouping("SenMLParseBoltPREDSYS");
-//                .fieldsGrouping("AzureBlobDownloadTaskBolt",new Fields("ANALAYTICTYPE"));
+		//
+		builder.setBolt("ErrorEstimationBolt", new ErrorEstimationBolt(p_), boltInstances.get(4))
+				.shuffleGrouping("BlockWindowAverageBolt").shuffleGrouping("LinearRegressionPredictorBolt");
 
+		builder.setBolt("MQTTPublishBolt", new MQTTPublishBolt(p_), boltInstances.get(5))
+				.shuffleGrouping("ErrorEstimationBolt").shuffleGrouping("DecisionTreeClassifyBolt");
 
-        builder.setBolt("BlockWindowAverageBolt",
-                new BlockWindowAverageBolt(p_), boltInstances.get(2))
-                .shuffleGrouping("SenMLParseBoltPREDSYS");
+		/*
+		 * builder.setBolt("sink", new Sink(sinkLogFileName),
+		 * 1).shuffleGrouping("MQTTPublishBolt");
+		 */
+		builder.setBolt("sink", new IoTPredictionTopologySinkBolt(sinkLogFileName), 1)
+				.shuffleGrouping("MQTTPublishBolt");
 
-//
-        builder.setBolt("ErrorEstimationBolt",
-                new ErrorEstimationBolt(p_), boltInstances.get(3))
-                .shuffleGrouping("BlockWindowAverageBolt")
-                .shuffleGrouping("LinearRegressionPredictorBolt");
+		StormTopology stormTopology = builder.createTopology();
 
-        builder.setBolt("MQTTPublishBolt",
-                new MQTTPublishBolt(p_), boltInstances.get(4))
-                .shuffleGrouping("ErrorEstimationBolt")
-                .shuffleGrouping("DecisionTreeClassifyBolt") ;
-
-
-/*        builder.setBolt("sink", new Sink(sinkLogFileName), 1).shuffleGrouping("MQTTPublishBolt");
-*/
-        builder.setBolt("sink", new IoTPredictionTopologySinkBolt(sinkLogFileName), 1).shuffleGrouping("MQTTPublishBolt");
-
-
-        StormTopology stormTopology = builder.createTopology();
-
-        if (argumentClass.getDeploymentMode().equals("C")) {
+		if (argumentClass.getDeploymentMode().equals("C")) {
 			System.out.println("Spout Log File: " + spoutLogFileName);
 			System.out.println("Sink Log File: " + sinkLogFileName);
-            StormSubmitter.submitTopology(argumentClass.getTopoName(), conf, stormTopology);
-        } else {
-            LocalCluster cluster = new LocalCluster();
-            cluster.submitTopology(argumentClass.getTopoName(), conf, stormTopology);
-            Utils.sleep(600000);
-            cluster.killTopology(argumentClass.getTopoName());
-            cluster.shutdown();
+			StormSubmitter.submitTopology(argumentClass.getTopoName(), conf, stormTopology);
+		} else {
+			LocalCluster cluster = new LocalCluster();
+			cluster.submitTopology(argumentClass.getTopoName(), conf, stormTopology);
+			Utils.sleep(600000);
+			cluster.killTopology(argumentClass.getTopoName());
+			cluster.shutdown();
 			System.out.println("Input Rate: " + metric_utils.Utils.getInputRate(spoutLogFileName));
 			System.out.println("Throughput: " + metric_utils.Utils.getThroughput(sinkLogFileName));
-        }
-    }
+		}
+	}
 }
 
-
-//    L   IdentityTopology  /Users/anshushukla/PycharmProjects/DataAnlytics1/Storm-Scheduler-SC-scripts/SYS-inputcsv-predict-10spouts600mps-480sec-file/SYS-inputcsv-predict-10spouts600mps-480sec-file1.csv     SYS-210  0.001   /Users/anshushukla/data/output/temp    /Users/anshushukla/Downloads/Incomplete/stream/iot-bm/modules/tasks/src/main/resources/tasks_CITY.properties  test
+// L IdentityTopology
+// /Users/anshushukla/PycharmProjects/DataAnlytics1/Storm-Scheduler-SC-scripts/SYS-inputcsv-predict-10spouts600mps-480sec-file/SYS-inputcsv-predict-10spouts600mps-480sec-file1.csv
+// SYS-210 0.001 /Users/anshushukla/data/output/temp
+// /Users/anshushukla/Downloads/Incomplete/stream/iot-bm/modules/tasks/src/main/resources/tasks_CITY.properties
+// test

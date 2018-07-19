@@ -116,6 +116,13 @@ public class SenMLParseBoltPREDSYS extends BaseRichBolt {
 			Values values = new Values(msgId, resultMap.get(idField), meta.toString(), "dummyobsType",
 					obsVal.toString(), "MSGTYPE", "DumbType");
 			//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+			
+			if (tuple.getLongByField("TIMESTAMP") > 0) {
+				values.add(System.currentTimeMillis());
+			} else {
+				values.add(-1L);
+			}
+			
 			collector.emit(values);
 
 		} catch (Exception e) {
@@ -125,7 +132,7 @@ public class SenMLParseBoltPREDSYS extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("MSGID", "SENSORID", "META", "OBSTYPE", "OBSVAL", "MSGTYPE", "ANALAYTICTYPE"));
+		declarer.declare(new Fields("MSGID", "SENSORID", "META", "OBSTYPE", "OBSVAL", "MSGTYPE", "ANALAYTICTYPE", "TIMESTAMP"));
 	}
 
 	@Override

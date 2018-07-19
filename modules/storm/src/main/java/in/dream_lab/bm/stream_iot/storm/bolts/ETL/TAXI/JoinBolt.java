@@ -115,6 +115,13 @@ public class JoinBolt extends BaseRichBolt {
 				msgIdCountMap.remove(msgIdLong);
 				Values values = new Values(msgId, meta, "joinedValue", joinedValues.toString());
 				//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+				
+				if (input.getLongByField("TIMESTAMP") > 0) {
+					values.add(System.currentTimeMillis());
+				} else {
+					values.add(-1L);
+				}
+				
 				collector.emit(values);
 			}
 		}
@@ -161,6 +168,13 @@ public class JoinBolt extends BaseRichBolt {
 						
 */				Values values = new Values(msgId, meta, "joinedValue", joinedValues.toString());
 				//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+				
+				if (input.getLongByField("TIMESTAMP") > 0) {
+					values.add(System.currentTimeMillis());
+				} else {
+					values.add(-1L);
+				}
+
 				collector.emit(values);
 			}
 		}
@@ -173,6 +187,6 @@ public class JoinBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("MSGID", "META", "OBSTYPE", "OBSVAL"));
+		outputFieldsDeclarer.declare(new Fields("MSGID", "META", "OBSTYPE", "OBSVAL", "TIMESTAMP"));
 	}
 }

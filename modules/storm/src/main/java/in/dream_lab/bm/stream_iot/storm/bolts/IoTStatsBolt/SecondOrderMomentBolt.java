@@ -60,18 +60,27 @@ public class SecondOrderMomentBolt extends BaseRichBolt {
 
         Float res = (Float) secondOrderMoment.getLastResult();
 
-        if(l.isInfoEnabled())
-            l.info("secondordermoment:"+res);
+        //if(l.isInfoEnabled())
+        //    l.info("secondordermoment:"+res);
 
 
         if(res!=null ) {
             if(res!=Float.MIN_VALUE) {
-
-                collector.emit(new Values(sensorMeta,sensorID,obsType,res.toString(),msgId));
+            	Values values = new Values(sensorMeta,sensorID,obsType,res.toString(),msgId);
+            	
+            	values.add("SOM");
+            	
+            	if (input.getLongByField("TIMESTAMP") > 0) {
+    				values.add(System.currentTimeMillis());
+    			} else {
+    				values.add(-1L);
+    			}
+            	
+                collector.emit(values);
 
             }
             else {
-                if (l.isWarnEnabled()) l.warn("Error in secondordermomentBolt");
+                // if (l.isWarnEnabled()) l.warn("Error in secondordermomentBolt");
                 throw new RuntimeException();
             }
         }
@@ -83,7 +92,7 @@ public class SecondOrderMomentBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("sensorMeta","sensorID","obsType","res","MSGID"));
+        outputFieldsDeclarer.declare(new Fields("sensorMeta","sensorID","obsType","res","MSGID","ANALYTICTYPE", "TIMESTAMP"));
     }
 
 }

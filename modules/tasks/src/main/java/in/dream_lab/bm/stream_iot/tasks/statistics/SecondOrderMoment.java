@@ -69,8 +69,8 @@ public class SecondOrderMoment extends AbstractTask {
 		if (itemToFreqArrayIndexMap.size() < maxMapSize)
 			nextAvailIndex++;
 
-		if (l.isInfoEnabled())
-			l.info("Result of SecondOrderMoment op-" + result);
+		//if (l.isInfoEnabled())
+		//	l.info("Result of SecondOrderMoment op-" + result);
 
 //		return (float) result;
 		return  (Float)super.setLastResult(result);
@@ -96,19 +96,19 @@ public class SecondOrderMoment extends AbstractTask {
 			Map<Float, Integer> itemToIndexMap, float[] items, int[] freq,
 			int nextAvailIndex, Logger l) {
 
-		if (l.isInfoEnabled()) {// print the Map
-			for (Float key : itemToIndexMap.keySet()) {
-				l.info("Key: {} , ArrayIndex: {}, Freq: {}", key, itemToIndexMap.get(key), freq[itemToIndexMap.get(key)]);
-			}
-		}
+		//if (l.isInfoEnabled()) {// print the Map
+		//	for (Float key : itemToIndexMap.keySet()) {
+		//		l.info("Key: {} , ArrayIndex: {}, Freq: {}", key, itemToIndexMap.get(key), freq[itemToIndexMap.get(key)]);
+		//	}
+		//}
 
 		if (!itemToIndexMap.containsKey(item)) { // input item not present
 			if (itemToIndexMap.size() < maxMapSize) { // have spare capacity, add new item to end of freq array
 				itemToIndexMap.put(item, nextAvailIndex);
 				freq[nextAvailIndex] = 1;
 				items[nextAvailIndex] = item;
-				if (l.isInfoEnabled())
-					l.info("CASE1:New entry {}", item);
+				//if (l.isInfoEnabled())
+				//	l.info("CASE1:New entry {}", item);
 			} else { // dont have spare capacity, replace random old item by new item
 				// pick a random item to remove from items[] array
 				int rndItemIndex = ThreadLocalRandom.current().nextInt(maxMapSize);
@@ -118,23 +118,23 @@ public class SecondOrderMoment extends AbstractTask {
 				itemToIndexMap.put(item, replacementIndex);
 				freq[replacementIndex] = 1;
 				items[replacementIndex] = item;
-				if (l.isInfoEnabled())
-					l.info("CASE2:Reached max size, replacing rnd item {} with new item {}", rndItem, item);
+				//if (l.isInfoEnabled())
+				//	l.info("CASE2:Reached max size, replacing rnd item {} with new item {}", rndItem, item);
 			}
 		} else { // element-key is already in Map
 			int itemIndex = itemToIndexMap.get(item);
 			freq[itemIndex]++;
-			if (l.isInfoEnabled())
-				l.info("CASE3:Key {} is already in map, freq is {}", item, freq[itemIndex]);
+			//if (l.isInfoEnabled())
+			//	l.info("CASE3:Key {} is already in map, freq is {}", item, freq[itemIndex]);
 		}
 
 		// calculate the 2nd order moment using Alon-Matias-Szegedy Algorithm
-		if (l.isInfoEnabled()) l.info("TEST array {}", Arrays.toString(freq));
+		//if (l.isInfoEnabled()) l.info("TEST array {}", Arrays.toString(freq));
 
 		float surpriseNumber = 0;
 		for (int countOfElement : freq) {
 			surpriseNumber += counter * (2 * countOfElement - 1);
-			if (l.isInfoEnabled()) l.info("{},{},{}", counter, countOfElement, surpriseNumber);
+			//if (l.isInfoEnabled()) l.info("{},{},{}", counter, countOfElement, surpriseNumber);
 		}
 		surpriseNumber = surpriseNumber / itemToIndexMap.size();
 		

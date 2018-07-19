@@ -58,6 +58,13 @@ public class AnnotationBolt extends BaseRichBolt {
     	if (updatedValue != null ){    		
 			Values values = new Values(msgId, meta, "annoatedValue", updatedValue);
 			//System.out.println(this.getClass().getName() + " - LOGS - " + values.toString());
+			
+			if (input.getLongByField("TIMESTAMP") > 0) {
+				values.add(System.currentTimeMillis());
+			} else {
+				values.add(-1L);
+			}
+			
 			collector.emit(values);
     	} else {
     		//System.out.println(this.getClass().getName() + " - UPDATED VALUE = NULL - " + obsVal);
@@ -71,7 +78,7 @@ public class AnnotationBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("MSGID", "META", "OBSTYPE", "OBSVAL"));
+        outputFieldsDeclarer.declare(new Fields("MSGID", "META", "OBSTYPE", "OBSVAL", "TIMESTAMP"));
     }
 
 }

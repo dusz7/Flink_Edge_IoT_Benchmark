@@ -10,6 +10,14 @@ public class TopologyArgumentClass {
 	String outputDirName; // Path where the output log file from spout and sink
 							// has to be kept
 	List<Integer> boltInstances;
+	List<Integer> boltComplexities = new ArrayList<Integer>();
+	List<Integer> boltInputRatios = new ArrayList<Integer>();
+	List<Integer> boltOutputRatios = new ArrayList<Integer>();
+	
+	String boltInstancesStr;
+	String boltComplexitiesStr;
+	String boltInputRatiosStr;
+	String boltOutputRatiosStr;
 	
 	int inputRate;
 	int numWorkers;
@@ -72,15 +80,65 @@ public class TopologyArgumentClass {
 	}
 	
 	public void setBoltInstances(String boltInstanceList) {
-    	String[] list = boltInstanceList.split(",");
-    	boltInstances = new ArrayList<Integer>();
-    	for (String bolt : list) {
-    		boltInstances.add(Integer.parseInt(bolt));
-    	}
+		boltInstancesStr = boltInstanceList;
+		String[] list = boltInstanceList.split(",");
+		boltInstances = new ArrayList<Integer>();
+		for (String bolt : list) {
+			boltInstances.add(Integer.parseInt(bolt));
+		}
+	}
+	
+	public void setBoltComplexities(String str) {
+		boltComplexitiesStr = str;
+		fillListFromStr(boltComplexities, str);
     }
-
+	
+	public void setBoltInputRatios(String str) {
+		boltInputRatiosStr = str;
+		fillListFromStr(boltInputRatios, str);
+    }
+	
+	public void setBoltOutputRatios(String str) {
+		boltOutputRatiosStr = str;
+		fillListFromStr(boltOutputRatios, str);
+    }
+	
     public List<Integer> getBoltInstances() {
     	return boltInstances;
     }
+    
+    public String getBoltInstancesStr() {
+    	return boltInstancesStr;
+    }
+    
+    public List<Integer> getBoltComplexities() {
+    	return boltComplexities;
+    }
+    
+    public String getBoltComplexitiesStr() {
+    	return boltComplexitiesStr;
+    }
+    
+    public List<Integer> getBoltInputRatios() {
+    	return boltInputRatios;
+    }
+    
+    public String getBoltInputRatiosStr() {
+    	return boltInputRatiosStr;
+    }
+    
+    public List<Integer> getBoltOutputRatios() {
+    	return boltOutputRatios;
+    }
+    
+    public String getBoltOutputRatiosStr() {
+    	return boltOutputRatiosStr;
+    }
 
+    private void fillListFromStr(List<Integer> list, String str) {
+    	String[] strArray = str.split(",");
+    	for (String intStr : strArray) {
+    		list.add(Integer.parseInt(intStr));
+    	}
+    }
 }

@@ -53,21 +53,29 @@ public class ParseProjectSYSBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple input) {
-        String rowString = input.getStringByField("RowString");
+        String rowString = input.getStringByField("PAYLOAD");
         String msgId = input.getStringByField("MSGID");
 
 {
-
+				// System.out.println("rowString: " + rowString);
                 String[] rowStringArray = rowString.split(",");
-                sensorDetails= StringUtils.join(Arrays.copyOfRange(rowStringArray, 0, 4), ","); //TODO: ts to lat
+                sensorDetails= StringUtils.join(Arrays.copyOfRange(rowStringArray, 0, 3), ","); //TODO: ts to lat
                 sensorID= rowStringArray[1];
-                observedValArr = Arrays.copyOfRange(rowStringArray, 4, 9);  // temp to aq
+                observedValArr = Arrays.copyOfRange(rowStringArray, 3, 8);  // temp to aq
 
-                if(l.isInfoEnabled())
-                l.info("sensorDetails : "+sensorDetails );
+                // if(l.isInfoEnabled())
+                // l.info("sensorDetails : "+sensorDetails );
 
                 for(int obsIndex=0;obsIndex<observedValArr.length;obsIndex++){
-                    collector.emit(new Values(sensorDetails,sensorID,obsType[obsIndex],observedValArr[obsIndex],msgId));
+                	Values values = new Values(sensorDetails,sensorID,obsType[obsIndex],observedValArr[obsIndex],msgId);
+                	
+                	if (input.getLongByField("TIMESTAMP") > 0) {
+    					values.add(System.currentTimeMillis());
+    				} else {
+    					values.add(-1L);
+    				}
+                	
+                    collector.emit(values);
                 }
 
             }
@@ -81,7 +89,7 @@ public class ParseProjectSYSBolt extends BaseRichBolt {
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
 //        outputFieldsDeclarer.declare(new Fields("RowString","MSGID","Res"));
-        outputFieldsDeclarer.declare(new Fields("sensorMeta","sensorID","obsType","obsVal","MSGID")); // obsType = {temp, humid, airq, light, dust}
+        outputFieldsDeclarer.declare(new Fields("sensorMeta","sensorID","obsType","obsVal","MSGID", "TIMESTAMP")); // obsType = {temp, humid, airq, light, dust}
     }
 
 }

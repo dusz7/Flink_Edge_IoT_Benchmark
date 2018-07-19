@@ -22,7 +22,7 @@ public class TopologyArgumentParser {
 	 * */
 	
 	public static TopologyArgumentClass parserCLI(String[] args) {
-		if (args == null || !(args.length == 7 || args.length == 8)) {
+		if (args == null || !(args.length == 7 || args.length == 8 || args.length == 11)) {
 			System.out.println("invalid number of arguments");
 			return null;
 		} else {
@@ -36,6 +36,12 @@ public class TopologyArgumentParser {
 			argumentClass.setNumWorkers(Integer.parseInt(args[6]));
 			if (args.length == 8)
             	argumentClass.setBoltInstances(args[7]);
+			if (args.length == 11) {
+				argumentClass.setBoltInstances(args[7]);
+				argumentClass.setBoltComplexities(args[8]);
+				argumentClass.setBoltInputRatios(args[9]);
+				argumentClass.setBoltOutputRatios(args[10]);
+			}
 			return argumentClass;
 		}
 	}

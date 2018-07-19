@@ -61,11 +61,11 @@ public class KalmanFilterBolt extends BaseRichBolt {
 	public void execute(Tuple input) {
 
 		String msgId = input.getStringByField("MSGID");
-		String sensorMeta = input.getStringByField("META");
-		String sensorID = input.getStringByField("SENSORID");
-		String obsType = input.getStringByField("OBSTYPE");
-		String obsVal = input.getStringByField("OBSVAL");
-
+		String sensorMeta = input.getStringByField("sensorMeta");
+		String sensorID = input.getStringByField("sensorID");
+		String obsType = input.getStringByField("obsType");
+		String obsVal = input.getStringByField("obsVal");
+		
 		if (useMsgList.contains(obsType)) {
 
 			String key = sensorID + obsType;
@@ -91,10 +91,17 @@ public class KalmanFilterBolt extends BaseRichBolt {
 			if (kalmanUpdatedVal != null) {
 				Values values = new Values(sensorMeta, sensorID, obsType, kalmanUpdatedVal.toString(), msgId);
 				//System.out.println(this.getClass().getName() + " - EMITS - " + values.toString());
+				
+				if (input.getLongByField("TIMESTAMP") > 0) {
+					values.add(System.currentTimeMillis());
+				} else {
+					values.add(-1L);
+				}
+				
 				collector.emit(values);
 			} else {
-				if (l.isWarnEnabled())
-					l.warn("Error in KalmanFilterBolt and Val is -" + kalmanUpdatedVal);
+				// if (l.isWarnEnabled())
+				//	l.warn("Error in KalmanFilterBolt and Val is -" + kalmanUpdatedVal);
 				throw new RuntimeException();
 			}
 		}
@@ -107,7 +114,7 @@ public class KalmanFilterBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("META", "SENSORID", "OBSTYPE", "kalmanUpdatedVal", "MSGID"));
+		outputFieldsDeclarer.declare(new Fields("sensorMeta", "sensorID", "obsType", "kalmanUpdatedVal", "MSGID", "TIMESTAMP"));
 	}
 
 }

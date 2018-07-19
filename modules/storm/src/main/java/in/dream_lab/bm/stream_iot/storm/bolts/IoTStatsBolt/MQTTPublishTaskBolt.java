@@ -52,21 +52,31 @@ public class MQTTPublishTaskBolt extends BaseRichBolt {
 
 //        String res="2015-01-27T06:52:23.000Z;ci527ripa000403471yii8wim;121.370579;31.196056-temp-2358.3333#2363.994#2369.6545#2375.3152#2380.9758#2386.6365#2392.2969#2397.9575#2403.6182#2409.2788#";
 
-        if(l.isInfoEnabled())
-            l.info("mqttpublishTaskres"+res);
+        //if(l.isInfoEnabled())
+        //   l.info("mqttpublishTaskres"+res);
 
         HashMap<String, String> map = new HashMap();
         map.put(AbstractTask.DEFAULT_KEY, res);
         mqttpublishTask.doTask(map);
         String publishedRes = (String) mqttpublishTask.getLastResult();
 
-        if(l.isInfoEnabled())
-            l.info("mqttpublishTask:"+publishedRes);
+        //if(l.isInfoEnabled())
+        //    l.info("mqttpublishTask:"+publishedRes);
 
 
 
         if(publishedRes!=null ) {
-                collector.emit(new Values(publishedRes,msgId));
+        	Values values = new Values(publishedRes,msgId);
+        	
+        	values.add(input.getStringByField("ANALYTICTYPE"));
+        	
+        	if (input.getLongByField("TIMESTAMP") > 0) {
+				values.add(System.currentTimeMillis());
+			} else {
+				values.add(-1L);
+			}
+        	
+            collector.emit(values);
         }
     }
 
@@ -77,7 +87,7 @@ public class MQTTPublishTaskBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("publishedRes","MSGID"));
+        outputFieldsDeclarer.declare(new Fields("publishedRes","MSGID", "ANALYTICTYPE", "TIMESTAMP"));
     }
 
 }

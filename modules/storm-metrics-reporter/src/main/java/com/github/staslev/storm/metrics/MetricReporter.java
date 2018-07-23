@@ -159,7 +159,6 @@ public class MetricReporter implements IMetricsConsumer {
 
 	@Override
 	public void handleDataPoints(final TaskInfo taskInfo, final Collection<DataPoint> dataPoints) {
-
 		final Map<String, List<Metric>> component2metrics = toMetricsByComponent(dataPoints, taskInfo);
 		final ImmutableList<Metric> capacityMetrics = CapacityCalculator.calculateCapacityMetrics(component2metrics,
 				taskInfo);

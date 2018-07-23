@@ -12,6 +12,7 @@ import in.dream_lab.bm.stream_iot.storm.sinks.IoTPredictionTopologySinkBolt;
 import in.dream_lab.bm.stream_iot.storm.sinks.Sink;
 import in.dream_lab.bm.stream_iot.storm.spouts.MQTTSubscribeSpout;
 import in.dream_lab.bm.stream_iot.storm.spouts.SampleSenMLSpout;
+import in.dream_lab.bm.stream_iot.storm.spouts.SampleSenMLTimerSpout;
 import vt.lee.lab.storm.riot_resources.RiotResourceFileProps;
 import in.dream_lab.bm.stream_iot.storm.spouts.SampleSenMLSpout;
 //import in.dream_lab.bm.stream_iot.storm.spouts.TimeSpout;
@@ -108,9 +109,9 @@ public class IoTPredictionTopologySYS {
 		// conf.put("static-bolt-weights", "30,17,21,14,14,37,45");
 		// conf.put("static-bolt-weights", "17,19,25,15,15,27,47");
 
-		conf.put("consume", "all");
-		// conf.put("consume", "constant");
-		// conf.put("constant", 100);
+		// conf.put("consume", "all");
+		conf.put("consume", "constant");
+		conf.put("constant", 100);
 
 		conf.put("get_wait_time", true);
 		conf.put("get_empty_time", true);
@@ -143,7 +144,7 @@ public class IoTPredictionTopologySYS {
 
 		String spout1InputFilePath = resourceDir + "/SYS_sample_data_senml.csv";
 
-		builder.setSpout("spout", new SampleSenMLSpout(spout1InputFilePath, spoutLogFileName,
+		builder.setSpout("spout", new SampleSenMLTimerSpout(spout1InputFilePath, spoutLogFileName,
 				argumentClass.getScalingFactor(), inputRate, numEvents), 1);
 
 		builder.setBolt("SenMLParseBoltPREDSYS", new SenMLParseBoltPREDSYS(p_), boltInstances.get(0))

@@ -36,6 +36,7 @@ import in.dream_lab.bm.stream_iot.storm.genevents.factory.ArgumentClass;
 import in.dream_lab.bm.stream_iot.storm.genevents.factory.ArgumentParser;
 import in.dream_lab.bm.stream_iot.storm.sinks.EtlTopologySinkBolt;
 import in.dream_lab.bm.stream_iot.storm.spouts.SampleSenMLSpout;
+import in.dream_lab.bm.stream_iot.storm.spouts.SampleSenMLTimerSpout;
 import vt.lee.lab.storm.riot_resources.RiotResourceFileProps;
 
 public class ETLTopology {
@@ -105,7 +106,7 @@ public class ETLTopology {
 		// conf.put("consume", "all");
 		// conf.put("consume", "half");
 		conf.put("consume", "constant");
-		conf.put("constant", 400);
+		conf.put("constant", 100);
 		
 		conf.put("get_wait_time", true);
 		conf.put("get_empty_time", true);
@@ -134,7 +135,7 @@ public class ETLTopology {
 
 		System.out.println(spout1InputFilePath);
 
-		builder.setSpout("spout", new SampleSenMLSpout(spout1InputFilePath, spoutLogFileName,
+		builder.setSpout("spout", new SampleSenMLTimerSpout(spout1InputFilePath, spoutLogFileName,
 				argumentClass.getScalingFactor(), inputRate, numEvents), 1);
 
 		builder.setBolt("SenMlParseBolt", new SenMLParseBolt(p_), boltInstances.get(0)).shuffleGrouping("spout");

@@ -90,11 +90,19 @@ public class ETLTopology {
 		//processor = new SimpleStormMetricProcessor(config);
 		
 		/*only get capacity metrics*/
-        MetricReporterConfig metricReporterConfig = new MetricReporterConfig(".*",
+        /*
+          MetricReporterConfig metricReporterConfig = new MetricReporterConfig(".*",
 				SimpleStormMetricProcessor.class.getCanonicalName(), Long.toString(inputRate), Long.toString((long) (numEvents*1.95)));
 		
 		
 		conf.registerMetricsConsumer(MetricReporter.class, metricReporterConfig, 1);
+		*/
+		
+		Map<String, Object> metricArg = new HashMap<String, Object>();
+		metricArg.put("InputRate", (long) inputRate);
+		metricArg.put("TotalEvents", (long) (numEvents*1.95));
+		metricArg.put("OutputPrefix", argumentClass.getOutputDirName() + "/" + argumentClass.getTopoName());
+		conf.registerMetricsConsumer(MyMetricsConsumer.class, metricArg, 1);
 		
 		// conf.put("policy", "eda-random");
 		conf.put("policy", "eda-dynamic");
@@ -161,11 +169,11 @@ public class ETLTopology {
 
 		builder.setBolt("AnnotationBolt", new AnnotationBolt(p_), boltInstances.get(5)).shuffleGrouping("JoinBolt");
 
-		builder.setBolt("AzureInsert", new AzureTableInsertBolt(p_), boltInstances.get(6)).shuffleGrouping("AnnotationBolt");
+		builder.setBolt("AzureInsert_Sink", new AzureTableInsertBolt(p_), boltInstances.get(6)).shuffleGrouping("AnnotationBolt");
 
 		builder.setBolt("CsvToSenMLBolt", new CsvToSenMLBolt(p_), boltInstances.get(7)).shuffleGrouping("AnnotationBolt");
 
-		builder.setBolt("PublishBolt", new MQTTPublishBolt(p_), boltInstances.get(8)).shuffleGrouping("CsvToSenMLBolt");
+		builder.setBolt("PublishBolt_Sink", new MQTTPublishBolt(p_), boltInstances.get(8)).shuffleGrouping("CsvToSenMLBolt");
 
 		/*
 		 * builder.setBolt("sink", new Sink(sinkLogFileName),

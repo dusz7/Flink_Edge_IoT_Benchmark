@@ -6,6 +6,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.storm.Config;
+import org.apache.storm.metric.api.MeanReducer;
+import org.apache.storm.metric.api.MultiReducedMetric;
+import org.apache.storm.metric.api.ReducedMetric;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -19,7 +23,11 @@ import org.slf4j.LoggerFactory;
 import in.dream_lab.bm.stream_iot.tasks.io.AzureTableBatchInsert;
 
 public class AzureTableInsertBolt  extends BaseRichBolt {
-
+	
+	private transient ReducedMetric reducedMetric;
+	private int sampleCount = 0;
+	private int sampleRate;
+	
     private Properties p;
 
     public AzureTableInsertBolt(Properties p_)
@@ -35,7 +43,7 @@ public class AzureTableInsertBolt  extends BaseRichBolt {
     private int insertBatchSize ;
     private String batchFirstMsgId;
     @Override
-    public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
+    public void prepare(Map config, TopologyContext context, OutputCollector outputCollector) {
 
         this.collector=outputCollector;
         initLogger(LoggerFactory.getLogger("APP"));
@@ -45,6 +53,13 @@ public class AzureTableInsertBolt  extends BaseRichBolt {
         azureTableInsertTask.setup(l,p);
         tuplesMap = new HashMap<String, String>();
         insertBatchSize = Integer.parseInt(p.getProperty("IO.AZURE_TABLE.INSERTBATCHSIZE", "100"));
+        
+        System.out.println("TOPOLOGY_BUILTIN_METRICS_BUCKET_SIZE_SECS = " + config.get(Config.TOPOLOGY_BUILTIN_METRICS_BUCKET_SIZE_SECS));
+		Long builtinPeriod = (Long) config.get(Config.TOPOLOGY_BUILTIN_METRICS_BUCKET_SIZE_SECS);
+        reducedMetric= new ReducedMetric(new MeanReducer());
+        context.registerMetric("total-latency", reducedMetric, builtinPeriod.intValue());
+        
+        sampleRate =(int) (1 / (double) config.get(Config.TOPOLOGY_STATS_SAMPLE_RATE));
     }
 
     @Override
@@ -68,7 +83,7 @@ public class AzureTableInsertBolt  extends BaseRichBolt {
     	 	//collector.emit(new Values(batchFirstMsgId, meta, obsType, (String)input.getValueByField("OBSVAL")));
     	}
     	//long time = System.currentTimeMillis();
-    	
+    	/*
     	Values values = new Values(msgId, meta, obsType, obsVal);
     	
     	if (input.getLongByField("TIMESTAMP") > 0) {
@@ -77,7 +92,26 @@ public class AzureTableInsertBolt  extends BaseRichBolt {
 			values.add(-1L);
 		}
     	
+    	Long spoutTimestamp = input.getLongByField("SPOUTTIMESTAMP");
+		if (spoutTimestamp > 0) {
+			values.add(spoutTimestamp);
+		} else {
+			values.add(-1L);
+		}
+    	
     	collector.emit(values);
+    	*/
+    	if (sampleCount == 0) {
+    		Long spoutTimestamp = input.getLongByField("SPOUTTIMESTAMP");
+    		if (spoutTimestamp > 0) {
+    			reducedMetric.update(System.currentTimeMillis() - spoutTimestamp);
+    		}
+    	}
+    	
+    	sampleCount++;
+    	if (sampleCount == sampleRate) {
+    		sampleCount = 0;
+    	}
     	
     }
 
@@ -88,6 +122,6 @@ public class AzureTableInsertBolt  extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-    	outputFieldsDeclarer.declare(new Fields("MSGID", "META", "OBSTYPE", "OBSVAL", "TIMESTAMP"));
+    	// outputFieldsDeclarer.declare(new Fields("MSGID", "META", "OBSTYPE", "OBSVAL", "TIMESTAMP", "SPOUTTIMESTAMP"));
     }
 }

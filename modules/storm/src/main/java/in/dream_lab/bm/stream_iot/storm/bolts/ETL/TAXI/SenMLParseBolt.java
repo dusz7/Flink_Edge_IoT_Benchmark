@@ -131,6 +131,13 @@ public class SenMLParseBolt extends BaseRichBolt {
 					value.add(-1L);
 				}
 				
+				Long spoutTimestamp = tuple.getLongByField("SPOUTTIMESTAMP");
+				if (spoutTimestamp > 0) {
+					value.add(spoutTimestamp);
+				} else {
+					value.add(-1L);
+				}
+				
 				collector.emit(value);
 			}
 		} catch (Exception e) {
@@ -140,7 +147,7 @@ public class SenMLParseBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("MSGID", "SENSORID", "META", "OBSTYPE", "OBSVAL", "TIMESTAMP"));
+		declarer.declare(new Fields("MSGID", "SENSORID", "META", "OBSTYPE", "OBSVAL", "TIMESTAMP", "SPOUTTIMESTAMP"));
 	}
 
 	@Override

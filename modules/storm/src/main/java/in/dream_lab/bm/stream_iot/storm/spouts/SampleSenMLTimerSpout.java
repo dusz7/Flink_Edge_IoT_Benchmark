@@ -30,7 +30,7 @@ public class SampleSenMLTimerSpout extends BaseRichSpout implements ISyntheticEv
 	String outSpoutCSVLogFileName;
 	String experiRunId;
 	double scalingFactor;
-	BatchedFileLogging ba;
+	// BatchedFileLogging ba;
 	long msgId;
 	int inputRate;
 	long numEvents;
@@ -93,17 +93,19 @@ public class SampleSenMLTimerSpout extends BaseRichSpout implements ISyntheticEv
 		values.add(Long.toString(msgId));
 		values.add(newRow);
 		
-		if (this.msgId > (this.startingMsgId + this.numEvents / 3)
+		if (this.msgId > (this.startingMsgId + this.numEvents / 4)
 				&& (this.msgId < (this.startingMsgId + (this.numEvents * 3) / 4))) {
 			values.add(System.currentTimeMillis());
+			values.add(System.currentTimeMillis());
 		} else {
+			values.add(-1L);
 			values.add(-1L);
 		}
 		
 		this._collector.emit(values);
 
 		// start monitoring backpressure
-		if ((this.msgId == (this.startingMsgId + this.numEvents / 3) && !bpMonitor)) {
+		if ((this.msgId == (this.startingMsgId + this.numEvents / 4) && !bpMonitor)) {
 			bpMonitor = true;
 			long window = 2000;
 			BpTimeIntervalMonitoringTask bpTask = new BpTimeIntervalMonitoringTask(bptime, window, 5.0);
@@ -124,8 +126,9 @@ public class SampleSenMLTimerSpout extends BaseRichSpout implements ISyntheticEv
 			timer.cancel();
 		}
 
-		/* skip logging first 1/3 of events to reach a stable condition */
-		if (this.msgId > (this.startingMsgId + this.numEvents / 3)
+		/* skip logging first 1/4 of events to reach a stable condition */
+		/*
+		if (this.msgId > (this.startingMsgId + this.numEvents / 4)
 				&& (this.msgId < (this.startingMsgId + (this.numEvents * 3) / 4))) {
 			try {
 				ba.batchLogwriter(System.currentTimeMillis(), "MSGID," + msgId);
@@ -133,6 +136,7 @@ public class SampleSenMLTimerSpout extends BaseRichSpout implements ISyntheticEv
 				e.printStackTrace();
 			}
 		}
+		*/
 	}
 
 	@Override
@@ -152,7 +156,7 @@ public class SampleSenMLTimerSpout extends BaseRichSpout implements ISyntheticEv
 		this.eventGen.launch(this.csvFileName, uLogfilename); // Launch
 																		// threads
 		bptime = new BpTime();
-		ba = new BatchedFileLogging(uLogfilename, context.getThisComponentId());
+		// ba = new BatchedFileLogging(uLogfilename, context.getThisComponentId());
 	}
 
 	@Override
@@ -176,7 +180,7 @@ public class SampleSenMLTimerSpout extends BaseRichSpout implements ISyntheticEv
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("MSGID", "PAYLOAD", "TIMESTAMP"));
+		declarer.declare(new Fields("MSGID", "PAYLOAD", "TIMESTAMP", "SPOUTTIMESTAMP"));
 	}
 
 	@Override

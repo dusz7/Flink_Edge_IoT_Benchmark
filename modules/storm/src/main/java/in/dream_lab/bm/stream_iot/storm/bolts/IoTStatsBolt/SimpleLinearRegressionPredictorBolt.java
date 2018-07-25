@@ -96,6 +96,13 @@ public class SimpleLinearRegressionPredictorBolt extends BaseRichBolt {
 			} else {
 				values.add(-1L);
 			}
+			
+			Long spoutTimestamp = input.getLongByField("SPOUTTIMESTAMP");
+			if (spoutTimestamp > 0) {
+				values.add(spoutTimestamp);
+			} else {
+				values.add(-1L);
+			}
 
 			collector.emit(values);
 		}
@@ -108,7 +115,7 @@ public class SimpleLinearRegressionPredictorBolt extends BaseRichBolt {
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
 		outputFieldsDeclarer
-				.declare(new Fields("sensorID", "sensorMeta", "obsType", "res", "MSGID", "ANALYTICTYPE", "TIMESTAMP"));
+				.declare(new Fields("sensorID", "sensorMeta", "obsType", "res", "MSGID", "ANALYTICTYPE", "TIMESTAMP", "SPOUTTIMESTAMP"));
 	}
 
 }

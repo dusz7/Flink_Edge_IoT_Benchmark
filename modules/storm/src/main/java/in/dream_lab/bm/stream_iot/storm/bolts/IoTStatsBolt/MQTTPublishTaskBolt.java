@@ -4,6 +4,9 @@ package in.dream_lab.bm.stream_iot.storm.bolts.IoTStatsBolt;
 import in.dream_lab.bm.stream_iot.tasks.AbstractTask;
 import in.dream_lab.bm.stream_iot.tasks.io.MQTTPublishTask;
 
+import org.apache.storm.Config;
+import org.apache.storm.metric.api.MeanReducer;
+import org.apache.storm.metric.api.ReducedMetric;
 import org.apache.storm.task.OutputCollector;
 import org.apache.storm.task.TopologyContext;
 import org.apache.storm.topology.OutputFieldsDeclarer;
@@ -20,6 +23,10 @@ import java.util.Properties;
 
 public class MQTTPublishTaskBolt extends BaseRichBolt {
 
+	private transient ReducedMetric reducedMetric;
+	private int sampleCount = 0;
+	private int sampleRate;
+	
     private Properties p;
 
     public MQTTPublishTaskBolt(Properties p_){
@@ -30,12 +37,19 @@ public class MQTTPublishTaskBolt extends BaseRichBolt {
     MQTTPublishTask mqttpublishTask;
 
     @Override
-    public void prepare(Map map, TopologyContext topologyContext, OutputCollector outputCollector) {
+    public void prepare(Map config, TopologyContext context, OutputCollector outputCollector) {
 
         this.collector=outputCollector; initLogger(LoggerFactory.getLogger("APP"));
 
         mqttpublishTask=new MQTTPublishTask();
         mqttpublishTask.setup(l,p);
+        
+        System.out.println("TOPOLOGY_BUILTIN_METRICS_BUCKET_SIZE_SECS = " + config.get(Config.TOPOLOGY_BUILTIN_METRICS_BUCKET_SIZE_SECS));
+		Long builtinPeriod = (Long) config.get(Config.TOPOLOGY_BUILTIN_METRICS_BUCKET_SIZE_SECS);
+        reducedMetric= new ReducedMetric(new MeanReducer());
+        context.registerMetric("total-latency", reducedMetric, builtinPeriod.intValue());
+        
+        sampleRate =(int) (1 / (double) config.get(Config.TOPOLOGY_STATS_SAMPLE_RATE));
     }
 
     @Override
@@ -64,7 +78,7 @@ public class MQTTPublishTaskBolt extends BaseRichBolt {
         //    l.info("mqttpublishTask:"+publishedRes);
 
 
-
+        /*
         if(publishedRes!=null ) {
         	Values values = new Values(publishedRes,msgId);
         	
@@ -78,6 +92,18 @@ public class MQTTPublishTaskBolt extends BaseRichBolt {
         	
             collector.emit(values);
         }
+        */
+        if (sampleCount == 0) {
+    		Long spoutTimestamp = input.getLongByField("SPOUTTIMESTAMP");
+    		if (spoutTimestamp > 0) {
+    			reducedMetric.update(System.currentTimeMillis() - spoutTimestamp);
+    		}
+    	}
+    	
+    	sampleCount++;
+    	if (sampleCount == sampleRate) {
+    		sampleCount = 0;
+    	}
     }
 
     @Override
@@ -87,7 +113,7 @@ public class MQTTPublishTaskBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("publishedRes","MSGID", "ANALYTICTYPE", "TIMESTAMP"));
+        // outputFieldsDeclarer.declare(new Fields("publishedRes","MSGID", "ANALYTICTYPE", "TIMESTAMP"));
     }
 
 }

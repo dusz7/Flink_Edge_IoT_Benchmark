@@ -76,6 +76,13 @@ public class SecondOrderMomentBolt extends BaseRichBolt {
     				values.add(-1L);
     			}
             	
+            	Long spoutTimestamp = input.getLongByField("SPOUTTIMESTAMP");
+    			if (spoutTimestamp > 0) {
+    				values.add(spoutTimestamp);
+    			} else {
+    				values.add(-1L);
+    			}
+            	
                 collector.emit(values);
 
             }
@@ -92,7 +99,7 @@ public class SecondOrderMomentBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("sensorMeta","sensorID","obsType","res","MSGID","ANALYTICTYPE", "TIMESTAMP"));
+        outputFieldsDeclarer.declare(new Fields("sensorMeta","sensorID","obsType","res","MSGID","ANALYTICTYPE", "TIMESTAMP", "SPOUTTIMESTAMP"));
     }
 
 }

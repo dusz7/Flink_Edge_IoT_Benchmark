@@ -79,6 +79,13 @@ public class BloomFilterCheckBolt extends BaseRichBolt {
     					values.add(-1L);
     				}
                 	
+                	Long spoutTimestamp = input.getLongByField("SPOUTTIMESTAMP");
+    				if (spoutTimestamp > 0) {
+    					values.add(spoutTimestamp);
+    				} else {
+    					values.add(-1L);
+    				}
+                	
                 	collector.emit(values);
                 }
                     
@@ -97,7 +104,7 @@ public class BloomFilterCheckBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields("sensorMeta","sensorID","obsType","obsVal","MSGID", "TIMESTAMP")); // obsType = {temp, humid, airq, light, dust}
+        outputFieldsDeclarer.declare(new Fields("sensorMeta","sensorID","obsType","obsVal","MSGID", "TIMESTAMP", "SPOUTTIMESTAMP")); // obsType = {temp, humid, airq, light, dust}
 
     }
 

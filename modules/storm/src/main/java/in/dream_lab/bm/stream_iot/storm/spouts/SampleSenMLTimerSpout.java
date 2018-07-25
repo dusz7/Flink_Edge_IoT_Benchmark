@@ -93,7 +93,7 @@ public class SampleSenMLTimerSpout extends BaseRichSpout implements ISyntheticEv
 		values.add(Long.toString(msgId));
 		values.add(newRow);
 		
-		if (this.msgId > (this.startingMsgId + this.numEvents / 4)
+		if (this.msgId > (this.startingMsgId + this.numEvents / 2)
 				&& (this.msgId < (this.startingMsgId + (this.numEvents * 3) / 4))) {
 			values.add(System.currentTimeMillis());
 			values.add(System.currentTimeMillis());
@@ -105,7 +105,7 @@ public class SampleSenMLTimerSpout extends BaseRichSpout implements ISyntheticEv
 		this._collector.emit(values);
 
 		// start monitoring backpressure
-		if ((this.msgId == (this.startingMsgId + this.numEvents / 4) && !bpMonitor)) {
+		if ((this.msgId == (this.startingMsgId + this.numEvents / 2) && !bpMonitor)) {
 			bpMonitor = true;
 			long window = 2000;
 			BpTimeIntervalMonitoringTask bpTask = new BpTimeIntervalMonitoringTask(bptime, window, 5.0);
@@ -118,9 +118,10 @@ public class SampleSenMLTimerSpout extends BaseRichSpout implements ISyntheticEv
 			bpMonitor = false;
 
 		if (this.msgId == this.startingMsgId + this.numEvents - 1) {
-			String dir = outSpoutCSVLogFileName.substring(0, outSpoutCSVLogFileName.lastIndexOf("/") + 1);
-			String filename = outSpoutCSVLogFileName.substring(outSpoutCSVLogFileName.lastIndexOf("/") + 1);
-			filename = dir + "back_pressure-" + filename;
+			//String dir = outSpoutCSVLogFileName.substring(0, outSpoutCSVLogFileName.lastIndexOf("/") + 1);
+			//String filename = outSpoutCSVLogFileName.substring(outSpoutCSVLogFileName.lastIndexOf("/") + 1);
+			//filename = dir + "back_pressure-" + filename;
+			String filename = outSpoutCSVLogFileName + "BackPressure";
 			writeBPTime(filename);
 
 			timer.cancel();

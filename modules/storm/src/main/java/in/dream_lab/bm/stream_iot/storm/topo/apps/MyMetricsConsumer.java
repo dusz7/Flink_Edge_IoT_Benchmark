@@ -58,16 +58,42 @@ public class MyMetricsConsumer implements IMetricsConsumer {
 	@Override
 	public void handleDataPoints(TaskInfo taskInfo, Collection<DataPoint> dataPoints) {
 		String componentId = taskInfo.srcComponentId;
+		if (componentId.startsWith("spout") ||
+				componentId.startsWith("__")) {
+			return;
+		}
+		
 		int taskId = taskInfo.srcTaskId;
 		int updateIntervalSecs = taskInfo.updateIntervalSecs;
+		
+		/*
+		String padding = "                       ";
+		StringBuilder sb = new StringBuilder();
+        String header = String.format("%d\t%15s:%-4d\t%3d:%-11s\t",
+            taskInfo.timestamp,
+            taskInfo.srcWorkerHost, taskInfo.srcWorkerPort,
+            taskInfo.srcTaskId,
+            taskInfo.srcComponentId);
+        sb.append(header);
+		*/
 		
 		Map<String, Long> executeCountMap = null;
 		Map<String, Double> executeLatencyMap = null;
 		Long waitLatency = -1L;
 		Long emptyTime = -1L;
 		Double queueTime = -1.0;
-		Long totalLatency = -1L;
+		Double totalLatency = -1.0;
 		for (DataPoint dataPoint : dataPoints) {
+			/*
+			DataPoint p = dataPoint;
+			sb.delete(header.length(), sb.length());
+            sb.append(p.name)
+                .append(padding).delete(header.length()+23,sb.length()).append("\t")
+                .append(p.value);
+            
+            System.out.println(sb.toString());
+			*/
+			
 			String name = dataPoint.name;
 			switch (name) {
 			case "__execute-count":
@@ -77,16 +103,22 @@ public class MyMetricsConsumer implements IMetricsConsumer {
 				executeLatencyMap = (Map<String, Double>) dataPoint.value;
 				break;
 			case "__wait-latency":
-				waitLatency = (Long) dataPoint.value;
+				//waitLatency = (Long) dataPoint.value;
+				Map<String, Long> waitLatencyMap = (Map<String, Long>) dataPoint.value;
+				waitLatency = waitLatencyMap.get("default");
 				break;
 			case "__empty-time":
-				emptyTime = (Long) dataPoint.value;
+				//emptyTime = (Long) dataPoint.value;
+				Map<String, Long> emptyTimeMap = (Map<String, Long>) dataPoint.value;
+				emptyTime = emptyTimeMap.get("default");
 				break;
 			case "__queue-time":
-				queueTime = (Double) dataPoint.value;
+				//queueTime = (Double) dataPoint.value;
+				Map<String, Double> queueTimeMap = (Map<String, Double>) dataPoint.value;
+				queueTime = queueTimeMap.get("default");
 				break;
 			case "total-latency":
-				totalLatency = (Long) dataPoint.value;
+				totalLatency = (Double) dataPoint.value;
 				break;
 			default:
 				break;
@@ -126,20 +158,20 @@ public class MyMetricsConsumer implements IMetricsConsumer {
 			reported = true;
 			writeToFile(OpMetrics, outputPrefix + "OpMetrics");
 			writeToFile(TopoMetrics, outputPrefix + "TopoMetrics");
+			
+			try {
+				InetAddress addr = InetAddress.getByName(nimbusIp);
+				Socket socket = new Socket(addr, port);
+				PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+				out.println(inputRate);
+				out.close();
+				socket.close();
+			} catch (UnknownHostException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} 
 		}
-		
-		try {
-			InetAddress addr = InetAddress.getByName(nimbusIp);
-			Socket socket = new Socket(addr, port);
-			PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-			out.println(inputRate);
-			out.close();
-			socket.close();
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} 
 	}
 	
 	private void updateMetrics(

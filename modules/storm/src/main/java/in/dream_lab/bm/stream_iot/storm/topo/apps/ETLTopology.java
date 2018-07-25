@@ -55,7 +55,10 @@ public class ETLTopology {
 		String logFilePrefix = argumentClass.getTopoName() + "-" + argumentClass.getExperiRunId() + "-"
 				+ argumentClass.getScalingFactor() + ".log";
 		String sinkLogFileName = argumentClass.getOutputDirName() + "/sink-" + logFilePrefix;
-		String spoutLogFileName = argumentClass.getOutputDirName() + "/spout-" + logFilePrefix;
+		// String spoutLogFileName = argumentClass.getOutputDirName() + "/spout-" + logFilePrefix;
+		
+		String spoutLogFileName = argumentClass.getOutputDirName() + "/" + argumentClass.getTopoName();
+		
 		String taskPropFilename = inputPath + "/" + argumentClass.getTasksPropertiesFilename();
 		int inputRate = argumentClass.getInputRate();
 		long numEvents = argumentClass.getNumEvents();
@@ -82,6 +85,7 @@ public class ETLTopology {
 		conf.setDebug(false);
 		conf.setNumAckers(0);
 		conf.setNumWorkers(numWorkers);
+		conf.put(conf.TOPOLOGY_BUILTIN_METRICS_BUCKET_SIZE_SECS, 30);
 		
 		//SimpleStormMetricProcessor processor;
 		
@@ -180,8 +184,8 @@ public class ETLTopology {
 		 * 1).shuffleGrouping("PublishBolt") .shuffleGrouping("AzureInsert");
 		 */
 
-		builder.setBolt("sink", new EtlTopologySinkBolt(sinkLogFileName), 1).shuffleGrouping("PublishBolt")
-				.shuffleGrouping("AzureInsert");
+		//builder.setBolt("sink", new EtlTopologySinkBolt(sinkLogFileName), 1).shuffleGrouping("PublishBolt")
+		//		.shuffleGrouping("AzureInsert");
 
 		StormTopology stormTopology = builder.createTopology();
 

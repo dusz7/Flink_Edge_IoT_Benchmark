@@ -82,6 +82,8 @@ public class IoTPredictionTopologySYS {
 		conf.put(Config.TOPOLOGY_BACKPRESSURE_ENABLE, true);
 		conf.setDebug(false);
 		conf.setNumAckers(0);
+		conf.setNumWorkers(numWorkers);
+		conf.put(conf.TOPOLOGY_BUILTIN_METRICS_BUCKET_SIZE_SECS, 30);
 
 		// conf.put("policy", "signal-simple");
 		// // conf.put("policy", "signal-group");

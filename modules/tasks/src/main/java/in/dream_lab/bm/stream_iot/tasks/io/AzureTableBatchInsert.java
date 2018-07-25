@@ -76,7 +76,7 @@ public class AzureTableBatchInsert extends AbstractTask<String, Float> {
 
 			// ArrayList a = table.execute(batchOperation);
 
-			System.out.println(this.getClass().getName() + " Cannot connect - LOGGING - ");
+			// System.out.println(this.getClass().getName() + " Cannot connect - LOGGING - ");
 			return (float) map.size();
 		} catch (Exception e) {
 			e.printStackTrace();

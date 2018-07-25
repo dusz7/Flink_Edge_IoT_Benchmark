@@ -11,6 +11,7 @@ import in.dream_lab.bm.stream_iot.storm.sinks.IoTTrainTopologySinkBolt;
 import in.dream_lab.bm.stream_iot.storm.sinks.Sink;
 import in.dream_lab.bm.stream_iot.storm.spouts.SampleSenMLSpout;
 import in.dream_lab.bm.stream_iot.storm.spouts.SampleSpoutTimerForTrain;
+import in.dream_lab.bm.stream_iot.storm.spouts.SampleTimerSpoutForTrain;
 import in.dream_lab.bm.stream_iot.storm.spouts.TimeSpout;
 import vt.lee.lab.storm.riot_resources.RiotResourceFileProps;
 
@@ -29,7 +30,9 @@ import com.github.staslev.storm.metrics.yammer.SimpleStormMetricProcessor;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 //import in.dream_lab.bm.stream_iot.storm.spouts.TimeSpout;
@@ -52,7 +55,10 @@ public class IoTTrainTopologySYS {
 		String logFilePrefix = argumentClass.getTopoName() + "-" + argumentClass.getExperiRunId() + "-"
 				+ argumentClass.getScalingFactor() + ".log";
 		String sinkLogFileName = argumentClass.getOutputDirName() + "/sink-" + logFilePrefix;
-		String spoutLogFileName = argumentClass.getOutputDirName() + "/spout-" + logFilePrefix;
+		//String spoutLogFileName = argumentClass.getOutputDirName() + "/spout-" + logFilePrefix;
+		
+		String spoutLogFileName = argumentClass.getOutputDirName() + "/" + argumentClass.getTopoName();
+		
 		String taskPropFilename = inputPath + "/" + argumentClass.getTasksPropertiesFilename();
 		System.out.println("taskPropFilename-" + taskPropFilename);
 		int inputRate = argumentClass.getInputRate();
@@ -64,12 +70,19 @@ public class IoTTrainTopologySYS {
 		conf.put(Config.TOPOLOGY_BACKPRESSURE_ENABLE, true);
 		conf.setDebug(false);
 		conf.setNumAckers(0);
-		
+		conf.put(conf.TOPOLOGY_BUILTIN_METRICS_BUCKET_SIZE_SECS, 30);
+		/*
 		MetricReporterConfig metricReporterConfig = new MetricReporterConfig(".*",
 				SimpleStormMetricProcessor.class.getCanonicalName(), Long.toString(inputRate), Long.toString((long) (numEvents*1.95)));
 		
 		
 		conf.registerMetricsConsumer(MetricReporter.class, metricReporterConfig, 1);
+		*/
+		Map<String, Object> metricArg = new HashMap<String, Object>();
+		metricArg.put("InputRate", (long) inputRate);
+		metricArg.put("TotalEvents", (long) (numEvents*1.95));
+		metricArg.put("OutputPrefix", argumentClass.getOutputDirName() + "/" + argumentClass.getTopoName());
+		conf.registerMetricsConsumer(MyMetricsConsumer.class, metricArg, 1);
 		
 		// conf.put("policy", "eda-random");
 		conf.put("policy", "eda-dynamic");
@@ -109,9 +122,12 @@ public class IoTTrainTopologySYS {
 
 		String spout1InputFilePath = resourceDir + "/inputFileForTimerSpout-CITY_NoAz.csv";
 
-		builder.setSpout("TimeSpout", new SampleSpoutTimerForTrain(spout1InputFilePath, spoutLogFileName,
+		//builder.setSpout("TimeSpout", new SampleSpoutTimerForTrain(spout1InputFilePath, spoutLogFileName,
+		//		argumentClass.getScalingFactor(), inputRate, numEvents), 1);
+		
+		builder.setSpout("TimeSpout", new SampleTimerSpoutForTrain(spout1InputFilePath, spoutLogFileName,
 				argumentClass.getScalingFactor(), inputRate, numEvents), 1);
-
+		
 		// builder.setBolt("AzureTableRangeQueryBolt", new
 		// AzureTableRangeQueryBolt(p_), 1)
 		// .shuffleGrouping("TimeSpout");
@@ -128,7 +144,7 @@ public class IoTTrainTopologySYS {
 		// builder.setBolt("MQTTPublishBolt", new MQTTPublishBolt(p_),
 		// 1).shuffleGrouping("AzureBlobUploadTaskBolt");
 
-		builder.setBolt("MQTTPublishBolt", new MQTTPublishBolt(p_), 1).shuffleGrouping("DecisionTreeTrainBolt")
+		builder.setBolt("MQTTPublishBolt_Sink", new MQTTPublishBolt(p_), 1).shuffleGrouping("DecisionTreeTrainBolt")
 				.shuffleGrouping("LinearRegressionTrainBolt");
 
 		builder.setBolt("AnnotateDTClassBolt", new AnnotateDTClassBolt(p_), 1).shuffleGrouping("data-read-bolt");
@@ -136,7 +152,7 @@ public class IoTTrainTopologySYS {
 		builder.setBolt("DecisionTreeTrainBolt", new DecisionTreeTrainBolt(p_), 4)
 				.shuffleGrouping("AnnotateDTClassBolt");
 
-		builder.setBolt("sink", new IoTTrainTopologySinkBolt(sinkLogFileName), 1).shuffleGrouping("MQTTPublishBolt");
+		//builder.setBolt("sink", new IoTTrainTopologySinkBolt(sinkLogFileName), 1).shuffleGrouping("MQTTPublishBolt");
 
 		StormTopology stormTopology = builder.createTopology();
 

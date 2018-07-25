@@ -84,12 +84,19 @@ public class ReadTrainDataBolt extends BaseRichBolt {
 			values.add(-1L);
 		}
 		
+		Long spoutTimestamp = input.getLongByField("SPOUTTIMESTAMP");
+		if (spoutTimestamp > 0) {
+			values.add(spoutTimestamp);
+		} else {
+			values.add(-1L);
+		}
+		
 		collector.emit(values);
 	}
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("TRAINDATA", "MSGID", "ROWKEYEND", "TIMESTAMP"));
+		declarer.declare(new Fields("TRAINDATA", "MSGID", "ROWKEYEND", "TIMESTAMP", "SPOUTTIMESTAMP"));
 	}
 
 	private List<AzureTableRangeQueryTaskSYS.SYS_City> readData(long start, long end) {

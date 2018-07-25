@@ -85,6 +85,13 @@ public class ErrorEstimationBolt extends BaseRichBolt {
 				values.add(-1L);
 			}
 			
+			Long spoutTimestamp = input.getLongByField("SPOUTTIMESTAMP");
+			if (spoutTimestamp > 0) {
+				values.add(spoutTimestamp);
+			} else {
+				values.add(-1L);
+			}
+			
 			collector.emit(values);
 
 		}
@@ -96,7 +103,7 @@ public class ErrorEstimationBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("META", "ERROR", "MSGID", "ANALAYTICTYPE", "OBSVAL", "TIMESTAMP"));
+		outputFieldsDeclarer.declare(new Fields("META", "ERROR", "MSGID", "ANALAYTICTYPE", "OBSVAL", "TIMESTAMP", "SPOUTTIMESTAMP"));
 	}
 
 }

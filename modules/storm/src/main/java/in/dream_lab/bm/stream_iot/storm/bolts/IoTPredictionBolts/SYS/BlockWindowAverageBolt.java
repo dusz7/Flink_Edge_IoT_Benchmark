@@ -100,6 +100,13 @@ public class BlockWindowAverageBolt extends BaseRichBolt {
 						values.add(-1L);
 					}
 					
+					Long spoutTimestamp = input.getLongByField("SPOUTTIMESTAMP");
+					if (spoutTimestamp > 0) {
+						values.add(spoutTimestamp);
+					} else {
+						values.add(-1L);
+					}
+					
 					collector.emit(values);
 
 				} else {
@@ -118,7 +125,7 @@ public class BlockWindowAverageBolt extends BaseRichBolt {
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
 		outputFieldsDeclarer
-				.declare(new Fields("META", "SENSORID", "OBSTYPE", "AVGRES", "OBSVAL", "MSGID", "ANALAYTICTYPE", "TIMESTAMP"));
+				.declare(new Fields("META", "SENSORID", "OBSTYPE", "AVGRES", "OBSVAL", "MSGID", "ANALAYTICTYPE", "TIMESTAMP", "SPOUTTIMESTAMP"));
 	}
 
 }

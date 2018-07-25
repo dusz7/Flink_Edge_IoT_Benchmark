@@ -33,7 +33,9 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -54,7 +56,10 @@ public class IoTPredictionTopologySYS {
 		String logFilePrefix = argumentClass.getTopoName() + "-" + argumentClass.getExperiRunId() + "-"
 				+ argumentClass.getScalingFactor() + ".log";
 		String sinkLogFileName = argumentClass.getOutputDirName() + "/sink-" + logFilePrefix;
-		String spoutLogFileName = argumentClass.getOutputDirName() + "/spout-" + logFilePrefix;
+		//String spoutLogFileName = argumentClass.getOutputDirName() + "/spout-" + logFilePrefix;
+		
+		String spoutLogFileName = argumentClass.getOutputDirName() + "/" + argumentClass.getTopoName();
+		
 		String taskPropFilename = inputPath + "/" + argumentClass.getTasksPropertiesFilename();
 		System.out.println("taskPropFilename-" + taskPropFilename);
 		int inputRate = argumentClass.getInputRate();
@@ -120,12 +125,17 @@ public class IoTPredictionTopologySYS {
 		conf.put("info_path", argumentClass.getOutputDirName());
 		conf.put("get_queue_time", true);
 		conf.put("queue_time_sample_freq", inputRate * 3);
-
-		MetricReporterConfig metricReporterConfig = new MetricReporterConfig(".*",
+		/*		MetricReporterConfig metricReporterConfig = new MetricReporterConfig(".*",
 				SimpleStormMetricProcessor.class.getCanonicalName(), Long.toString(inputRate),
 				Long.toString((long) (numEvents * 1.95)));
 
 		conf.registerMetricsConsumer(MetricReporter.class, metricReporterConfig, 1);
+		*/
+		Map<String, Object> metricArg = new HashMap<String, Object>();
+		metricArg.put("InputRate", (long) inputRate);
+		metricArg.put("TotalEvents", (long) (numEvents*1.95));
+		metricArg.put("OutputPrefix", argumentClass.getOutputDirName() + "/" + argumentClass.getTopoName());
+		conf.registerMetricsConsumer(MyMetricsConsumer.class, metricArg, 1);
 
 		Properties p_ = new Properties();
 		InputStream input = new FileInputStream(taskPropFilename);
@@ -180,15 +190,15 @@ public class IoTPredictionTopologySYS {
 		builder.setBolt("ErrorEstimationBolt", new ErrorEstimationBolt(p_), boltInstances.get(3))
 				.shuffleGrouping("BlockWindowAverageBolt").shuffleGrouping("LinearRegressionPredictorBolt");
 
-		builder.setBolt("MQTTPublishBolt", new MQTTPublishBolt(p_), boltInstances.get(4))
+		builder.setBolt("MQTTPublishBolt_Sink", new MQTTPublishBolt(p_), boltInstances.get(4))
 				.shuffleGrouping("ErrorEstimationBolt").shuffleGrouping("DecisionTreeClassifyBolt");
 
 		/*
 		 * builder.setBolt("sink", new Sink(sinkLogFileName),
 		 * 1).shuffleGrouping("MQTTPublishBolt");
 		 */
-		builder.setBolt("sink", new IoTPredictionTopologySinkBolt(sinkLogFileName), 1)
-				.shuffleGrouping("MQTTPublishBolt");
+		//builder.setBolt("sink", new IoTPredictionTopologySinkBolt(sinkLogFileName), 1)
+		//		.shuffleGrouping("MQTTPublishBolt");
 
 		StormTopology stormTopology = builder.createTopology();
 

@@ -98,11 +98,13 @@ public class LinearRegressionTrainBatched extends AbstractTask {
 				l.info("instancesBuf-" + instancesBuf.toString());*/
 			StringReader stringReader = new StringReader(instancesBuf.toString());
 			result = linearRegressionTrainAndSaveModel(stringReader, fullFilePath, model, l);
-
+			
+			/*
 			if (l.isInfoEnabled()) {
-				LinearRegression readModel = (LinearRegression) weka.core.SerializationHelper.read(fullFilePath);
+				// LinearRegression readModel = (LinearRegression) weka.core.SerializationHelper.read(fullFilePath);
 				//l.info("Trained Model L.R.-{}", readModel.toString());
 			}
+			*/
 
 			super.setLastResult(model);
 			instancesBuf = new StringBuffer(instanceHeader);

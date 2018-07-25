@@ -125,14 +125,14 @@ public class IoTTrainTopologySYS {
 		//builder.setSpout("TimeSpout", new SampleSpoutTimerForTrain(spout1InputFilePath, spoutLogFileName,
 		//		argumentClass.getScalingFactor(), inputRate, numEvents), 1);
 		
-		builder.setSpout("TimeSpout", new SampleTimerSpoutForTrain(spout1InputFilePath, spoutLogFileName,
+		builder.setSpout("spout", new SampleTimerSpoutForTrain(spout1InputFilePath, spoutLogFileName,
 				argumentClass.getScalingFactor(), inputRate, numEvents), 1);
 		
 		// builder.setBolt("AzureTableRangeQueryBolt", new
 		// AzureTableRangeQueryBolt(p_), 1)
 		// .shuffleGrouping("TimeSpout");
 
-		builder.setBolt("data-read-bolt", new ReadTrainDataBolt(p_), 2).shuffleGrouping("TimeSpout");
+		builder.setBolt("data-read-bolt", new ReadTrainDataBolt(p_), 2).shuffleGrouping("spout");
 
 		builder.setBolt("LinearRegressionTrainBolt", new LinearRegressionTrainBolt(p_), 4)
 				.shuffleGrouping("data-read-bolt");

@@ -122,10 +122,12 @@ public class SampleTimerSpoutForTrain extends BaseRichSpout implements ISyntheti
 			if ((this.msgId == (this.startingMsgId + (this.numEvents * 3) / 4) && bpMonitor))
 				bpMonitor = false;
 
-			if (this.msgId == this.startingMsgId + this.numEvents - 1) {
-				String dir = outSpoutCSVLogFileName.substring(0, outSpoutCSVLogFileName.lastIndexOf("/") + 1);
-				String filename = outSpoutCSVLogFileName.substring(outSpoutCSVLogFileName.lastIndexOf("/") + 1);
-				filename = dir + "back_pressure-" + filename;
+			// if (this.msgId == this.startingMsgId + this.numEvents - 1) {
+			if (this.msgId == this.startingMsgId + (this.numEvents * 3) / 4) {
+				//String dir = outSpoutCSVLogFileName.substring(0, outSpoutCSVLogFileName.lastIndexOf("/") + 1);
+				//String filename = outSpoutCSVLogFileName.substring(outSpoutCSVLogFileName.lastIndexOf("/") + 1);
+				//filename = dir + "back_pressure-" + filename;
+				String filename = outSpoutCSVLogFileName + "BackPressure";
 				writeBPTime(filename);
 
 				timer.cancel();

@@ -127,6 +127,7 @@ public class LinearRegressionPredictorBolt extends BaseRichBolt {
 					values.add(-1L);
 				}
 				
+				values.add(input.getLongByField("CHAINSTAMP"));
 				collector.emit(values);
 			} else {
 				if (l.isWarnEnabled())
@@ -144,7 +145,7 @@ public class LinearRegressionPredictorBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("META", "OBSVAL", "MSGID", "RES", "ANALAYTICTYPE", "TIMESTAMP", "SPOUTTIMESTAMP"));
+		outputFieldsDeclarer.declare(new Fields("META", "OBSVAL", "MSGID", "RES", "ANALAYTICTYPE", "TIMESTAMP", "SPOUTTIMESTAMP", "CHAINSTAMP"));
 	}
 
 }

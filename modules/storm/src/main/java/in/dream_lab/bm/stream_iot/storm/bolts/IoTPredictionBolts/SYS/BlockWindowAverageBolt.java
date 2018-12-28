@@ -107,6 +107,7 @@ public class BlockWindowAverageBolt extends BaseRichBolt {
 						values.add(-1L);
 					}
 					
+					values.add(input.getLongByField("CHAINSTAMP"));
 					collector.emit(values);
 
 				} else {
@@ -125,7 +126,7 @@ public class BlockWindowAverageBolt extends BaseRichBolt {
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
 		outputFieldsDeclarer
-				.declare(new Fields("META", "SENSORID", "OBSTYPE", "AVGRES", "OBSVAL", "MSGID", "ANALAYTICTYPE", "TIMESTAMP", "SPOUTTIMESTAMP"));
+				.declare(new Fields("META", "SENSORID", "OBSTYPE", "AVGRES", "OBSVAL", "MSGID", "ANALAYTICTYPE", "TIMESTAMP", "SPOUTTIMESTAMP", "CHAINSTAMP"));
 	}
 
 }

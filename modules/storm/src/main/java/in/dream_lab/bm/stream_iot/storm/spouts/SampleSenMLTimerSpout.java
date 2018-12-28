@@ -102,6 +102,7 @@ public class SampleSenMLTimerSpout extends BaseRichSpout implements ISyntheticEv
 			values.add(-1L);
 		}
 		
+		values.add(System.currentTimeMillis());
 		this._collector.emit(values);
 
 		// start monitoring backpressure
@@ -182,7 +183,7 @@ public class SampleSenMLTimerSpout extends BaseRichSpout implements ISyntheticEv
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("MSGID", "PAYLOAD", "TIMESTAMP", "SPOUTTIMESTAMP"));
+		declarer.declare(new Fields("MSGID", "PAYLOAD", "TIMESTAMP", "SPOUTTIMESTAMP", "CHAINSTAMP"));
 	}
 
 	@Override

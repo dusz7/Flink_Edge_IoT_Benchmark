@@ -52,7 +52,9 @@ public class DecisionTreeClassifyBolt extends BaseRichBolt {
 
 		decisionTreeClassify.setup(l, p);
 	}
-
+	
+	int tuple_num = 0;
+	
 	@Override
 	public void execute(Tuple input) {
 
@@ -149,6 +151,7 @@ public class DecisionTreeClassifyBolt extends BaseRichBolt {
 					values.add(-1L);
 				}
 				
+				values.add(input.getLongByField("CHAINSTAMP"));
 				collector.emit(values);
 			} else {
 				if (l.isWarnEnabled())
@@ -156,6 +159,7 @@ public class DecisionTreeClassifyBolt extends BaseRichBolt {
 				throw new RuntimeException();
 			}
 		}
+		
 	}
 
 	@Override
@@ -165,7 +169,7 @@ public class DecisionTreeClassifyBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("META", "OBSVAL", "MSGID", "RES", "ANALAYTICTYPE", "TIMESTAMP", "SPOUTTIMESTAMP"));
+		outputFieldsDeclarer.declare(new Fields("META", "OBSVAL", "MSGID", "RES", "ANALAYTICTYPE", "TIMESTAMP", "SPOUTTIMESTAMP", "CHAINSTAMP"));
 	}
 
 }

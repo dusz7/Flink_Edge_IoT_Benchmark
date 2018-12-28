@@ -92,6 +92,7 @@ public class ErrorEstimationBolt extends BaseRichBolt {
 				values.add(-1L);
 			}
 			
+			values.add(input.getLongByField("CHAINSTAMP"));
 			collector.emit(values);
 
 		}
@@ -103,7 +104,7 @@ public class ErrorEstimationBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("META", "ERROR", "MSGID", "ANALAYTICTYPE", "OBSVAL", "TIMESTAMP", "SPOUTTIMESTAMP"));
+		outputFieldsDeclarer.declare(new Fields("META", "ERROR", "MSGID", "ANALAYTICTYPE", "OBSVAL", "TIMESTAMP", "SPOUTTIMESTAMP", "CHAINSTAMP"));
 	}
 
 }

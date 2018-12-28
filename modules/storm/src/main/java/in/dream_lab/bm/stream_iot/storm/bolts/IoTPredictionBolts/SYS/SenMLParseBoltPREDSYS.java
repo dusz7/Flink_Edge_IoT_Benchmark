@@ -130,6 +130,7 @@ public class SenMLParseBoltPREDSYS extends BaseRichBolt {
 				values.add(-1L);
 			}
 			
+			values.add(tuple.getLongByField("CHAINSTAMP"));
 			collector.emit(values);
 
 		} catch (Exception e) {
@@ -139,7 +140,7 @@ public class SenMLParseBoltPREDSYS extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("MSGID", "SENSORID", "META", "OBSTYPE", "OBSVAL", "MSGTYPE", "ANALAYTICTYPE", "TIMESTAMP", "SPOUTTIMESTAMP"));
+		declarer.declare(new Fields("MSGID", "SENSORID", "META", "OBSTYPE", "OBSVAL", "MSGTYPE", "ANALAYTICTYPE", "TIMESTAMP", "SPOUTTIMESTAMP", "CHAINSTAMP"));
 	}
 
 	@Override

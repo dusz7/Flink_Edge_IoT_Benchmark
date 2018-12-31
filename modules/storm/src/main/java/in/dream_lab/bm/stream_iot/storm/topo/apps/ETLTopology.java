@@ -109,16 +109,24 @@ public class ETLTopology {
 		conf.registerMetricsConsumer(MyMetricsConsumer.class, metricArg, 1);
 		
 		// conf.put("policy", "eda-random");
-		conf.put("policy", "eda-dynamic");
+		// conf.put("policy", "eda-dynamic");
 		// conf.put("policy", "eda-static");
 		// conf.put("static-bolt-ids", "SenMlParseBolt,RangeFilterBolt,BloomFilterBolt,InterpolationBolt,JoinBolt,AnnotationBolt,AzureInsert,CsvToSenMLBolt,PublishBolt,sink");
 		// conf.put("static-bolt-weights", "31,15,15,25,17,9,8,19,14,22");
 		// conf.put("static-bolt-weights", "12,17,16,33,16,8,8,23,14,27");
 		
-		// conf.put("consume", "all");
+		//conf.put("policy", "eda-chain");
+		//conf.put("chain-bolt-ids", "SenMlParseBolt,RangeFilterBolt,BloomFilterBolt,InterpolationBolt,JoinBolt,AnnotationBolt,AzureInsert_Sink,CsvToSenMLBolt,PublishBolt_Sink");
+		//conf.put("chain-bolt-prios", "3,3,3,3,3,3,2,1,1");
+				
+		conf.put("policy", "eda-min-lat");
+		conf.put("min-lat-bolt-ids", "SenMlParseBolt,RangeFilterBolt,BloomFilterBolt,InterpolationBolt,JoinBolt,AnnotationBolt,AzureInsert_Sink,CsvToSenMLBolt,PublishBolt_Sink");
+		conf.put("min-lat-bolt-prios", "1,2,3,4,5,6,9,7,8");
+		
+		conf.put("consume", "all");
 		// conf.put("consume", "half");
-		conf.put("consume", "constant");
-		conf.put("constant", 100);
+		//conf.put("consume", "constant");
+		//conf.put("constant", 50);
 		
 		conf.put("get_wait_time", true);
 		conf.put("get_empty_time", true);

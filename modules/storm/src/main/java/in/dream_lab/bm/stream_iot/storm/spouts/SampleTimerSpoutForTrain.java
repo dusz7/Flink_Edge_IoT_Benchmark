@@ -107,6 +107,8 @@ public class SampleTimerSpoutForTrain extends BaseRichSpout implements ISyntheti
 				values.add(-1L);
 			}
 			
+			values.add(System.currentTimeMillis());
+			
 			this._collector.emit(values);
 
 			// start monitoring backpressure
@@ -196,7 +198,7 @@ public class SampleTimerSpoutForTrain extends BaseRichSpout implements ISyntheti
 		// List<String> fieldsList = EventGen.getHeadersFromCSV(csvFileName);
 		// fieldsList.add("MSGID");
 		// declarer.declare(new Fields(fieldsList));
-		declarer.declare(new Fields("RowString", "MSGID", "ROWKEYSTART", "ROWKEYEND", "TIMESTAMP", "SPOUTTIMESTAMP"));
+		declarer.declare(new Fields("RowString", "MSGID", "ROWKEYSTART", "ROWKEYEND", "TIMESTAMP", "SPOUTTIMESTAMP", "CHAINSTAMP"));
 	}
 
 	@Override

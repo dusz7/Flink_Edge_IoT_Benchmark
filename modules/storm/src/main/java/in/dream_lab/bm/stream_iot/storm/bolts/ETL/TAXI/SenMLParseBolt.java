@@ -138,6 +138,7 @@ public class SenMLParseBolt extends BaseRichBolt {
 					value.add(-1L);
 				}
 				
+				value.add(tuple.getLongByField("CHAINSTAMP"));
 				collector.emit(value);
 			}
 		} catch (Exception e) {
@@ -147,7 +148,7 @@ public class SenMLParseBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("MSGID", "SENSORID", "META", "OBSTYPE", "OBSVAL", "TIMESTAMP", "SPOUTTIMESTAMP"));
+		declarer.declare(new Fields("MSGID", "SENSORID", "META", "OBSTYPE", "OBSVAL", "TIMESTAMP", "SPOUTTIMESTAMP", "CHAINSTAMP"));
 	}
 
 	@Override

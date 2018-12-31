@@ -98,6 +98,8 @@ public class DistinctApproxCountBolt extends BaseRichBolt {
     				values.add(-1L);
     			}
 				
+    			values.add(input.getLongByField("CHAINSTAMP"));
+    			
 				collector.emit(values);
 			} else {
 				//if (l.isWarnEnabled())
@@ -114,7 +116,7 @@ public class DistinctApproxCountBolt extends BaseRichBolt {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("sensorMeta", "sensorID", "obsType", "res", "MSGID", "ANALYTICTYPE", "TIMESTAMP", "SPOUTTIMESTAMP"));
+		outputFieldsDeclarer.declare(new Fields("sensorMeta", "sensorID", "obsType", "res", "MSGID", "ANALYTICTYPE", "TIMESTAMP", "SPOUTTIMESTAMP", "CHAINSTAMP"));
 	}
 
 }

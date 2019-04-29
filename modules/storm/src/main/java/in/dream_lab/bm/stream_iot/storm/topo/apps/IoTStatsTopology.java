@@ -84,7 +84,7 @@ public class IoTStatsTopology {
 		conf.registerMetricsConsumer(MyMetricsConsumer.class, metricArg, 1);
 		
 		// conf.put("policy", "eda-random");
-		// conf.put("policy", "eda-dynamic");
+		conf.put("policy", "eda-dynamic");
 		// conf.put("policy", "eda-static");
 		// conf.put("static-bolt-ids", "SenMLParseBoltPREDSYS,DecisionTreeClassifyBolt,LinearRegressionPredictorBolt,BlockWindowAverageBolt,ErrorEstimationBolt,MQTTPublishBolt,sink");
 		// conf.put("static-bolt-weights", "30,17,21,14,14,37,45");
@@ -94,14 +94,14 @@ public class IoTStatsTopology {
 		//conf.put("chain-bolt-ids", "ParseProjectSYSBolt,BloomFilterCheckBolt,KalmanFilterBolt,SimpleLinearRegressionPredictorBolt,SecondOrderMomentBolt,DistinctApproxCountBolt,MQTTPublishTaskBolt_Sink");
 		//conf.put("chain-bolt-prios", "2,1,1,1,1,1,1");
 				
-		conf.put("policy", "eda-min-lat");
-		conf.put("min-lat-bolt-ids", "ParseProjectSYSBolt,BloomFilterCheckBolt,KalmanFilterBolt,SimpleLinearRegressionPredictorBolt,SecondOrderMomentBolt,DistinctApproxCountBolt,MQTTPublishTaskBolt_Sink");
-		conf.put("min-lat-bolt-prios", "1,2,3,4,6,5,7");
+		//conf.put("policy", "eda-min-lat");
+		//conf.put("min-lat-bolt-ids", "ParseProjectSYSBolt,BloomFilterCheckBolt,KalmanFilterBolt,SimpleLinearRegressionPredictorBolt,SecondOrderMomentBolt,DistinctApproxCountBolt,MQTTPublishTaskBolt_Sink");
+		//conf.put("min-lat-bolt-prios", "1,2,3,4,6,5,7");
 		
-		conf.put("consume", "all");
+		//conf.put("consume", "all");
 		// conf.put("consume", "half");
-		//conf.put("consume", "constant");
-		//conf.put("constant", 50);
+		conf.put("consume", "constant");
+		conf.put("constant", 50);
 		
 		conf.put("get_wait_time", true);
 		conf.put("get_empty_time", true);

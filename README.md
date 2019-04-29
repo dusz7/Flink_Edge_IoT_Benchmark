@@ -1,69 +1,33 @@
-## RIoTBench: A Real-time IoT Benchmark for Distributed Stream Processing Platforms
-### IoT  Micro-benchmarks 
-| Annotate                     | ANN | Parse         | Transform        | 1:1   | No  |
-|------------------------------|-----|---------------|------------------|-------|-----|
-| CsvToSenML                   | C2S | Parse         | Transform        | 1:1   | No  |
-| SenML Parsing                | SML | Parse         | Transform        | 1:1   | No  |
-| XML Parsing                  | XML | Parse         | Transform        | 1:1   | No  |
-| Bloom Filter                 | BLF | Filter        | Filter           | 1:0/1 | No  |
-| Range Filter                 | RGF | Filter        | Filter           | 1:0/1 | No  |
-| Accumlator                   | ACC | Statistical   | Aggregate        | N:1   | Yes |
-| Average                      | AVG | Statistical   | Aggregate        | N:1   | Yes |
-| Distinct Appox. Count        | DAC | Statistical   | Transform        | 1:1   | Yes |
-| Kalman Filter                | KAL | Statistical   | Transform        | 1:1   | Yes |
-| Second Order Moment          | SOM | Statistical   | Transform        | 1:1   | Yes |
-| Decision Tree Classify       | DTC | Predictive    | Transform        | 1:1   | No  |
-| Decision Tree Train          | DTT | Predictive    | Aggregate        | N:1   | No  |
-| Interpolation                | INP | Predictive    | Transform        | 1:1   | Yes |
-| Multi-var. Linear Reg.       | MLR | Predictive    | Transform        | 1:1   | No  |
-| Multi-var. Linear Reg. Train | MLT | Predictive    | Aggregate        | N:1   | No  |
-| Sliding Linear Regression    | SLR | Predictive    | Flat Map         | N:M   | Yes |
-| Azure Blob D/L               | ABD | IO            | Source/Transform | 1:1   | No  |
-| Azure Blob U/L               | ABU | IO            | Sink             | 1:1   | No  |
-| Azure Table Lookup           | ATL | IO            | Source/Transform | 1:1   | No  |
-| Azure Table Range            | ATR | IO            | Source/Transform | 1:1   | No  |
-| Azure Table Insert           | ATI | IO            | Transform        | 1:1   | No  |
-| MQTT Publish                 | MQP | IO            | Sink             | 1:1   | No  |
-| MQTT Subscribe               | MQS | IO            | Sink             | 1:1   | No  |
-| Local Files Zip              | LZP | IO            | Sink             | 1:1   | No  |
-| Remote Files Zip             | RZP | IO            | Sink             | 1:1   | No  |
-| MultiLine Plot               | PLT | Visualization | Transform        | 1:1   | No  |
+# ATC'19 EdgeWise Prototype - Benchmarks
+This repository contains the Benchmarks used by the EdgeWise Prototype for the [ATC'19](https://www.usenix.org/conference/atc19) paper:
 
-### Application  benchmarks 
-| App. Name  | Code |
-| ------------- | ------------- |
-| Extraction, Transform and Load  dataflow  | ETL   |
-| Statistical Summarization dataflow  | STATS   |
-| Model Training dataflow  | TRAIN   |
-| Predictive Analytics dataflow   | PRED   |
+*Xinwei Fu, Talha Ghaffar, James C. Davis, Dongyoon Lee, "[EdgeWise: A Better Stream Processing Engine for the Edge](http://people.cs.vt.edu/fuxinwei/)", USENIX Annual Technical Conference (ATC), Renton, WA, USA, July 2019.*
 
+This repository modify the [riot-bench](https://github.com/dream-lab/riot-bench).
 
-### Extraction, Transform and Load  dataflow (ETL)
- ![FCAST](https://github.com/anshuiisc/FIG/blob/master/ETL-1.png)
-### Statistical Summarization dataflow (STATS) 
- ![FCAST](https://github.com/anshuiisc/FIG/blob/master/stats-1.png)
-### Model Training dataflow (TRAIN)
- ![FCAST](https://github.com/anshuiisc/FIG/blob/master/pred-1.png)
-### Predictive Analytics dataflow (PRED)  
- ![FCAST](https://github.com/anshuiisc/FIG/blob/master/Train-1.png)
+### Setup
+Download resources [here](https://drive.google.com/drive/folders/1DOrSu4r-Lzf1BE-5qRYdC-HRM9vjhmN4?usp=sharing).
+Copy *pc_resources* folder into the nimbus PC and copy *pi_resources* folder into distributed PIs.
+Setup env in the nimbus PC:
+```sh
+$ export STORM=MYPATH/apache-storm-1.1.0/bin/storm
+$ export RIOT_INPUT_PROP_PATH="MYPATH/pc_resources"
+$ export RIOT_RESOURCES="MYPATH/pi_resources/"
+```
 
+### How to Compile and Package
+We used 4 topologies: [ETL](https://github.com/XinweiFu/EdgeWise-ATC-19-Benchmarks/blob/atc19/modules/storm/src/main/java/in/dream_lab/bm/stream_iot/storm/topo/apps/ETLTopology.java), [PRED](https://github.com/XinweiFu/EdgeWise-ATC-19-Benchmarks/blob/atc19/modules/storm/src/main/java/in/dream_lab/bm/stream_iot/storm/topo/apps/IoTPredictionTopologySYS.java), [STAT](https://github.com/XinweiFu/EdgeWise-ATC-19-Benchmarks/blob/atc19/modules/storm/src/main/java/in/dream_lab/bm/stream_iot/storm/topo/apps/IoTStatsTopology.java), [TRAIN](https://github.com/XinweiFu/EdgeWise-ATC-19-Benchmarks/blob/atc19/modules/storm/src/main/java/in/dream_lab/bm/stream_iot/storm/topo/apps/IoTTrainTopologySYS.java). You can modify the configureations before compiling and packaging as descirbed [here](https://github.com/XinweiFu/EdgeWise-ATC-19).
+```sh
+$ mvn compile package -DskipTests
+# Generated jar file is here: modules/storm/target/iot-bm-storm-0.1-jar-with-dependencies.jar
+# If it shows errors, please run it again.
+```
 
-- Steps to run benchmark's
-- Once cloned  run 
-    ```
-   mvn clean compile package -DskipTests
-    ```
-- To submit jar microbenchmarks- 
- ```
- storm jar <stormJarPath>   in.dream_lab.bm.stream_iot.storm.topo.micro.MicroTopologyDriver  C  <microTaskName>  <inputDataFilePath used by CustomEventGen and spout>   PLUG-<expNum>  <rate as 1x,2x>  <outputLogPath>   <tasks.properties File Path>   <TopoName>
- 
- 
- ```
-- For microTaskName please refer  switch logic in  MicroTopologyFactory class in package   "in.dream_lab.bm.stream_iot.storm.topo.micro"   
-
-Please refer the paper for detailed info  - <https://arxiv.org/abs/1701.08530> 
-
-
-
-
-
+### Run scripts
+Script parameters, including input rate and total events for each topology, can be set in [scripts/exp_setup.py](https://github.com/XinweiFu/EdgeWise-ATC-19-Benchmarks/blob/atc19/scripts/exp_setup.py).
+There are running examples in [scripts/run_examples.sh](https://github.com/XinweiFu/EdgeWise-ATC-19-Benchmarks/blob/atc19/scripts/run_examples.sh)
+```sh
+$ cd scripts/
+$ ./run_examples.sh
+# Generated output jar file is in the folder: scripts/exp_archive_dir
+```

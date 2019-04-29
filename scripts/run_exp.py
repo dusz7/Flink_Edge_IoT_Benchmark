@@ -25,7 +25,7 @@ args = parser.parse_args()
 
 def get_results(pi_outdir,  exp_result_dir):
     #devices = ["pi@raspberrypi1", "pi@raspberrypi2", "pi@raspberrypi3", "pi@raspberrypi11", "pi@raspberrypi12","pi@raspberrypi4", "pi@raspberrypi5", "pi@raspberrypi6", "pi@raspberrypi7", "pi@raspberrypi8","pi@raspberrypi9","pi@raspberrypi10"]
-    devices = ["pi@raspberrypi11", "pi@raspberrypi12", "pi@raspberrypi7", "pi@raspberrypi8","pi@raspberrypi9","pi@raspberrypi10"]
+    devices = ["pi@raspberrypi11", "pi@raspberrypi12", "pi@raspberrypi7", "pi@raspberrypi8","pi@raspberrypi9","pi@raspberrypi1"]
     for dev in devices:
         process = subprocess.Popen(["scp", dev + ":" + pi_outdir + "/*", exp_result_dir+"/"], stdout=subprocess.PIPE)
         output, error = process.communicate()

@@ -29,5 +29,5 @@ There are running examples in [scripts/run_examples.sh](https://github.com/Xinwe
 ```sh
 $ cd scripts/
 $ ./run_examples.sh
-# Generated output jar file is in the folder: scripts/exp_archive_dir
+# Generated output tar file is in the folder: scripts/exp_archive_dir
 ```

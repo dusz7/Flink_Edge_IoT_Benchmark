@@ -23,12 +23,15 @@ parser.add_argument('--numWorkers', type=int, default=1, choices=xrange(1, 10), 
 
 args = parser.parse_args()
 
-def get_results(pi_outdir,  exp_result_dir):
+def get_results(topo_run_outdir, exp_result_dir):
     #devices = ["pi@raspberrypi1", "pi@raspberrypi2", "pi@raspberrypi3", "pi@raspberrypi11", "pi@raspberrypi12","pi@raspberrypi4", "pi@raspberrypi5", "pi@raspberrypi6", "pi@raspberrypi7", "pi@raspberrypi8","pi@raspberrypi9","pi@raspberrypi10"]
-    devices = ["pi@raspberrypi11", "pi@raspberrypi12", "pi@raspberrypi7", "pi@raspberrypi8","pi@raspberrypi9","pi@raspberrypi1"]
-    for dev in devices:
-        process = subprocess.Popen(["scp", dev + ":" + pi_outdir + "/*", exp_result_dir+"/"], stdout=subprocess.PIPE)
-        output, error = process.communicate()
+#     devices = ["pi@raspberrypi11", "pi@raspberrypi12", "pi@raspberrypi7", "pi@raspberrypi8","pi@raspberrypi9","pi@raspberrypi1"]
+#     for dev in devices:
+#         process = subprocess.Popen(["scp", dev + ":" + topo_run_outdir + "/*", exp_result_dir+"/"], stdout=subprocess.PIPE)
+#         output, error = process.communicate()
+    cmd = 'cp ' + topo_run_outdir + '/* ' + exp_result_dir + '/'
+    process = subprocess.Popen(cmd, shell=True)
+    output, error = process.communicate()
 
 def wait_for_completion(in_topo_name, num_experiments, start_time, port=38999):
     host = ''
@@ -36,7 +39,7 @@ def wait_for_completion(in_topo_name, num_experiments, start_time, port=38999):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # AF_INET-> IPv4, SOCK_STREAM-> TCP
 
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    # Bind socket to local host and port
+    # Bind socket to local host clean_dirs_on_pisand port
     try:
         s.bind((host, port))
     except socket.error as msg:
@@ -60,7 +63,7 @@ def wait_for_completion(in_topo_name, num_experiments, start_time, port=38999):
     s.close()
     print "Completed!"
 
-def launch_experiments(input_rates, in_topo_name, jar_name, topo, data_file, pi_outdir, prop_file, num_events, num_workers):
+def launch_experiments(input_rates, in_topo_name, jar_name, topo, data_file, topo_run_outdir, prop_file, num_events, num_workers):
     executed_topologies = []
     commands = []
 
@@ -69,9 +72,9 @@ def launch_experiments(input_rates, in_topo_name, jar_name, topo, data_file, pi_
         topo_unique_name = in_topo_name + "_" + str(input_rates[i])
 
         executed_topologies.append(topo_unique_name)
-                
-        command_pre = storm_exe + " jar " + jar_path + " " + topo + " C " +  topo_unique_name  + " " + data_file + " 1 1 " + pi_outdir + " " + prop_file + " " + topo_unique_name
-        
+
+        command_pre = storm_exe + " jar " + jar_path + " " + topo + " C " + topo_unique_name + " " + data_file + " 1 1 " + topo_run_outdir + " " + prop_file + " " + topo_unique_name
+
         commands.append(command_pre + " " + str(input_rates[i]) + " " + str(num_events[i]) + " " + str(num_workers))
         
         print "Running experiment:"
@@ -82,12 +85,15 @@ def launch_experiments(input_rates, in_topo_name, jar_name, topo, data_file, pi_
 
     return (commands, executed_topologies)
 
-def clean_dirs_on_pis(pi_outdir):
-    cmd = "dsh -aM -c rm " + pi_outdir + "/*"
+def clean_dirs_on_pis(topo_run_outdir):
+#     cmd = "dsh -aM -c rm " + topo_run_outdir + "/*"
+#     process = subprocess.Popen(cmd.split(), stdout=FNULL, stderr=subprocess.STDOUT)
+    cmd = "rm -rf " + topo_run_outdir
     process = subprocess.Popen(cmd.split(), stdout=FNULL, stderr=subprocess.STDOUT)
     output, error = process.communicate()
     if error is None:
         print "Deleted output directories on PIs"
+        os.mkdir(topo_run_outdir)
 
 def kill_topologies(path):
     cmd = path+"/kill_topos.sh"
@@ -140,7 +146,7 @@ def run_experiments(jar_name, in_topo_name, numWorkers):
     
     topo = topo_qualified_path[in_topo_name]
     
-    exp_result_dir = results_dir[hostname]
+    exp_result_dir = exp_results_dir[hostname]
     path = paths[hostname]
     
     os.chdir(path)
@@ -149,10 +155,10 @@ def run_experiments(jar_name, in_topo_name, numWorkers):
     kill_topologies(path)
 
     # Clean output directories on PIs
-    clean_dirs_on_pis(pi_outdir)
+    clean_dirs_on_pis(topo_run_outdir)
     
     # Run the experiments now.
-    commands, executed_topologies = launch_experiments(input_rates, in_topo_name, jar_name, topo, data_file, pi_outdir, prop_file, num_events, numWorkers)
+    commands, executed_topologies = launch_experiments(input_rates, in_topo_name, jar_name, topo, data_file, topo_run_outdir, prop_file, num_events, numWorkers)
     
     # Wait for completion
     wait_for_completion(port=PORT, in_topo_name=in_topo_name, num_experiments=len(input_rates), start_time=time.time())
@@ -161,7 +167,7 @@ def run_experiments(jar_name, in_topo_name, numWorkers):
     if not os.path.isdir(exp_result_dir):
         os.mkdir(exp_result_dir)
     
-    get_results(pi_outdir, exp_result_dir)
+    get_results(topo_run_outdir, exp_result_dir)
     print "get_results Completed!"
 
 def parse_results(topo_name, jar_name):
@@ -173,7 +179,7 @@ def parse_results(topo_name, jar_name):
             input_rates_str += ","
     
     
-    exp_result_dir = results_dir[hostname]
+    exp_result_dir = exp_results_dir[hostname]
     
     command = "java -jar ParseResults.jar "
     command += topo_name + " "
@@ -194,7 +200,7 @@ def main():
     run_experiments(args.jar_name, args.in_topo_name, args.numWorkers)
     parse_results(args.in_topo_name, args.jar_name)
     
-    archive_results(paths[hostname], args.jar_name, args.in_topo_name, results_dir[hostname])
+    archive_results(paths[hostname], args.jar_name, args.in_topo_name, exp_results_dir[hostname])
     
 if __name__ == "__main__":
     main()

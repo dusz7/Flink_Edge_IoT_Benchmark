@@ -142,9 +142,12 @@ topo_qualified_path = {
 			"train_h" : "in.dream_lab.bm.stream_iot.storm.topo.apps.IoTTrainTopologySYS"
 			}
 			
-paths={'buzz':'/home/fuxinwei/EdgeWiseATC19/EdgeWise-ATC-19-Benchmarks/scripts'}
-results_dir={'buzz':'/home/fuxinwei/EdgeWiseATC19/EdgeWise-ATC-19-Benchmarks/scripts/experiment_results'}
+paths={'buzz':'/home/dusz512/Projects/edgeStreamingForIoT/riotBench19/scripts'}
 
-pi_outdir = "/home/pi/topo_run_outdir/reg-SYS"
+# on storm nimbus : copy the supervisors' topology running result and is temp
+exp_results_dir={'buzz':'/home/dusz512/Projects/edgeStreamingForIoT/riotBench19/scripts/exp_results_dir_temp'}
+
+# on storm supervisor : topology running result
+topo_run_outdir = "/home/dusz512/Projects/edgeStreamingForIoT/riotBench19/scripts/stormTopology_run_out_dir"
 
 PORT = 38999

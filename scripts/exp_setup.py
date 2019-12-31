@@ -144,7 +144,7 @@ topo_qualified_path = {
 			
 paths={'buzz':'/home/dusz512/Projects/edgeStreamingForIoT/riotBench19/scripts'}
 
-# on storm nimbus : copy the supervisors' topology running result and is temp
+# on storm nimbus : copy the supervisors' topology running result in here and is temp
 exp_results_dir={'buzz':'/home/dusz512/Projects/edgeStreamingForIoT/riotBench19/scripts/exp_results_dir_temp'}
 
 # on storm supervisor : topology running result

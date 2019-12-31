@@ -8,6 +8,7 @@ import org.json.simple.parser.JSONParser;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -28,7 +29,7 @@ import in.dream_lab.bm.stream_iot.tasks.AbstractTask;
  * @author simmhan, shilpa
  *
  */
-public class SenMLParse extends AbstractTask<String,Map> 
+public class SenMLParse extends AbstractTask<String,Map> implements Serializable
 {
 	
 	private static final Object SETUP_LOCK = new Object();

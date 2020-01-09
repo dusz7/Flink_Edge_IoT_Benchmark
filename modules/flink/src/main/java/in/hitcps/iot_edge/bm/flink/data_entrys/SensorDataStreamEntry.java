@@ -1,13 +1,28 @@
 package in.hitcps.iot_edge.bm.flink.data_entrys;
 
 public class SensorDataStreamEntry {
-    String msgId;
-    String sensorId;
-    String metaValues;
-    String obsField;
-    String obsValue;
-    Long sourceInTimestamp;
-    Long opTimestamp;
+    public static final String MSGTYPE_DEFAULT = "MSGTYPE_DEFAULT";
+    public static final String MSGTYPE_MODELUPDATE = "MSGTYPE_MODELUPDATE";
+    public static final String ANATYPE_DEFAULT = "ANATYPE_DEFAULT";
+    public static final String ANATYPE_DTC = "DTC";
+    public static final String ANATYPE_MLR = "MLR";
+    public static final String ANATYPE_AVG = "AVG";
+    public static final String ANATYPE_SLR = "SLR";
+    public static final String ANATYPE_SOM = "SOM";
+    public static final String ANATYPE_DUMB = "ANATYPE_DUMB";
+    public static final String OBSFIELD_DUMMY = "OBSFIELD_DUMMY";
+
+    private String msgId;
+    private String sensorId;
+    private String metaValues;
+    private String obsField;
+    private String obsValue;
+    private Long sourceInTimestamp;
+    private Long opTimestamp;
+    private String calculateResult;
+
+    private String msgType = MSGTYPE_DEFAULT;
+    private String analyticType = ANATYPE_DEFAULT;
 
     public SensorDataStreamEntry(String msgId, String sensorId, String metaValues, String obsField, String obsValue, Long sourceTimestamp) {
         this.msgId = msgId;
@@ -27,7 +42,11 @@ public class SensorDataStreamEntry {
                 "sensorId = " + sensorId +
                 ", metaValues = " + metaValues +
                 ", obsField = " + obsField +
-                ", obsValue = " + obsValue;
+                ", obsValue = " + obsValue +
+                ", msgType = " + msgType +
+                ", anaType = " + analyticType +
+                ", calRes = " + calculateResult +
+                " }";
     }
 
     public String getMsgId() {
@@ -84,5 +103,29 @@ public class SensorDataStreamEntry {
 
     public void setOpTimestamp(Long opTimestamp) {
         this.opTimestamp = opTimestamp;
+    }
+
+    public String getMsgType() {
+        return msgType;
+    }
+
+    public void setMsgType(String msgType) {
+        this.msgType = msgType;
+    }
+
+    public String getAnalyticType() {
+        return analyticType;
+    }
+
+    public void setAnalyticType(String analyticType) {
+        this.analyticType = analyticType;
+    }
+
+    public String getCalculateResult() {
+        return calculateResult;
+    }
+
+    public void setCalculateResult(String calculateResult) {
+        this.calculateResult = calculateResult;
     }
 }

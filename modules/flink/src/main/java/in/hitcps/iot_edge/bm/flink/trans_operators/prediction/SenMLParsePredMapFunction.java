@@ -1,25 +1,21 @@
-package in.hitcps.iot_edge.bm.flink.trans_operators.etl;
+package in.hitcps.iot_edge.bm.flink.trans_operators.prediction;
 
 import in.dream_lab.bm.stream_iot.tasks.AbstractTask;
 import in.dream_lab.bm.stream_iot.tasks.parse.SenMLParse;
 import in.hitcps.iot_edge.bm.flink.data_entrys.FileDataEntry;
 import in.hitcps.iot_edge.bm.flink.data_entrys.SensorDataStreamEntry;
-
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.util.*;
-
-
-import org.apache.flink.api.common.functions.RichFlatMapFunction;
+import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.util.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SenMLParseFlatMapFunction extends RichFlatMapFunction<FileDataEntry, SensorDataStreamEntry> {
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.*;
 
-    private static Logger l = LoggerFactory.getLogger(SenMLParseFlatMapFunction.class);
+public class SenMLParsePredMapFunction extends RichMapFunction<FileDataEntry, SensorDataStreamEntry> {
+
+    private static Logger l = LoggerFactory.getLogger(SenMLParsePredMapFunction.class);
     private Properties p;
 
     private SenMLParse senMLParse;
@@ -28,8 +24,8 @@ public class SenMLParseFlatMapFunction extends RichFlatMapFunction<FileDataEntry
     private String[] observableFields;
     private String idField;
 
-    public SenMLParseFlatMapFunction(Properties p_) {
-        p = p_;
+    public SenMLParsePredMapFunction(Properties p_) {
+        this.p = p_;
     }
 
     @Override
@@ -49,7 +45,7 @@ public class SenMLParseFlatMapFunction extends RichFlatMapFunction<FileDataEntry
             List<String> obsList = new ArrayList<>();
 
             for (String ot : br.readLine().split(",")) { // timestamp,source,longitude,latitude,temperature,humidity,light,dust,airquality_raw
-                if (!metaList.contains(ot) && !ot.equals(idField)) { // remove idfield 'source'
+                if (!metaList.contains(ot) && !ot.equals(idField)) {
                     obsList.add(ot);
                 }
             }
@@ -62,10 +58,11 @@ public class SenMLParseFlatMapFunction extends RichFlatMapFunction<FileDataEntry
     @Override
     public void close() throws Exception {
         super.close();
+        senMLParse.tearDown();
     }
 
     @Override
-    public void flatMap(FileDataEntry value, Collector<SensorDataStreamEntry> out) throws Exception {
+    public SensorDataStreamEntry map(FileDataEntry value) throws Exception {
         String msgId = value.getMsgId();
         String msg = value.getPayLoad();
 
@@ -79,12 +76,20 @@ public class SenMLParseFlatMapFunction extends RichFlatMapFunction<FileDataEntry
         for (String metaField : metaFields) {
             builder.append(resultMap.get(metaField)).append(",");
         }
-        builder = builder.deleteCharAt(builder.lastIndexOf(","));
+        builder.deleteCharAt(builder.lastIndexOf(","));
         String metaValues = builder.toString();
 
-        for (String observableField : observableFields) {
-            // timeStamp
-            out.collect(new SensorDataStreamEntry(msgId, resultMap.get(idField), metaValues, observableField, resultMap.get(observableField), value.getSourceInTimestamp()));
+        builder = new StringBuilder();
+        for (String obsField : observableFields) {
+            builder.append(resultMap.get(obsField)).append(",");
         }
+        builder.deleteCharAt(builder.lastIndexOf(","));
+        String obsValues = builder.toString();
+
+        SensorDataStreamEntry sensorDataStreamEntry = new SensorDataStreamEntry(msgId, resultMap.get(idField), metaValues,
+                SensorDataStreamEntry.OBSFIELD_DUMMY, obsValues, value.getSourceInTimestamp());
+        sensorDataStreamEntry.setAnalyticType(SensorDataStreamEntry.ANATYPE_DUMB);
+
+        return sensorDataStreamEntry;
     }
 }

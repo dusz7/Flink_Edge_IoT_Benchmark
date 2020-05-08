@@ -1,8 +1,5 @@
 package in.hitcps.iot_edge.bm.flink.jobs;
 
-import in.hitcps.iot_edge.bm.flink.data_entrys.FileDataEntry;
-import in.hitcps.iot_edge.bm.flink.source_operators.SourceFromSysFile;
-import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +27,7 @@ public class TrainJob {
         int numData = 10;
 
         // data source
-//        SourceFromSysFile sourceFromSysFile = new SourceFromSysFile(inputFilePath, scalingFactor, inputRate, numData);
+//        SourceFromFile sourceFromSysFile = new SourceFromFile(inputFilePath, scalingFactor, inputRate, numData);
 //        DataStream<FileDataEntry> dataSource = env.addSource(sourceFromSysFile);
 //        dataSource.print();
     }

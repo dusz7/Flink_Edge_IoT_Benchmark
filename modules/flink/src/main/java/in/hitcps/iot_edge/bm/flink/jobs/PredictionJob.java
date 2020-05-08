@@ -2,15 +2,12 @@ package in.hitcps.iot_edge.bm.flink.jobs;
 
 import in.hitcps.iot_edge.bm.flink.data_entrys.FileDataEntry;
 import in.hitcps.iot_edge.bm.flink.data_entrys.SensorDataStreamEntry;
-import in.hitcps.iot_edge.bm.flink.sink_operators.etl.MQTTSinkETLFunction;
 import in.hitcps.iot_edge.bm.flink.sink_operators.prediction.MQTTPredSinkFunction;
-import in.hitcps.iot_edge.bm.flink.source_operators.SourceFromSysFile;
+import in.hitcps.iot_edge.bm.flink.source_operators.SourceFromFile;
 import in.hitcps.iot_edge.bm.flink.trans_operators.prediction.*;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
-import org.apache.flink.streaming.api.datastream.WindowedStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,8 +35,8 @@ public class PredictionJob {
         int numData = 20;
 
         // data source
-        SourceFromSysFile sourceFromSysFile = new SourceFromSysFile(inputFilePath, scalingFactor, inputRate, numData);
-        DataStream<FileDataEntry> dataSource = env.addSource(sourceFromSysFile);
+        SourceFromFile sourceFromFile = new SourceFromFile(inputFilePath, scalingFactor, inputRate, numData);
+        DataStream<FileDataEntry> dataSource = env.addSource(sourceFromFile);
 //        dataSource.print();
 
         SingleOutputStreamOperator<SensorDataStreamEntry> parsedData = dataSource.map(new SenMLParsePredMapFunction(p)).setParallelism(1);

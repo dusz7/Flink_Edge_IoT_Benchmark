@@ -4,24 +4,25 @@ import in.hitcps.iot_edge.bm.flink.data_entrys.FileDataEntry;
 import in.hitcps.iot_edge.bm.flink.utils.event_gens.DataTimerEventGen;
 import in.hitcps.iot_edge.bm.flink.utils.listeners.DataReadListener;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.streaming.api.functions.source.RichSourceFunction;
+import org.apache.flink.streaming.api.functions.source.RichParallelSourceFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class SourceFromSysFile extends RichSourceFunction<FileDataEntry> implements DataReadListener {
+public class PSourceFromFile extends RichParallelSourceFunction<FileDataEntry> implements DataReadListener {
 
-    private static Logger l = LoggerFactory.getLogger(SourceFromSysFile.class);
+    private static Logger l = LoggerFactory.getLogger(SourceFromFile.class);
 
     private volatile boolean isRunning = true;
 
     // read data from somewhere
     private DataTimerEventGen eventGen;
-    private BlockingQueue<List<String>> dataReadingQueue;
+    private ConcurrentLinkedQueue<List<String>> dataReadingQueue;
 
     private long msgId;
     private long startMsgId;
@@ -33,9 +34,7 @@ public class SourceFromSysFile extends RichSourceFunction<FileDataEntry> impleme
     // scalingFactor means what  default: 1
     private double scalingFactor;
 
-    // ts
-
-    public SourceFromSysFile(String csvFileName, double scalingFactor, int inputRate, long numData) {
+    public PSourceFromFile(String csvFileName, double scalingFactor, int inputRate, long numData) {
         this.csvFileName = csvFileName;
         this.scalingFactor = scalingFactor;
         this.inputRate = inputRate;
@@ -57,7 +56,7 @@ public class SourceFromSysFile extends RichSourceFunction<FileDataEntry> impleme
 
         System.out.println("eventGen create");
         eventGen = new DataTimerEventGen(scalingFactor, inputRate);
-        dataReadingQueue = new LinkedBlockingQueue<List<String>>();
+        dataReadingQueue = new ConcurrentLinkedQueue<List<String>>();
 
         eventGen.setDataReadListener(this);
         eventGen.launch(csvFileName);
@@ -69,8 +68,7 @@ public class SourceFromSysFile extends RichSourceFunction<FileDataEntry> impleme
     }
 
     @Override
-    public void run(SourceContext<FileDataEntry> sourceContext) throws Exception {
-//        System.out.println("Source Read Running");
+    public void run(SourceContext sourceContext) throws Exception {
         while (isRunning) {
             List<String> dataE = dataReadingQueue.poll();
             // use numData to control use how many data
@@ -82,17 +80,10 @@ public class SourceFromSysFile extends RichSourceFunction<FileDataEntry> impleme
             msgId++;
             entry.setPayLoad(dataE.get(1));
 
-            // source in time stamp
-            // note to min the influence of early startup_phase
-//            if (msgId > startMsgId + numData / 3) {
-//
-//            }
             entry.setSourceInTimestamp(System.currentTimeMillis());
 
             // send data
             sourceContext.collect(entry);
-
-            // monitoring bp
         }
     }
 
@@ -103,11 +94,11 @@ public class SourceFromSysFile extends RichSourceFunction<FileDataEntry> impleme
 
     @Override
     public void receive(List<String> data) {
-//        System.out.println("receive data from EventGen");
         try {
-            this.dataReadingQueue.put(data);
-        } catch (InterruptedException e) {
+            this.dataReadingQueue.offer(data);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
 }

@@ -204,3 +204,18 @@ def main():
     
 if __name__ == "__main__":
     main()
+
+
+# run_example
+# cp ../modules/storm/target/iot-bm-storm-0.1-jar-with-dependencies.jar topologies.jar
+# python run_exp.py topologies.jar etl_h
+# input_rates = [600,700,800,900,1000,1100]
+# num_events = [144000,168000,192000,216000,240000,264000]
+# topo = "in.dream_lab.bm.stream_iot.storm.topo.apps.ETLTopology"
+# topo_run_outdir = "/home/dusz512/Projects/edgeStreamingForIoT/riotBench19/scripts/stormTopology_run_out_dir"
+
+# 'cp ' + topo_run_outdir + '/* ' + exp_result_dir + '/'
+
+# parse_results:
+# input_rates = "600,700,800,900,1000,1100"
+# exp_result_dir = exp_result_dir

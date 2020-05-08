@@ -3,7 +3,7 @@ package in.hitcps.iot_edge.bm.flink.jobs;
 import in.hitcps.iot_edge.bm.flink.data_entrys.FileDataEntry;
 import in.hitcps.iot_edge.bm.flink.data_entrys.SensorDataStreamEntry;
 import in.hitcps.iot_edge.bm.flink.sink_operators.etl.MQTTSinkETLFunction;
-import in.hitcps.iot_edge.bm.flink.source_operators.SourceFromSysFile;
+import in.hitcps.iot_edge.bm.flink.source_operators.SourceFromFile;
 import in.hitcps.iot_edge.bm.flink.trans_operators.etl.*;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
@@ -25,7 +25,7 @@ public class ETLJob {
 //        LocalStreamEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
 
 //        String resourceDir = System.getenv("RIOT_RESOURCES");  // pi_resource
-        String resourceDir = "/home/dusz512/Projects/edgeStreamingForIoT/riotResource/pi_resources";
+        String resourceDir = "/Users/craig/Projects/edgeStreamingForIoT/riotResource/pi_resources";
         String inputFilePath = resourceDir + "/" + "SYS_sample_data_senml.csv";
         String taskPropertiesFileName = resourceDir + "/" + "my_etl.properties";
         System.out.println("inputDataFilePath : " + inputFilePath + "     taskPropertiesFilePath : " + taskPropertiesFileName);
@@ -33,12 +33,12 @@ public class ETLJob {
         p.load(new FileInputStream(taskPropertiesFileName));
 
         double scalingFactor = 1;
-        int inputRate = 10;
-        int numData = 10;
+        int inputRate = 1000;
+        int numData = 1000000;
 
         // data source
-        SourceFromSysFile sourceFromSysFile = new SourceFromSysFile(inputFilePath, scalingFactor, inputRate, numData);
-        DataStream<FileDataEntry> dataSource = env.addSource(sourceFromSysFile);
+        SourceFromFile sourceFromFile = new SourceFromFile(inputFilePath, scalingFactor, inputRate, numData);
+        DataStream<FileDataEntry> dataSource = env.addSource(sourceFromFile);
 //        dataSource.print();
 
         // SenML Parse Map

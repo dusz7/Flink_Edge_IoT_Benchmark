@@ -137,10 +137,10 @@
 
     <modules>
         <module>modules/tasks</module>
-        <module>modules/storm-metrics-reporter</module>
-        <module>modules/storm</module>
+<!--        <module>modules/storm-metrics-reporter</module>-->
+<!--        <module>modules/storm</module>-->
         <module>modules/flink</module>
-        <module>modules/distribution</module>
+<!--        <module>modules/distribution</module>-->
     </modules>
 
     <properties>

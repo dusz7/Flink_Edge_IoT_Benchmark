@@ -9,6 +9,7 @@ public class SensorDataStreamEntry {
     public static final String ANATYPE_AVG = "AVG";
     public static final String ANATYPE_SLR = "SLR";
     public static final String ANATYPE_SOM = "SOM";
+    public static final String ANATYPE_DAC = "DAC";
     public static final String ANATYPE_DUMB = "ANATYPE_DUMB";
     public static final String OBSFIELD_DUMMY = "OBSFIELD_DUMMY";
 

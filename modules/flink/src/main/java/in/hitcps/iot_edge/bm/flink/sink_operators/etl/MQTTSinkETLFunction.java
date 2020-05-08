@@ -67,6 +67,7 @@ public class MQTTSinkETLFunction extends RichSinkFunction<SensorDataStreamEntry>
         mqttPublishTask.doTask(map);
         if (value.getSourceInTimestamp() > 0) {
             histogram.update(System.currentTimeMillis() - value.getSourceInTimestamp());
+            System.out.println("count = " + histogram.getCount() + "   mean = " + histogram.getStatistics().getMean() );
 //            l.warn("count = {}   mean = {}, this = {}", histogram.getCount(), histogram.getStatistics().getMean(), System.currentTimeMillis() - value.getSourceInTimestamp());
         }
     }

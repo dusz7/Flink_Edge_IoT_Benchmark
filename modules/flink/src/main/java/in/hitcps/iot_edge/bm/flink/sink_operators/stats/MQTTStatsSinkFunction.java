@@ -35,10 +35,10 @@ public class MQTTStatsSinkFunction extends RichSinkFunction<SensorDataStreamEntr
         super.open(parameters);
         mqttPublishTask = new MQTTPublishTask();
         mqttPublishTask.setup(l, p);
-        com.codahale.metrics.Histogram dropwizardHistogram = new com.codahale.metrics.Histogram(new SlidingWindowReservoir(dataNum));
+        com.codahale.metrics.Histogram dropwizardHistogram = new com.codahale.metrics.Histogram(new SlidingWindowReservoir(dataNum * 5));
         histogram = getRuntimeContext().getMetricGroup()
-                .addGroup("flink-stats")
-                .histogram("job-latency", new DropwizardHistogramWrapper(dropwizardHistogram));
+                .addGroup("MyMetrics")
+                .histogram("MyLatency", new DropwizardHistogramWrapper(dropwizardHistogram));
     }
 
     @Override
@@ -49,7 +49,7 @@ public class MQTTStatsSinkFunction extends RichSinkFunction<SensorDataStreamEntr
     @Override
     public void invoke(SensorDataStreamEntry value, Context context) throws Exception {
 
-        // TODO: timeStamp in metaValues ??
+        // TODO: timeStamp in metaValues ?
         String res = value.getMetaValues().replace(",", ";")
                 + "-" + value.getObsField() + "-" + value.getCalculateResult();
 
@@ -59,7 +59,7 @@ public class MQTTStatsSinkFunction extends RichSinkFunction<SensorDataStreamEntr
 
         if (value.getSourceInTimestamp() > 0) {
             histogram.update(System.currentTimeMillis() - value.getSourceInTimestamp());
-            l.warn("count = {}   mean = {}, this = {}", histogram.getCount(), histogram.getStatistics().getMean(), System.currentTimeMillis() - value.getSourceInTimestamp());
+//            l.warn("count = {}   mean = {}, this = {}", histogram.getCount(), histogram.getStatistics().getMean(), System.currentTimeMillis() - value.getSourceInTimestamp());
         }
 
     }

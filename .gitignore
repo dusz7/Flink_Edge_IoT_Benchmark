@@ -4,6 +4,10 @@ modules/tasks/target/
 scripts/stormTopology_run_out_dir
 scripts/exp_archive_dir
 
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
 .idea/
 
 *~

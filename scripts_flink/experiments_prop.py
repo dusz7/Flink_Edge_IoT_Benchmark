@@ -19,8 +19,10 @@ pred_h_nums_of_data = [528000, 528000, 528000, 528000, 528000, 528000]
 
 # stats_input_rates = [60,80,100,150,180,200]
 # stats_nums_of_data = [14400,19200,24000,36000,43200,48000]
-stats_input_rates = [350, 80]
-stats_nums_of_data = [31500, 800]
+stats_input_rates = [20]
+stats_nums_of_data = [200]
+# stats_input_rates = [10, 20, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100]
+# stats_nums_of_data = [1800, 3600, 9000, 18000, 36000, 54000, 72000, 90000, 108000, 126000, 144000, 162000, 180000, 198000]
 
 stats_h_input_rates = [250, 300, 350, 400, 450, 500]
 stats_h_nums_of_data = [60000, 72000, 84000, 96000, 108000, 120000]
@@ -61,7 +63,7 @@ resource_path = "/usr/local/etc/flink-remote/bm_files/bm_resources"
 data_files = {
     "etl": "SYS_sample_data_senml.csv",
     "pred": "SYS_sample_data_senml.csv",
-    "stats": "train_input_data_test.csv",
+    "stats": "train_input_data.csv",
     "train": "inputFileForTimerSpout-CITY_NoAz.csv"
 }
 
@@ -85,3 +87,6 @@ metrics_log_dir = "/usr/local/etc/flink-remote/bm_files/metrics_logs"
 
 # metrics_log_save_dir
 metrics_log_archive_dir = "/usr/local/etc/flink-remote/bm_files/bm_results"
+
+# end_experiment
+PORT = 38999

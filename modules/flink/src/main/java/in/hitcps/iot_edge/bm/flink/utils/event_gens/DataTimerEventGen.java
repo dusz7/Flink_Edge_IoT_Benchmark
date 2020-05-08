@@ -4,6 +4,7 @@ import in.hitcps.iot_edge.bm.flink.utils.io.JsonDataRead;
 import in.hitcps.iot_edge.bm.flink.utils.listeners.DataReadListener;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -68,7 +69,7 @@ public class DataTimerEventGen {
                     rowIndex = 0;
                 }
                 List<String> data = dataRows.get(rowIndex);
-//                System.out.println("eventGen send data : " + data);
+                data.set(0, String.valueOf(Instant.now().toEpochMilli()));
                 dataReadListener.receive(data);
                 rowIndex++;
             }

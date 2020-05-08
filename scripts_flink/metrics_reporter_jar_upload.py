@@ -34,6 +34,8 @@ def upload_jar():
     remote_cmd = "sudo scp flink-metrics-my.jar pi@192.168.88.237:/usr/local/etc/flink-remote/lib/"
     process = subprocess.Popen(remote_cmd.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     output, error = process.communicate()
+    if error is not None:
+        print error
 
 def main():
     package_metrics_reporter_jar()

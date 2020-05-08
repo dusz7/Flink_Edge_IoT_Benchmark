@@ -82,12 +82,18 @@ public class SourceFromFile extends RichSourceFunction<FileDataEntry> implements
             msgId++;
             entry.setPayLoad(dataE.get(1));
 
+//            entry.setSourceInTimestamp(System.currentTimeMillis());
+
             // source in time stamp
             // note to min the influence of early startup_phase
-//            if (msgId > startMsgId + numData / 3) {
-//
-//            }
-            entry.setSourceInTimestamp(System.currentTimeMillis());
+            if ((msgId > startMsgId + numData / 3) && (msgId < startMsgId + numData * 3 / 4)) {
+                entry.setSourceInTimestamp(Long.parseLong(dataE.get(0)));
+            }
+
+            // mark the end of the exp
+            if (msgId > startMsgId + numData - 10) {
+                entry.setSourceInTimestamp(-999L);
+            }
 
             // send data
             sourceContext.collect(entry);

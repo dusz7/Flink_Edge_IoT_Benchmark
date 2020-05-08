@@ -35,6 +35,8 @@ public class StatsJob {
 //        String taskPropertiesFileName = resourceDir + "/" + "my_stats.properties";
 //        System.out.println("inputDataFilePath : " + inputFilePath + "     taskPropertiesFilePath : " + taskPropertiesFileName);
 
+//        flink run -c in.hitcps.iot_edge.bm.flink.jobs.StatsJob flink_bm.jar -input 20 -total 4000 -res_path /usr/local/etc/flink-remote/bm_files/bm_resources -data_file train_input_data_test.csv  -prop_file my_stats.properties
+
 
         double scalingFactor = 1;
         int inputRate = 100;
@@ -55,9 +57,9 @@ public class StatsJob {
 
         // data source
         SourceFromFile sourceFromFile = new SourceFromFile(inputFilePath, scalingFactor, inputRate, numData);
-        PSourceFromFile pSourceFromFile = new PSourceFromFile(inputFilePath, scalingFactor, inputRate, numData);
-//        DataStream<FileDataEntry> dataSource = env.addSource(sourceFromFile, "Source");
-        DataStream<FileDataEntry> dataSource = env.addSource(pSourceFromFile, "Source").setParallelism(2);
+//        PSourceFromFile pSourceFromFile = new PSourceFromFile(inputFilePath, scalingFactor, inputRate, numData);
+        DataStream<FileDataEntry> dataSource = env.addSource(sourceFromFile, "Source");
+//        DataStream<FileDataEntry> dataSource = env.addSource(pSourceFromFile, "Source").setParallelism(2);
 //        dataSource.print();
 
         SingleOutputStreamOperator<SensorDataStreamEntry> parsedRes = dataSource.flatMap(new ParseStatsMapFunction(p)).name("SenML Parse").setParallelism(1);

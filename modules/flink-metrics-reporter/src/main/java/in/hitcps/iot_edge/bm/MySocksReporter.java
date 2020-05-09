@@ -20,8 +20,6 @@ public class MySocksReporter implements MetricReporter, Scheduled {
 
     private final Map<Gauge<?>, String> gauges = new HashMap<>();
 
-    private boolean isExperimentEnding = false;
-
     private int port = 38999;
 
     @Override
@@ -53,7 +51,7 @@ public class MySocksReporter implements MetricReporter, Scheduled {
         for (Map.Entry metric : gauges.entrySet()) {
             if (((String) metric.getValue()).contains(ENDEXPERIMENT)) {
                 boolean flag = (Boolean) ((Gauge) metric.getKey()).getValue();
-                if (!isExperimentEnding && flag) {
+                if (flag) {
                     try {
 //                        InetAddress addr = InetAddress.getByName(nimbusIp);
 //                        Socket socket = new Socket(addr, port);

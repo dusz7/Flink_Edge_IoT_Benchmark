@@ -37,7 +37,7 @@ def clean_metrics_log():
     process = subprocess.Popen(cmd.split(), stdout=FNULL, stderr=subprocess.STDOUT)
     output, error = process.communicate()
     if error is None:
-        print "Clean metrics_log directories on PIs"
+        print "  cleaned metrics_log directories on PIs"
 
 
 def run_flink_job(jar_path, target_job_name, input_rate, num_of_data, resource_path, data_file, prop_file):
@@ -45,15 +45,17 @@ def run_flink_job(jar_path, target_job_name, input_rate, num_of_data, resource_p
     flink_command = flink_command_pre + " -input " + str(input_rate) + " -total " + str(num_of_data) \
                     + " -res_path " + resource_path + " -data_file " + data_file + " -prop_file " + prop_file
 
-    print "Running experiment:"
-    print flink_command
-    print "-------------------------------------"
+    # print "Running experiment:"
+    # print flink_command
+    print "  +++++ input_throughput: " + str(input_rate) + "   total_num_of_data: " + str(num_of_data)
+    print "  +++++ started running the job at: " + time.strftime("%H.%M.%S", time.localtime())
+
     process = subprocess.Popen(flink_command.split(), stdout=subprocess.PIPE)
     # process = subprocess.Popen(flink_command.split())
     output, error = process.communicate()
 
 
-def wait_for_job_completion(port=38999, input_rate=100):
+def wait_for_job_completion(start_time, port=38999):
     host = ''
     # create a socket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # AF_INET-> IPv4, SOCK_STREAM-> TCP
@@ -72,14 +74,14 @@ def wait_for_job_completion(port=38999, input_rate=100):
     conn, addr = s.accept()
 
     s.close()
-    print "  +++++ " + str(input_rate) + "/s input_rate experiment completed!"
+    print "  +++++ completed the job, using complete ({:.4f} min)".format((time.time() - start_time)/60)
 
 def create_exp_results_dir(unique_exp_name):
     cmd = "dsh -aM -c mkdir " + metrics_log_archive_dir + "/" + unique_exp_name
     process = subprocess.Popen(cmd.split(), stdout=FNULL, stderr=subprocess.STDOUT)
     output, error = process.communicate()
     if error is None:
-        print "create exp_results dir..."
+        print "Created exp_results directories"
 
 def archive_job_metrics(unique_exp_job_name, unique_exp_name):
     cmd = "dsh -aM -c mkdir " + metrics_log_archive_dir + "/" + unique_exp_name + "/" + unique_exp_job_name + \
@@ -87,7 +89,7 @@ def archive_job_metrics(unique_exp_job_name, unique_exp_name):
     process = subprocess.Popen(cmd.split(), stdout=FNULL, stderr=subprocess.STDOUT)
     output, error = process.communicate()
     if error is None:
-        print "  +++++ archive this time's metrics log on PIs"
+        print "  +++++ archived metrics log on PIs"
 
 # def colletc_exp_results_on_pis(unique_exp_job_log_name):
 #     cmd = "dsh -aM -c scp " + metrics_log_archive_dir + "/" +  + \
@@ -108,22 +110,27 @@ def run_experiments(jar_name, job_alias, execution_time, unique_exp_name):
     prop_file = prop_files[job_alias]
 
     for i in range(len(input_rates)):
+        print "--------------------------------------------"
         # run a job:
         input_rate = input_rates[i]
         num_of_data = nums_of_data[i]
-
+        # prepare job
         kill_running_jobs()
         clean_metrics_log()
+        print "  +++++ prepared this job"
+        # start job
         unique_exp_job_name = job_alias + "-" + str(input_rate) + "-" + str(num_of_data) + "-t" + str(execution_time)
         run_flink_job(jar_path, target_job_name, input_rate, num_of_data,
                       resource_path, data_file, prop_file)
         # blocking wait
-        wait_for_job_completion(port=PORT, input_rate=input_rate)
+        wait_for_job_completion(port=PORT, start_time=time.time())
+        # finish job
         archive_job_metrics(unique_exp_job_name, unique_exp_name)
         kill_running_jobs()
-        print "  +++++ kill the running job"
-        print "  +++++ +++++ +++++ "
+        print "  +++++ canceled the running job"
+        print "  +++++ +++++ +++++ +++++ +++++"
         time.sleep(10)
+        pring ""
 
     print "one time of experiments execute completed!"
 
@@ -145,7 +152,7 @@ def main():
 
     for i in range(t):
         print "***************************************************"
-        print "now start the " + str(i+1) + " time's execution..."
+        print "Now the " + str(i+1) + " time's execution..."
         run_experiments(args.jar_name, args.job_alias, i+1, unique_exp_name)
 
     # parse_results()

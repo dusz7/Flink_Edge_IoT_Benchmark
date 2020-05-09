@@ -26,6 +26,9 @@ public class StatsJob {
         // Flink env
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
+        // Operator chain
+        env.disableOperatorChaining();
+
 //        String resourceDir = System.getenv("RIOT_RESOURCES");  // pi_resource
 //        String resourceDir = "/Users/craig/Projects/edgeStreamingForIoT/riotResource/pi_resources";
         // remote

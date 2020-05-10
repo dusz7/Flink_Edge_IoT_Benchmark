@@ -50,16 +50,13 @@ scripts/exp_archive_dir
 hs_err_pid*
 
 # vscode
-.vscode/*
+.vscode/
 .project
 .settings
 .classpath
 .factorypath
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
 *.code-workspace
+.python-version
 
 # maven
 target/

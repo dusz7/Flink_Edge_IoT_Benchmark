@@ -92,7 +92,7 @@ public class MyFileMetricReporter implements MetricReporter, Scheduled {
 
         try {
             File mFile = new File("/usr/local/etc/flink-remote/bm_files/metrics_logs/metrics.txt");
-            File eFile = new File("/usr/local/etc/flink-remote/bm_files/metrics_logs/latency_throught.txt");
+            File eFile = new File("/usr/local/etc/flink-remote/bm_files/metrics_logs/latency_throughput.txt");
             if (!mFile.exists()) {
                 mFile.createNewFile();
             }
@@ -139,8 +139,8 @@ public class MyFileMetricReporter implements MetricReporter, Scheduled {
             eBuilder.append(lineSeparator).append("---------- lantency ----------").append(lineSeparator);
             for (Map.Entry metric : histograms.entrySet()) {
                 HistogramStatistics stats = ((Histogram) metric.getKey()).getStatistics();
-                builder.append(metric.getValue()).append(": mean=").append(stats.getMean()).append(", min=").append(stats.getMin()).append(", max=").append(stats.getMean()).append(", stddev=").append(stats.getStdDev()).append(", p25=").append(stats.getQuantile(0.25D)).append(", p50=").append(stats.getQuantile(0.5D)).append(", p75=").append(stats.getQuantile(0.75D)).append(", p95=").append(stats.getQuantile(0.95D)).append(", p98=").append(stats.getQuantile(0.98D)).append(", p99=").append(stats.getQuantile(0.99D)).append(", p999=").append(stats.getQuantile(0.999D)).append(lineSeparator);
-                eBuilder.append(metric.getValue()).append(": mean=").append(stats.getMean()).append(", min=").append(stats.getMin()).append(", max=").append(stats.getMean()).append(", stddev=").append(stats.getStdDev()).append(", p25=").append(stats.getQuantile(0.25D)).append(", p50=").append(stats.getQuantile(0.5D)).append(", p75=").append(stats.getQuantile(0.75D)).append(", p95=").append(stats.getQuantile(0.95D)).append(", p98=").append(stats.getQuantile(0.98D)).append(", p99=").append(stats.getQuantile(0.99D)).append(", p999=").append(stats.getQuantile(0.999D)).append(lineSeparator);
+                builder.append(metric.getValue()).append(": mean=").append(stats.getMean()).append(", min=").append(stats.getMin()).append(", max=").append(stats.getMean()).append(", p25=").append(stats.getQuantile(0.25D)).append(", p50=").append(stats.getQuantile(0.5D)).append(", p75=").append(stats.getQuantile(0.75D)).append(", p95=").append(stats.getQuantile(0.95D)).append(", p98=").append(stats.getQuantile(0.98D)).append(", p99=").append(stats.getQuantile(0.99D)).append(", p999=").append(stats.getQuantile(0.999D)).append(lineSeparator);
+                eBuilder.append(metric.getValue()).append(": mean=").append(stats.getMean()).append(", min=").append(stats.getMin()).append(", max=").append(stats.getMean()).append(", p25=").append(stats.getQuantile(0.25D)).append(", p50=").append(stats.getQuantile(0.5D)).append(", p75=").append(stats.getQuantile(0.75D)).append(", p95=").append(stats.getQuantile(0.95D)).append(", p98=").append(stats.getQuantile(0.98D)).append(", p99=").append(stats.getQuantile(0.99D)).append(", p999=").append(stats.getQuantile(0.999D)).append(lineSeparator);
             }
 
             mFileOut.write(builder.toString().getBytes());

@@ -17,12 +17,11 @@ pred_h_nums_of_data = [528000, 528000, 528000, 528000, 528000, 528000]
 
 #################################################
 
-# stats_input_rates = [60,80,100,150,180,200]
-# stats_nums_of_data = [14400,19200,24000,36000,43200,48000]
-# stats_input_rates = [20]
-# stats_nums_of_data = [200]
-stats_input_rates = [10, 20, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100]
-stats_nums_of_data = [1800, 3600, 9000, 18000, 36000, 54000, 72000, 90000, 108000, 126000, 144000, 162000, 180000, 198000]
+# stats_input_rates = [20, 30]
+# stats_nums_of_data = [800, 1200]
+stats_input_rates = [10, 30, 50, 70, 90, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100]
+stats_nums_of_data = [2000, 6000, 10000, 14000, 18000, 20000, 40000, 60000, 80000, 100000, 120000, 140000, 160000,
+                      180000, 200000, 220000]
 
 stats_h_input_rates = [250, 300, 350, 400, 450, 500]
 stats_h_nums_of_data = [60000, 72000, 84000, 96000, 108000, 120000]
@@ -85,8 +84,24 @@ target_job_names = {
 # metrics_log_path
 metrics_log_dir = "/usr/local/etc/flink-remote/bm_files/metrics_logs"
 
-# metrics_log_save_dir
-metrics_log_archive_dir = "/usr/local/etc/flink-remote/bm_files/bm_results"
+# exp_metrics_log_save_dir
+exp_results_archive_dir = "/usr/local/etc/flink-remote/bm_files/bm_results"
+
+# exp_results_local_dir
+exp_results_local_dir = "/Users/craig/Projects/edgeStreamingForIoT/bm_results"
+
+# exp_results_summ_file_name
+exp_results_summ_file = "summary.csv"
+
+# flink_rasp_hosts
+rasp_hosts = ["flink_rasp1"]
 
 # end_experiment
-PORT = 38999
+PORT = 38997
+
+# experiment_analyze
+exp_ids = ["job_name", "execution_time", "input_rate", "num_of_data"]
+throughput_metrics = ["throughput"]
+latency_metrics = ["latency_mean", "latency_min", "latency_max", "latency_p25", "latency_p50", "latency_p75",
+                   "latency_p95", "latency_p98", "latency_p99", "latency_p999"]
+exp_metrics_head = exp_ids + throughput_metrics + latency_metrics

@@ -20,7 +20,7 @@ public class MySocksReporter implements MetricReporter, Scheduled {
 
     private final Map<Gauge<?>, String> gauges = new HashMap<>();
 
-    private int port = 38999;
+    private int port = 38997;
 
     @Override
     public void open(MetricConfig metricConfig) {
@@ -53,9 +53,8 @@ public class MySocksReporter implements MetricReporter, Scheduled {
                 boolean flag = (Boolean) ((Gauge) metric.getKey()).getValue();
                 if (flag) {
                     try {
-//                        InetAddress addr = InetAddress.getByName(nimbusIp);
-//                        Socket socket = new Socket(addr, port);
-                        Socket socket = new Socket("192.168.88.247", port);
+//                        InetAddress addr = InetAddress.getByName("flink_master");
+                        Socket socket = new Socket("flink_master", port);
                         PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                         out.println("ending");
                         out.close();

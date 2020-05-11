@@ -91,7 +91,7 @@ public class SourceFromFile extends RichSourceFunction<FileDataEntry> implements
             }
 
             // mark the end of the exp
-            if (msgId > startMsgId + numData - 10) {
+            if (msgId > startMsgId + numData - 50) {
                 entry.setSourceInTimestamp(-999L);
             }
 

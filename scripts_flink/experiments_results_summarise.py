@@ -111,6 +111,7 @@ def summarize_exp(job_alias, start_time, exe_time):
                     throughputs.append(throughput)
                     latency_hists.append(latency_hist)
                     write_throughput_latency_in_file(summ_file_name, job_alias, t, input_rate, num_of_data, throughput, latency_hist)
+
             total_mean_throughput = np.mean(np.array(throughputs))
             total_mean_latency_hist = np.mean(np.array(latency_hists), axis=0).tolist()
             write_throughput_latency_in_file(summ_file_name, job_alias, -1, input_rate, num_of_data, total_mean_throughput, total_mean_latency_hist)

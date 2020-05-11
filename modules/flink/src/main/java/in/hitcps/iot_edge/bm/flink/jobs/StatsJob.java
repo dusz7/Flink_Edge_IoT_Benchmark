@@ -27,19 +27,14 @@ public class StatsJob {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
         // Operator chain
-        env.disableOperatorChaining();
+//        env.disableOperatorChaining();
 
-//        String resourceDir = System.getenv("RIOT_RESOURCES");  // pi_resource
 //        String resourceDir = "/Users/craig/Projects/edgeStreamingForIoT/riotResource/pi_resources";
         // remote
 //        String resourceDir = "/usr/local/etc/flink-remote/riotResource/pi_resources";
-////        String resourceDir = "/home/pi/edgeStreamingForIoT/riotResource/pi_resources";
-//        String inputFilePath = resourceDir + "/" + "train_input_data_test.csv";
-//        String taskPropertiesFileName = resourceDir + "/" + "my_stats.properties";
-//        System.out.println("inputDataFilePath : " + inputFilePath + "     taskPropertiesFilePath : " + taskPropertiesFileName);
+//        String resourceDir = "/home/pi/edgeStreamingForIoT/riotResource/pi_resources";
 
 //        flink run -c in.hitcps.iot_edge.bm.flink.jobs.StatsJob flink_bm.jar -input 20 -total 4000 -res_path /usr/local/etc/flink-remote/bm_files/bm_resources -data_file train_input_data_test.csv  -prop_file my_stats.properties
-
 
         double scalingFactor = 1;
         int inputRate = 100;

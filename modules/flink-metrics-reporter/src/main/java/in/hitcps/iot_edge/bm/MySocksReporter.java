@@ -53,7 +53,6 @@ public class MySocksReporter implements MetricReporter, Scheduled {
                 boolean flag = (Boolean) ((Gauge) metric.getKey()).getValue();
                 if (flag) {
                     try {
-//                        InetAddress addr = InetAddress.getByName("flink_master");
                         Socket socket = new Socket("flink_master", port);
                         PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                         out.println("ending");
@@ -62,6 +61,8 @@ public class MySocksReporter implements MetricReporter, Scheduled {
                     } catch (UnknownHostException e) {
                         e.printStackTrace();
                     } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }

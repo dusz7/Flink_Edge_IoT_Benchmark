@@ -102,6 +102,6 @@ PORT = 38997
 # experiment_analyze
 exp_ids = ["job_name", "execution_time", "input_rate", "num_of_data"]
 throughput_metrics = ["throughput"]
-latency_metrics = ["latency_mean", "latency_min", "latency_max", "latency_p25", "latency_p50", "latency_p75",
-                   "latency_p95", "latency_p98", "latency_p99", "latency_p999"]
+latency_metrics = ["latency_mean", "latency_min", "latency_p10", "latency_p25", "latency_p50", "latency_p75",
+                   "latency_p95", "latency_p98", "latency_p99", "latency_p999", "latency_max"]
 exp_metrics_head = exp_ids + throughput_metrics + latency_metrics

@@ -11,9 +11,9 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.Properties;
 
-public class ParseStatsMapFunction extends RichFlatMapFunction<FileDataEntry, SensorDataStreamEntry> {
+public class SenMLParseStatsFlatMapFunction extends RichFlatMapFunction<FileDataEntry, SensorDataStreamEntry> {
 
-    private static Logger l = LoggerFactory.getLogger(ParseStatsMapFunction.class);
+    private static Logger l = LoggerFactory.getLogger(SenMLParseStatsFlatMapFunction.class);
 
     private Properties p;
 
@@ -21,7 +21,7 @@ public class ParseStatsMapFunction extends RichFlatMapFunction<FileDataEntry, Se
     private String[] observableValues;
 
 
-    public ParseStatsMapFunction(Properties p_) {
+    public SenMLParseStatsFlatMapFunction(Properties p_) {
         p = p_;
     }
 

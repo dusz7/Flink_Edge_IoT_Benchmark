@@ -84,6 +84,9 @@ public class AnnotateDTClass extends AbstractTask<String,String>
 //			System.out.println("in:"+in);
 			Double annotateKey = annotationMap.floorKey(in);
 //			System.out.println("annotateKey:"+annotateKey);
+			if (annotationMap == null) {
+				return null;
+			}
 			if(annotateKey==null && in<annotationMap.firstKey()){
 				annotateKey= annotationMap.firstKey();
 			}

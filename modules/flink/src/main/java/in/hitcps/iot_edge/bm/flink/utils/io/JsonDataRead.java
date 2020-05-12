@@ -21,9 +21,13 @@ public class JsonDataRead {
     public static int numThreads;
     public static int peakRate;
 
+    public static List<List<List<String>>> roundRobinSplitJsonToMemory(String inputSortedCSVFileName, int numThreads, double accFactor) throws IOException{
+        return roundRobinSplitJsonToMemory(inputSortedCSVFileName, numThreads, accFactor, "SENML");
+    }
+
     //Assumes sorted on timestamp csv file
     //It also treats the first event to be at 0 relative time
-    public static List<List<List<String>>> roundRobinSplitJsonToMemory(String inputSortedCSVFileName, int numThreads, double accFactor) throws IOException {
+    public static List<List<List<String>>> roundRobinSplitJsonToMemory(String inputSortedCSVFileName, int numThreads, double accFactor, String dataSetType) throws IOException {
 
         // init
         List<List<List<String>>> dataRowsList = new ArrayList<>();
@@ -39,7 +43,7 @@ public class JsonDataRead {
         int numMins = 90000;  // Keeping it fixed for current set of experiments
 
         Double cutOffTimeStamp = 0.0;
-        MyJSONReader jsonReader = new MyJSONReader(inputSortedCSVFileName);
+        MyJSONReader jsonReader = new MyJSONReader(inputSortedCSVFileName, dataSetType);
         String[] nextLine;
         nextLine = jsonReader.readLine();
         while ((nextLine = jsonReader.readLine()) != null) {
@@ -53,20 +57,15 @@ public class JsonDataRead {
             ctr = (ctr + 1) % numThreads;
 
             // get the time Stamp
-            int timestampColIndex = 0;
+            int timestampColIndex;
+            if (dataSetType.equals("SENML")) {
+                timestampColIndex = 0;
+            } else if (dataSetType.equals("TRAIN")) {
+                timestampColIndex = 1;
+            } else {
+                timestampColIndex = 0;
+            }
             DateTime date = new DateTime(Long.parseLong(nextLine[timestampColIndex]));
-//            if (datasetType.equals("TAXI")) {
-//                timestampColIndex = 3;
-//                date = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").parseDateTime(nextLine[timestampColIndex]);
-//            } else if (datasetType.equals("SYS")) {
-//                timestampColIndex = 0;
-//                date = ISODateTimeFormat.dateTimeParser().parseDateTime(nextLine[timestampColIndex]);
-//            } else if (datasetType.equals("PLUG")) {
-//                timestampColIndex = 1;
-//                date = new DateTime(Long.parseLong(nextLine[timestampColIndex]) * 1000);
-//            } else if (datasetType.equals("SENML")) {
-//
-//            }
             long ts = date.getMillis();
 
             // judge if the data read is enough
@@ -138,8 +137,11 @@ class MyJSONReader implements MyReader {
     public FileReader reader;
     public String inputFileName;
 
-    public MyJSONReader(String inputFileName_) {
+    String dataSetType;
+
+    public MyJSONReader(String inputFileName_, String dataSetType_) {
         inputFileName = inputFileName_;
+        dataSetType = dataSetType_;
         try {
             init();
         } catch (FileNotFoundException e) {
@@ -164,6 +166,9 @@ class MyJSONReader implements MyReader {
     public String[] readLine() throws IOException {
         String nextLine = bufferedReader.readLine();
         while (nextLine != null) {
+            if(dataSetType.equals("TRAIN")) {
+                return nextLine.split(",");
+            }
             String[] values = new String[2];
             // values[0] : timeStamp
             values[0] = (nextLine.split(","))[0];

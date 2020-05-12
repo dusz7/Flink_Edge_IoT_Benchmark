@@ -15,6 +15,12 @@ public class FileDataEntry {
         this.sourceInTimestamp = -1L;
     }
 
+    public FileDataEntry(String payLoad, String msgId, Long sourceInTimestamp) {
+        this.payLoad = payLoad;
+        this.msgId = msgId;
+        this.sourceInTimestamp = sourceInTimestamp;
+    }
+
     @Override
     public String toString() {
         return "{ #" + msgId +

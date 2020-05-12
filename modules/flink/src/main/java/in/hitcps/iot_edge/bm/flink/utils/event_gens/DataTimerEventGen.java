@@ -35,13 +35,20 @@ public class DataTimerEventGen {
     }
 
     public void launch(String csvFileName) {
-//        System.out.println("eventGen launch");
+        launch(csvFileName, "SENML");
+    }
+
+    public void launch(String csvFileName, String dataSetType) {
         // data lists from different reading threads
         try {
-            List<List<List<String>>> dataReadList = JsonDataRead.roundRobinSplitJsonToMemory(csvFileName, numThreads, scalingFactor);
+            List<List<List<String>>> dataReadList = JsonDataRead.roundRobinSplitJsonToMemory(csvFileName, numThreads, scalingFactor, dataSetType);
             for (int i = 0; i < numThreads; i++) {
                 Timer timer = new Timer("dataEventGen", true);
-                TimerTask task = new EventGenTimerTask(dataReadList.get(i));
+                int tsIndex = 0;
+                if (dataSetType.equals("TRAIN")){
+                    tsIndex = 1;
+                }
+                TimerTask task = new EventGenTimerTask(dataReadList.get(i), tsIndex);
                 timer.scheduleAtFixedRate(task, 0, period);
             }
         } catch (IOException e) {
@@ -55,11 +62,13 @@ public class DataTimerEventGen {
 
         private int rowLen;
         private int rowIndex;
+        private int tsIndex;
 
-        EventGenTimerTask(List<List<String>> dataRows) {
+        EventGenTimerTask(List<List<String>> dataRows, int tsIndex) {
             this.dataRows = dataRows;
             this.rowLen = dataRows.size();
             this.rowIndex = 0;
+            this.tsIndex = tsIndex;
         }
 
         @Override
@@ -69,7 +78,7 @@ public class DataTimerEventGen {
                     rowIndex = 0;
                 }
                 List<String> data = dataRows.get(rowIndex);
-                data.set(0, String.valueOf(Instant.now().toEpochMilli()));
+                data.set(tsIndex, String.valueOf(Instant.now().toEpochMilli()));
                 dataReadListener.receive(data);
                 rowIndex++;
             }

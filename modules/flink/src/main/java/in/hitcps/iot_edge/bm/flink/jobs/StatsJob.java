@@ -3,7 +3,6 @@ package in.hitcps.iot_edge.bm.flink.jobs;
 import in.hitcps.iot_edge.bm.flink.data_entrys.FileDataEntry;
 import in.hitcps.iot_edge.bm.flink.data_entrys.SensorDataStreamEntry;
 import in.hitcps.iot_edge.bm.flink.sink_operators.stats.MQTTStatsSinkFunction;
-import in.hitcps.iot_edge.bm.flink.source_operators.PSourceFromFile;
 import in.hitcps.iot_edge.bm.flink.source_operators.SourceFromFile;
 import in.hitcps.iot_edge.bm.flink.trans_operators.stats.*;
 import org.apache.flink.api.java.utils.ParameterTool;
@@ -29,25 +28,22 @@ public class StatsJob {
         // Operator chain
 //        env.disableOperatorChaining();
 
-//        String resourceDir = "/Users/craig/Projects/edgeStreamingForIoT/riotResource/pi_resources";
-        // remote
-//        String resourceDir = "/usr/local/etc/flink-remote/riotResource/pi_resources";
-//        String resourceDir = "/home/pi/edgeStreamingForIoT/riotResource/pi_resources";
+//        String resourceDir = "/Users/craig/Projects/edgeStreamingForIoT/bm_resources";
 
 //        flink run -c in.hitcps.iot_edge.bm.flink.jobs.StatsJob flink_bm.jar -input 20 -total 4000 -res_path /usr/local/etc/flink-remote/bm_files/bm_resources -data_file train_input_data_test.csv  -prop_file my_stats.properties
 
         double scalingFactor = 1;
         int inputRate = 100;
-        int numData = 20000;
+        int numData = 2000;
 
         ParameterTool parameters = ParameterTool.fromArgs(args);
         inputRate = parameters.getInt("input", 100);
-        numData = parameters.getInt("total", 20000);
+        numData = parameters.getInt("total", 2000);
         System.out.println("inputRate : " + inputRate + " ;  totalDataNum : " + numData);
 
-        String resourceDir = parameters.get("res_path");
-        String inputFilePath = resourceDir + "/" + parameters.get("data_file");
-        String taskPropertiesFileName = resourceDir + "/" + parameters.get("prop_file");
+        String resourceDir = parameters.get("res_path", "/Users/craig/Projects/edgeStreamingForIoT/bm_resources");
+        String inputFilePath = resourceDir + "/" + parameters.get("data_file", "train_input_data.csv");
+        String taskPropertiesFileName = resourceDir + "/" + parameters.get("prop_file", "my_stats.properties");
         System.out.println("inputDataFilePath : " + inputFilePath + " ;  taskPropertiesFilePath : " + taskPropertiesFileName);
 
         Properties p = new Properties();
@@ -60,8 +56,8 @@ public class StatsJob {
 //        DataStream<FileDataEntry> dataSource = env.addSource(pSourceFromFile, "Source").setParallelism(2);
 //        dataSource.print();
 
-        SingleOutputStreamOperator<SensorDataStreamEntry> parsedRes = dataSource.flatMap(new ParseStatsMapFunction(p)).name("SenML Parse").setParallelism(1);
-        SingleOutputStreamOperator<SensorDataStreamEntry> bFilterRes = parsedRes.filter(new BloomFilterStatsFunction(p)).name("Bloom Filter").setParallelism(1);
+        SingleOutputStreamOperator<SensorDataStreamEntry> parsedRes = dataSource.flatMap(new SenMLParseStatsFlatMapFunction(p)).name("SenML_Parse").setParallelism(1);
+        SingleOutputStreamOperator<SensorDataStreamEntry> bFilterRes = parsedRes.filter(new BloomFilterStatsFunction(p)).name("Bloom_Filter").setParallelism(1);
 
         // split
         SplitStream<SensorDataStreamEntry> splitBFliter = bFilterRes.split(new OutputSelector<SensorDataStreamEntry>() {
@@ -76,20 +72,20 @@ public class StatsJob {
         });
 
         // kFilter & SLR
-        SingleOutputStreamOperator<SensorDataStreamEntry> kFilterRes = splitBFliter.select("kFilter").filter(new KalmanFilterFunction(p)).name("Kalman Filter").setParallelism(1);
-        SingleOutputStreamOperator<SensorDataStreamEntry> slrRes = kFilterRes.flatMap(new SimpleLinearRegressionFlatMapFunction(p)).name("Linear Reg.").setParallelism(1);
+        SingleOutputStreamOperator<SensorDataStreamEntry> kFilterRes = splitBFliter.select("kFilter").filter(new KalmanFilterFunction(p)).name("Kalman_Filter").setParallelism(1);
+        SingleOutputStreamOperator<SensorDataStreamEntry> slrRes = kFilterRes.flatMap(new SimpleLinearRegressionFlatMapFunction(p)).name("Linear_Reg").setParallelism(1);
 
         // SOM
         SingleOutputStreamOperator<SensorDataStreamEntry> somRes = splitBFliter.select("som").flatMap(new SecondOrderMomentFlatMapFunction(p)).name("Average").setParallelism(1);
 
         // DAC
-        SingleOutputStreamOperator<SensorDataStreamEntry> dacRes = splitBFliter.select("dac").flatMap(new DistinctApproxCountFlatMapFunction(p)).name("Distinct Count").setParallelism(1);
+        SingleOutputStreamOperator<SensorDataStreamEntry> dacRes = splitBFliter.select("dac").flatMap(new DistinctApproxCountFlatMapFunction(p)).name("Distinct_Count").setParallelism(1);
 
         // union
         DataStream<SensorDataStreamEntry> unionRes = slrRes.union(somRes).union(dacRes);
 
         // mqtt sink
-        unionRes.addSink(new MQTTStatsSinkFunction(p, numData)).name("MQTT Publish").setParallelism(3);
+        unionRes.addSink(new MQTTStatsSinkFunction(p, numData)).name("MQTT_Publish").setParallelism(3);
 
 //        System.out.println(env.getExecutionPlan());
 

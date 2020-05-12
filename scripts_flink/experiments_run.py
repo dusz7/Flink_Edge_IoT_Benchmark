@@ -12,6 +12,8 @@ from experiments_results_summarise import summarize_exp
 
 flink_home = os.environ['FLINK_HOME']
 flink_exe = flink_home + "/bin/flink"
+start_flink = flink_home + "/bin/start-cluster.sh"
+stop_flink = flink_home + "/bin/stop-cluster.sh"
 
 FNULL = open(os.devnull, 'w')
 
@@ -27,9 +29,28 @@ args = parser.parse_args()
 hosts = rasp_hosts
 client = ParallelSSHClient(hosts, user='pi')
 
+def restart_flink():
+    cmd = stop_flink
+    process = subprocess.Popen(cmd.split(), stdout=FNULL, stderr=subprocess.STDOUT)
+    output, error = process.communicate()
+
+    time.sleep(2)
+
+    cmd = start_flink
+    process = subprocess.Popen(cmd.split(), stdout=FNULL, stderr=subprocess.STDOUT)
+    output, error = process.communicate()
+
+
 def kill_running_jobs():
     cmd = os.getcwd() + "/kill_running_jobs.sh"
     process = subprocess.Popen(cmd.split(), stdout=FNULL, stderr=subprocess.STDOUT)
+    output, error = process.communicate()
+
+
+def show_optimized_execution_plan(jar_path, target_job_name):
+    cmd = flink_exe + " info " + " -c " + target_job_name + " "+ jar_path
+    print cmd
+    process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
 
 
@@ -61,7 +82,6 @@ def run_flink_job(jar_path, target_job_name, input_rate, num_of_data, resource_p
     print "  +++++ started running the job at: " + time.strftime("%H.%M.%S", time.localtime())
 
     process = subprocess.Popen(flink_command.split(), stdout=subprocess.PIPE)
-    # process = subprocess.Popen(flink_command.split())
     output, error = process.communicate()
 
 
@@ -94,8 +114,6 @@ def archive_job_metrics(unique_exp_job_name, unique_exp_name):
     print "  +++++ archived metrics log on PIs"
 
 def collect_exp_results_on_pis(unique_exp_name):
-    print exp_results_archive_dir + "/" + unique_exp_name
-    print exp_results_local_dir + "/" + unique_exp_name
     cmds = client.copy_remote_file(exp_results_archive_dir + "/" + unique_exp_name, exp_results_local_dir + "/" + unique_exp_name, recurse=True)
     joinall(cmds, raise_error=True)
     print "collected the experiments results"
@@ -107,8 +125,12 @@ def run_experiments(jar_name, job_alias, execution_time, unique_exp_name):
     target_job_name = target_job_names[job_alias]
     input_rates = input_rates_dict[job_alias]
     nums_of_data = nums_of_data_dict[job_alias]
+    # input_rates.reverse()
+    # nums_of_data.reverse()
     data_file = data_files[job_alias]
     prop_file = prop_files[job_alias]
+
+    # show_optimized_execution_plan(jar_path, target_job_name)
 
     for i in range(len(input_rates)):
         print "--------------------------------------------"
@@ -116,7 +138,7 @@ def run_experiments(jar_name, job_alias, execution_time, unique_exp_name):
         input_rate = input_rates[i]
         num_of_data = nums_of_data[i]
         # prepare job
-        kill_running_jobs()
+        # kill_running_jobs()
         clean_metrics_log()
         print "  +++++ prepared this job"
         # start job
@@ -127,10 +149,11 @@ def run_experiments(jar_name, job_alias, execution_time, unique_exp_name):
         wait_for_job_completion(port=PORT, start_time=time.time())
         # finish job
         archive_job_metrics(unique_exp_job_name, unique_exp_name)
-        kill_running_jobs()
+        # kill_running_jobs()
+        restart_flink()
         print "  +++++ canceled the running job"
         print "  +++++ +++++ +++++ +++++ +++++"
-        time.sleep(10)
+        time.sleep(40)
         print ""
 
     print "one time of experiments execute completed!"
@@ -141,6 +164,8 @@ def main():
         print "can only execute " + str(valid_job_alias)
         exit(-1)
 
+    print ""
+    print ""
     print "Starting the " + str(args.job_alias) + " experiments, total " + str(args.ExecutionTimes) + " times..."
 
     exp_start_time = time.strftime("%m.%d-%H.%M", time.localtime())

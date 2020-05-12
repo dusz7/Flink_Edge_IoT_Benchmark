@@ -1,9 +1,9 @@
-package in.hitcps.iot_edge.bm.flink.sink_operators.stats;
+package in.hitcps.iot_edge.bm.flink.sink_operators.train;
 
 import com.codahale.metrics.SlidingWindowReservoir;
 import in.dream_lab.bm.stream_iot.tasks.AbstractTask;
 import in.dream_lab.bm.stream_iot.tasks.io.MQTTPublishTask;
-import in.hitcps.iot_edge.bm.flink.data_entrys.SensorDataStreamEntry;
+import in.hitcps.iot_edge.bm.flink.data_entrys.TrainDataStreamEntry;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.dropwizard.metrics.DropwizardHistogramWrapper;
 import org.apache.flink.metrics.Gauge;
@@ -16,8 +16,9 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Properties;
 
-public class MQTTStatsSinkFunction extends RichSinkFunction<SensorDataStreamEntry> {
-    private static Logger l = LoggerFactory.getLogger(MQTTStatsSinkFunction.class);
+public class MQTTTrainSinkFunction extends RichSinkFunction<TrainDataStreamEntry> {
+
+    private static Logger l = LoggerFactory.getLogger(MQTTTrainSinkFunction.class);
 
     private Properties p;
 
@@ -27,9 +28,9 @@ public class MQTTStatsSinkFunction extends RichSinkFunction<SensorDataStreamEntr
     private int dataNum;
     private Boolean isExperimentEnding = false;
 
-    private MQTTPublishTask mqttPublishTask;
+    MQTTPublishTask mqttPublishTask;
 
-    public MQTTStatsSinkFunction(Properties p_, int dataNum) {
+    public MQTTTrainSinkFunction(Properties p_, int dataNum) {
         p = p_;
         this.dataNum = dataNum;
     }
@@ -37,6 +38,7 @@ public class MQTTStatsSinkFunction extends RichSinkFunction<SensorDataStreamEntr
     @Override
     public void open(Configuration parameters) throws Exception {
         super.open(parameters);
+
         mqttPublishTask = new MQTTPublishTask();
         mqttPublishTask.setup(l, p);
 
@@ -61,15 +63,14 @@ public class MQTTStatsSinkFunction extends RichSinkFunction<SensorDataStreamEntr
     }
 
     @Override
-    public void invoke(SensorDataStreamEntry value, Context context) throws Exception {
+    public void invoke(TrainDataStreamEntry value, Context context) throws Exception {
+        String msgId = value.getMsgId();
+        String filename = value.getFileName();
+        String analyticType = value.getAnalyticType();
 
-        // TODO: timeStamp in metaValues ?
-        String res = value.getMetaValues().replace(",", ";")
-                + "-" + value.getObsField() + "-" + value.getCalculateResult();
-
-        HashMap<String, String> map = new HashMap<>();
-        map.put(AbstractTask.DEFAULT_KEY, res);
-        mqttPublishTask.doTask(map);
+        HashMap<String, String> map = new HashMap<String, String>();
+        map.put(AbstractTask.DEFAULT_KEY, filename);
+        Float res = mqttPublishTask.doTask(map);
 
         if (value.getSourceInTimestamp() > 0) {
             latencyHistogram.update(Instant.now().toEpochMilli() - value.getSourceInTimestamp());
@@ -77,6 +78,5 @@ public class MQTTStatsSinkFunction extends RichSinkFunction<SensorDataStreamEntr
         if (value.getSourceInTimestamp() < -1) {
             isExperimentEnding = true;
         }
-
     }
 }

@@ -42,7 +42,7 @@ public class MQTTSinkETLFunction extends RichSinkFunction<SensorDataStreamEntry>
         mqttPublishTask = new MQTTPublishTask();
         mqttPublishTask.setup(l, p);
 
-        com.codahale.metrics.Histogram dropwizardHistogram = new com.codahale.metrics.Histogram(new SlidingWindowReservoir(dataNum * 2));
+        com.codahale.metrics.Histogram dropwizardHistogram = new com.codahale.metrics.Histogram(new SlidingWindowReservoir(dataNum));
         latencyHistogram = getRuntimeContext().getMetricGroup()
                 .addGroup("MyMetrics")
                 .histogram("latency", new DropwizardHistogramWrapper(dropwizardHistogram));

@@ -3,63 +3,54 @@ valid_job_alias = ["etl", "pred", "stats", "train"]
 # input_rate & num_of_data
 # etl_input_rates = [400, 600]
 # etl_nums_of_data = [12000, 18000]
-etl_input_rates = [30, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100]
-etl_nums_of_data = [7200, 12000, 24000, 48000, 72000, 96000, 120000, 144000, 168000, 192000, 216000, 240000, 264000]
 
-etl_h_input_rates = [1200, 1300, 1350, 1400, 1450, 1500]
-etl_h_nums_of_data = [288000, 312000, 324000, 336000, 348000, 360000]
+etl_input_rates = [700, 900, 1100, 1150, 1200, 1250, 1275, 1300, 1325, 1350, 1375, 1400, 1450]
+etl_nums_of_data = [168000, 216000, 264000, 276000, 288000, 300000, 306000, 312000, 318000, 324000, 333000, 336000,
+                    348000]
 
 #################################################
 
 # pred_input_rates = [200, 400]
 # pred_nums_of_data = [6000, 12000]
-pred_input_rates = [30, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100]
-pred_nums_of_data = [7200, 12000, 24000, 48000, 72000, 96000, 120000, 144000, 168000, 192000, 216000, 240000, 264000]
+# pred_input_rates = [30, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100]
+# pred_nums_of_data = [7200, 12000, 24000, 48000, 72000, 96000, 120000, 144000, 168000, 192000, 216000, 240000, 264000]
+# pred_input_rates = [1100, 1300, 1500, 1700, 1800, 1900, 2000, 2100, 2200, 2300]
+# pred_nums_of_data = [264000, 312000, 360000, 408000, 432000, 456000, 480000, 504000, 528000, 552000]
 
-pred_h_input_rates = [2200, 2201, 2202, 2203, 2204, 2205]
-pred_h_nums_of_data = [528000, 528000, 528000, 528000, 528000, 528000]
+# pred_input_rates = [2400, 2500, 2600, 2700, 2800, 2900, 3000]
+# pred_nums_of_data = [576000, 600000, 624000, 648000, 672000, 696000, 720000]
+
+pred_input_rates = [2600, 3000, 3200, 3400, 3500, 3600, 3650, 3700, 3750, 3800, 3850, 3900, 4000]
+pred_nums_of_data = [624000, 720000, 768000, 816000, 840000, 864000, 876000, 888000, 900000, 912000, 924000, 936000, 960000]
 
 #################################################
 
 # stats_input_rates = [20, 30]
 # stats_nums_of_data = [600, 900]
 # 4min
-stats_input_rates = [50, 100, 200, 400, 600, 700, 800, 850, 900, 950, 1000]
-stats_nums_of_data = [12000, 24000, 48000, 96000, 144000, 168000, 192000, 204000, 216000, 228000, 240000]
-
-stats_h_input_rates = [250, 300, 350, 400, 450, 500]
-stats_h_nums_of_data = [60000, 72000, 84000, 96000, 108000, 120000]
+stats_input_rates = [200, 400, 600, 700, 750, 800, 825, 850, 875, 900, 925, 950, 1000]
+stats_nums_of_data = [48000, 96000, 144000, 168000, 180000, 192000, 198000, 204000, 210000, 216000, 222000, 228000,
+                      240000]
 
 #################################################
 
 # train_input_rates = [60, 120]
 # train_nums_of_data = [1800, 3600]
-train_input_rates = [20, 30, 50, 70, 100, 150, 200, 400, 600, 700]
-train_nums_of_data = [4800, 7200, 12000, 16800, 24000, 36000, 48000, 96000, 144000, 168000]
-
-train_h_input_rates = [90, 100, 110, 120, 130, 140]
-train_h_nums_of_data = [31500, 27000, 29700, 32400, 35100, 37800]
+train_input_rates = [ 70, 110, 150, 190, 210, 230, 250, 270, 290, 310, 330]
+train_nums_of_data = [ 16800, 26400, 36000, 45600, 50400, 55200, 60000, 64800, 69600, 74400, 79200]
 
 input_rates_dict = {
     "etl": etl_input_rates,
-    "etl_h": etl_h_input_rates,
     "pred": pred_input_rates,
-    "pred_h": pred_h_input_rates,
     "stats": stats_input_rates,
-    "stats_h": stats_h_input_rates,
     "train": train_input_rates,
-    "train_h": train_h_input_rates
 }
 
 nums_of_data_dict = {
     "etl": etl_nums_of_data,
-    "etl_h": etl_h_nums_of_data,
     "pred": pred_nums_of_data,
-    "pred_h": pred_h_nums_of_data,
     "stats": stats_nums_of_data,
-    "stats_h": stats_h_nums_of_data,
     "train": train_nums_of_data,
-    "train_h": train_h_nums_of_data
 }
 
 # data_file & prop_file
@@ -108,6 +99,8 @@ PORT = 38997
 # experiment_analyze
 exp_ids = ["job_name", "execution_time", "input_rate", "num_of_data"]
 throughput_metrics = ["throughput"]
-latency_metrics = ["latency_mean", "latency_min", "latency_p10", "latency_p25", "latency_p50", "latency_p75",
-                   "latency_p95", "latency_p98", "latency_p99", "latency_p999", "latency_max"]
+latency_metrics = ["latency_mean", "latency_min", "latency_p5", "latency_p10", "latency_p20", "latency_p25",
+                   "latency_p30", "latency_p40", "latency_p50", "latency_p60", "latency_p70", "latency_p75",
+                   "latency_p80", "latency_p90", "latency_p95", "latency_p98", "latency_p99", "latency_p999",
+                   "latency_max"]
 exp_metrics_head = exp_ids + throughput_metrics + latency_metrics

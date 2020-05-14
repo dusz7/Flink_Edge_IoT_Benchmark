@@ -42,7 +42,7 @@ public class MQTTTrainSinkFunction extends RichSinkFunction<TrainDataStreamEntry
         mqttPublishTask = new MQTTPublishTask();
         mqttPublishTask.setup(l, p);
 
-        com.codahale.metrics.Histogram dropwizardHistogram = new com.codahale.metrics.Histogram(new SlidingWindowReservoir(dataNum * 5));
+        com.codahale.metrics.Histogram dropwizardHistogram = new com.codahale.metrics.Histogram(new SlidingWindowReservoir(dataNum * 2));
         latencyHistogram = getRuntimeContext().getMetricGroup()
                 .addGroup("MyMetrics")
                 .histogram("latency", new DropwizardHistogramWrapper(dropwizardHistogram));
@@ -64,9 +64,7 @@ public class MQTTTrainSinkFunction extends RichSinkFunction<TrainDataStreamEntry
 
     @Override
     public void invoke(TrainDataStreamEntry value, Context context) throws Exception {
-        String msgId = value.getMsgId();
         String filename = value.getFileName();
-        String analyticType = value.getAnalyticType();
 
         HashMap<String, String> map = new HashMap<String, String>();
         map.put(AbstractTask.DEFAULT_KEY, filename);

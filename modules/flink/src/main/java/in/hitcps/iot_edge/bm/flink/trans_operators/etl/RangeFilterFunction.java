@@ -50,7 +50,7 @@ public class RangeFilterFunction extends RichFilterFunction<SensorDataStreamEntr
         if (result != 0) {
             return true;
         } else {
-            l.info("Rang Filter catch one : msg#{} obsField is {} and obsValue is {}", value.getMsgId(), value.getObsField(), value.getObsValue());
+//            l.info("Rang Filter catch one : msg#{} obsField is {} and obsValue is {}", value.getMsgId(), value.getObsField(), value.getObsValue());
             // interpolation after
             value.setObsValue("null");
             return true;

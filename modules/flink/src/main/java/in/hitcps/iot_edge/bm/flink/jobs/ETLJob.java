@@ -25,6 +25,8 @@ public class ETLJob {
 
         // Operator chain
 //        env.disableOperatorChaining();
+        int[] parallelisms = {3, 1, 1, 1, 1, 1, 3, 3};
+//        int[] parallelisms = {1, 1, 1, 1, 1, 1, 1, 3};
 
         double scalingFactor = 1;
         int inputRate = 100;
@@ -49,20 +51,19 @@ public class ETLJob {
 //        dataSource.print();
 
         // SenML Parse Map
-        SingleOutputStreamOperator<SensorDataStreamEntry> parseResult = dataSource.flatMap(new SenMLParseETLFlatMapFunction(p)).name("SenML_Parse").setParallelism(3);
+        SingleOutputStreamOperator<SensorDataStreamEntry> parseResult = dataSource.flatMap(new SenMLParseETLFlatMapFunction(p)).name("SenML_Parse").setParallelism(parallelisms[0]);
 
-        SingleOutputStreamOperator<SensorDataStreamEntry> filterResult = parseResult.filter(new RangeFilterFunction(p)).name("Range_Filter").setParallelism(1)
-                .filter(new BloomFilterFunction(p)).name("Bloom_Filter").setParallelism(1);
-//        filterResult.print();
+        SingleOutputStreamOperator<SensorDataStreamEntry> filterResult = parseResult.filter(new RangeFilterFunction(p)).name("Range_Filter").setParallelism(parallelisms[1])
+                .filter(new BloomFilterFunction(p)).name("Bloom_Filter").setParallelism(parallelisms[2]);
 
-        SingleOutputStreamOperator<SensorDataStreamEntry> interResult = filterResult.map(new InterpolationMapFunction(p)).name("Interpolation").setParallelism(1);
+        SingleOutputStreamOperator<SensorDataStreamEntry> interResult = filterResult.map(new InterpolationMapFunction(p)).name("Interpolation").setParallelism(parallelisms[3]);
 
         // flink auto_chain these operators' subtask, so the #1subtask of SenMLParseFlatMap's data can be send to #1subtask of JoinFlatMap..
-        SingleOutputStreamOperator<SensorDataStreamEntry> joined = interResult.flatMap(new JoinFlatMapFunction(p)).name("Join").setParallelism(1);
-        SingleOutputStreamOperator<SensorDataStreamEntry> annotated = joined.map(new AnnotationMapFunction(p)).name("Annotate").setParallelism(1);
-        SingleOutputStreamOperator<SensorDataStreamEntry> senml = annotated.map(new CSVToSenMLMapFunction(p)).name("CsvToSenML").setParallelism(3);
+        SingleOutputStreamOperator<SensorDataStreamEntry> joined = interResult.flatMap(new JoinFlatMapFunction(p)).name("Join").setParallelism(parallelisms[4]);
+        SingleOutputStreamOperator<SensorDataStreamEntry> annotated = joined.map(new AnnotationMapFunction(p)).name("Annotate").setParallelism(parallelisms[5]);
+        SingleOutputStreamOperator<SensorDataStreamEntry> senml = annotated.map(new CSVToSenMLMapFunction(p)).name("CsvToSenML").setParallelism(parallelisms[6]);
 
-        senml.addSink(new MQTTSinkETLFunction(p, numData)).name("MQTT_Publish").setParallelism(3);
+        senml.addSink(new MQTTSinkETLFunction(p, numData)).name("MQTT_Publish").setParallelism(parallelisms[7]);
 
 //        System.out.println(env.getExecutionPlan());
 

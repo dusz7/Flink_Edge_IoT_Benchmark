@@ -53,7 +53,7 @@ public class InterpolationMapFunction extends RichMapFunction<SensorDataStreamEn
             // timeStamp
             return value;
         } else if (result != Float.MIN_VALUE) {
-            l.info("Interpolation Map : msg#{} obsField is {} and obsValue is {} >> {}", value.getMsgId(), value.getObsField(), value.getObsValue(), result.toString());
+//            l.info("Interpolation Map : msg#{} obsField is {} and obsValue is {} >> {}", value.getMsgId(), value.getObsField(), value.getObsValue(), result.toString());
             value.setObsValue(result.toString());
 
             // timeStamp

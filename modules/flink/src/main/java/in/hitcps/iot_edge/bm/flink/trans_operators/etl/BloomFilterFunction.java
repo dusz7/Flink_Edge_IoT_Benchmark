@@ -56,7 +56,7 @@ public class BloomFilterFunction extends RichFilterFunction<SensorDataStreamEntr
             if (result != 0) {
                 return true;
             } else {
-                l.info("Bloom Filter catch one : msg#{} obsField is {} and obsValue is {}", value.getMsgId(), value.getObsField(), value.getObsValue());
+//                l.info("Bloom Filter catch one : msg#{} obsField is {} and obsValue is {}", value.getMsgId(), value.getObsField(), value.getObsValue());
                 return false;
             }
         } else {

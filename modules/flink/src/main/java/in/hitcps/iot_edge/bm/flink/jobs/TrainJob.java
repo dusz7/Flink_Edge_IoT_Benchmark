@@ -31,6 +31,9 @@ public class TrainJob {
         // Flink env
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
+        // Operator chain
+//        env.disableOperatorChaining();
+
         double scalingFactor = 1;
         int inputRate = 100;
         int numData = 2000;

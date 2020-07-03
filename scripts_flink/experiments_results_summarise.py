@@ -7,12 +7,12 @@ import numpy as np
 from experiments_prop import *
 
 # note
-usage = "python <script_name.py> <job_alias> <start_time>"
-parser = argparse.ArgumentParser(description='to summarize flink iot-bm experiments result')
-parser.add_argument("job_alias")
-parser.add_argument("start_time")
-parser.add_argument("--ExecutionTimes", type=int, default=1, choices=xrange(1, 10), help="Experiment Execution times")
-args = parser.parse_args()
+# usage = "python <script_name.py> <job_alias> <start_time>"
+# parser = argparse.ArgumentParser(description='to summarize flink iot-bm experiments result')
+# parser.add_argument("job_alias")
+# parser.add_argument("start_time")
+# parser.add_argument("--ExecutionTimes", type=int, default=1, choices=xrange(1, 10), help="Experiment Execution times")
+# args = parser.parse_args()
 
 def get_throughput_from_section(log_section):
     # print log_section[0]
@@ -84,6 +84,8 @@ def write_throughput_latency_in_file(sum_file_name, job_alias, exe_time, input_r
         csv_write = csv.writer(f)
         csv_row = [job_alias, exe_time, input_rate, num_of_data]
         csv_row.append(throughput)
+        # print latency_hist
+        # print csv_row
         csv_row += latency_hist
         csv_write.writerow(csv_row)
 
@@ -103,6 +105,7 @@ def summarize_exp(job_alias, start_time, exe_time):
             num_of_data = nums_of_data[i]
             throughputs = []
             latency_hists = []
+            success_time = 0
             for t in range(1, exe_time + 1):
                 unique_exp_job_name = job_alias + "-" + str(input_rate) + "-" + str(num_of_data) + "-t" + str(t)
                 latency_throughput_file_name = exp_results_local_dir + "/" + unique_exp_name + "/" + unique_exp_job_name + "/" + "latency_throughput.txt"
@@ -111,6 +114,9 @@ def summarize_exp(job_alias, start_time, exe_time):
                     throughputs.append(throughput)
                     latency_hists.append(latency_hist)
                     write_throughput_latency_in_file(summ_file_name, job_alias, t, input_rate, num_of_data, throughput, latency_hist)
+                    success_time += 1
+            if (success_time == 0):
+                continue
 
             total_mean_throughput = np.mean(np.array(throughputs))
             total_mean_latency_hist = np.mean(np.array(latency_hists), axis=0).tolist()
@@ -118,11 +124,12 @@ def summarize_exp(job_alias, start_time, exe_time):
 
 
 def main():
-    if args.job_alias not in valid_job_alias:
-        print "not a valid job name."
-        print "can only execute " + str(valid_job_alias)
-        exit(-1)
-    summarize_exp(args.job_alias, args.start_time, args.ExecutionTimes)
+    print "help"
+    # if args.job_alias not in valid_job_alias:
+    #     print "not a valid job name."
+    #     print "can only execute " + str(valid_job_alias)
+    #     exit(-1)
+    # summarize_exp(args.job_alias, args.start_time, args.ExecutionTimes)
 
 if __name__ == "__main__":
     main()

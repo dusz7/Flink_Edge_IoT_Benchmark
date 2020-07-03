@@ -11,7 +11,9 @@ from experiments_prop import *
 from experiments_results_summarise import summarize_exp
 
 flink_home = os.environ['FLINK_HOME']
+flink_local_home = os.environ['FLINK_LOCAL_HOME']
 flink_exe = flink_home + "/bin/flink"
+flink_local_exe = flink_local_home + "/bin/flink"
 start_flink = flink_home + "/bin/start-cluster.sh"
 stop_flink = flink_home + "/bin/stop-cluster.sh"
 
@@ -23,6 +25,8 @@ parser = argparse.ArgumentParser(description='to run flink iot-bm experiments')
 parser.add_argument("jar_name")
 parser.add_argument("job_alias")
 parser.add_argument("--ExecutionTimes", type=int, default=1, choices=xrange(1, 10), help="Experiment Execution times")
+parser.add_argument("--RunningLocal", type=int, default=0, choices=xrange(0, 2), help="is running local")
+
 args = parser.parse_args()
 
 # pssh-client
@@ -71,8 +75,11 @@ def clean_metrics_log():
     client.run_command(cmds)
 
 
-def run_flink_job(jar_path, target_job_name, input_rate, num_of_data, resource_path, data_file, prop_file):
-    flink_command_pre = flink_exe + " run -c " + target_job_name + " -d " + jar_path
+def run_flink_job(isLocal, jar_path, target_job_name, input_rate, num_of_data, resource_path, data_file, prop_file):
+    flink = flink_exe
+    if isLocal:
+        flink = flink_local_exe
+    flink_command_pre = flink + " run -c " + target_job_name + " -d " + jar_path
     flink_command = flink_command_pre + " -input " + str(input_rate) + " -total " + str(num_of_data) \
                     + " -res_path " + resource_path + " -data_file " + data_file + " -prop_file " + prop_file
 
@@ -143,7 +150,7 @@ def run_experiments(jar_name, job_alias, execution_time, unique_exp_name):
         print "  +++++ prepared this job"
         # start job
         unique_exp_job_name = job_alias + "-" + str(input_rate) + "-" + str(num_of_data) + "-t" + str(execution_time)
-        run_flink_job(jar_path, target_job_name, input_rate, num_of_data,
+        run_flink_job(False, jar_path, target_job_name, input_rate, num_of_data,
                       resource_path, data_file, prop_file)
         # blocking wait
         wait_for_job_completion(port=PORT, start_time=time.time())
@@ -158,6 +165,23 @@ def run_experiments(jar_name, job_alias, execution_time, unique_exp_name):
 
     print "one time of experiments execute completed!"
 
+def run_local(jar_name, job_alias, unique_exp_name):
+    jar_path = os.getcwd() + "/" + jar_name
+
+    target_job_name = target_job_names[job_alias]
+    input_rates = input_rates_dict[job_alias]
+    nums_of_data = nums_of_data_dict[job_alias]
+
+    data_file = data_files[job_alias]
+    prop_file = prop_files[job_alias]
+
+    input_rate = input_rates[1]
+    num_of_data = nums_of_data[1]
+
+    unique_exp_job_name = job_alias + "-" + str(input_rate) + "-" + str(num_of_data)
+    run_flink_job(True, jar_path, target_job_name, input_rate, num_of_data,
+                  resource_path, data_file, prop_file)
+
 def main():
     if args.job_alias not in valid_job_alias:
         print "not a valid job name."
@@ -170,6 +194,13 @@ def main():
 
     exp_start_time = time.strftime("%m.%d-%H.%M", time.localtime())
     unique_exp_name = args.job_alias + "-" + exp_start_time
+
+    running_local = args.RunningLocal
+    if running_local == 1 :
+        flink_exe = flink_local_home + "/bin/flink"
+        run_local(args.jar_name, args.job_alias, unique_exp_name)
+        return
+
     create_exp_results_dir(unique_exp_name)
 
     for i in range(args.ExecutionTimes):
